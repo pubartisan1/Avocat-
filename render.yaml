@@ -1,0 +1,23 @@
+# Déploiement GRATUIT sur Render : New → Blueprint → choisir ce dépôt.
+# Render demande 3 valeurs :
+#   ADMIN_PASSWORD      → le mot de passe de ton back-office (à inventer)
+#   TURSO_DATABASE_URL  → l'adresse de ta base Turso gratuite (libsql://....turso.io)
+#   TURSO_AUTH_TOKEN    → le jeton de ta base Turso
+# Toutes les autres clés (Anthropic, Stripe, emails) se collent ensuite dans le back-office → Paramètres.
+services:
+  - type: web
+    name: votreiapro-qg
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /sante
+    envVars:
+      - key: NODE_VERSION
+        value: "22.13.0"
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false

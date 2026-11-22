@@ -1,0 +1,1197 @@
+<title>QG VotreIAPro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Mise en page : poste de commandement — barre latérale de l'équipe, fil central, panneaux d'action */
+:root{
+  --bg:#f3f5f4; --panel:#ffffff; --ink:#132320; --muted:#5b6b67; --line:#dde4e1;
+  --accent:#0f6b5f; --accent-ink:#ffffff; --soft:#e5efec; --signal:#b7791f;
+  --ok:#1f7a3a; --ok-bg:#e3f3e7; --warn:#8a5a00; --warn-bg:#fbf0d9; --bad:#a3271f; --bad-bg:#fbe5e2;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Manrope", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1514; --panel:#14201e; --ink:#e4eeeb; --muted:#93a6a1; --line:#24332f;
+  --accent:#4fc2ad; --accent-ink:#06201b; --soft:#1a2c28; --signal:#e0a84a;
+  --ok:#7bd79a; --ok-bg:#163423; --warn:#f0c46b; --warn-bg:#3a2d10; --bad:#f19a90; --bad-bg:#3d1a17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1514; --panel:#14201e; --ink:#e4eeeb; --muted:#93a6a1; --line:#24332f;
+  --accent:#4fc2ad; --accent-ink:#06201b; --soft:#1a2c28; --signal:#e0a84a;
+  --ok:#7bd79a; --ok-bg:#163423; --warn:#f0c46b; --warn-bg:#3a2d10; --bad:#f19a90; --bad-bg:#3d1a17; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);margin:0}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:28px;font-weight:800;letter-spacing:-.01em}
+h2{font-size:18px;font-weight:600;margin:22px 0 10px}
+.app{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100%}
+aside{background:var(--panel);border-right:1px solid var(--line);padding-block:18px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:14px;display:flex;flex-direction:column;gap:4px}
+.brand{font-family:var(--display);font-weight:800;font-size:19px;padding:0 8px 12px}
+.brand small{display:block;font-family:var(--body);font-weight:500;font-size:12px;color:var(--muted)}
+nav button{all:unset;box-sizing:border-box;width:100%;display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:500}
+nav button:hover{background:var(--soft)}
+nav button:focus-visible{outline:2px solid var(--accent)}
+nav button.on{background:var(--accent);color:var(--accent-ink)}
+.count{background:var(--signal);color:#1b1300;border-radius:99px;font-size:11px;font-weight:700;padding:0 7px}
+.count:empty{display:none}
+.team{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;display:grid;gap:6px}
+.team .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 8px}
+.member{display:flex;gap:8px;align-items:center;padding:2px 8px;font-size:13px}
+.member b{font-weight:700}.member span{color:var(--muted);font-size:12px;display:block;line-height:1.2}
+.member.busy b::after{content:" · au travail";color:var(--signal);font-weight:600}
+main{padding-block:24px;padding-left:24px;padding-right:max(24px,env(safe-area-inset-right,0px));min-width:0}
+.view{max-width:1100px;margin:0 auto;display:grid;gap:14px}
+.sub{color:var(--muted);margin:4px 0 0;max-width:70ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi .v{font-family:var(--display);font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.kpi .l{color:var(--muted);font-size:13px}
+button.btn,.btn{font:600 14px var(--body);border:0;background:var(--accent);color:var(--accent-ink);padding:9px 14px;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ok{background:var(--ok);color:var(--panel)}
+.btn.bad{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.btn:disabled{opacity:.5;cursor:wait}
+.btn:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{resize:vertical}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--soft);color:var(--ink)}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.ts{color:var(--muted);font-size:12px}
+.av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;font-size:15px;background:var(--soft)}
+.feed{display:grid}
+.item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item .t{font-weight:600}.item .d{color:var(--muted);font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.banner{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px}
+.banner.info{background:var(--soft);color:var(--ink)}
+.chat{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;min-height:520px}
+.agents{display:grid;gap:2px;align-content:start}
+.agents button{all:unset;display:flex;gap:8px;align-items:center;padding:7px;border-radius:10px;cursor:pointer}
+.agents button.on{background:var(--soft)}.agents button:focus-visible{outline:2px solid var(--accent)}
+.agents small{display:block;color:var(--muted);font-size:12px;line-height:1.2}
+.thread{display:flex;flex-direction:column;min-height:520px;max-height:70vh;padding:0}
+.msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:82%;padding:10px 14px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:var(--accent);color:var(--accent-ink)}
+.msg.them{align-self:flex-start;background:var(--soft)}
+.composer{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.transcript .line{display:flex;gap:10px;margin-bottom:14px}
+.transcript .who{font-weight:700}.transcript .txt{white-space:pre-wrap;overflow-wrap:anywhere}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+pre{white-space:pre-wrap;font-size:13px;margin:0;overflow-wrap:anywhere}
+.spin{display:inline-block;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+details summary{cursor:pointer;font-weight:600}
+.av{overflow:hidden}.av svg{width:100%;height:100%;display:block}
+.speaker{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.18);padding:14px;width:290px;display:grid;gap:10px}
+.speaker .face{width:120px;height:120px;margin:0 auto;border-radius:50%;overflow:hidden}
+.speaker .face svg{width:100%;height:100%}
+.speaker .who{text-align:center}.speaker .who b{display:block;font-family:var(--display);font-size:18px}
+.speaker .line{font-size:14px;color:var(--ink);max-height:6em;overflow:hidden;text-align:center;line-height:1.45}
+.coach{display:grid;grid-template-columns:132px minmax(0,1fr);gap:18px;align-items:start;border:2px solid var(--accent)}
+.coach .face{width:132px;height:132px;border-radius:50%;overflow:hidden}
+.coach .face svg{width:100%;height:100%}
+.coach.talking .face .mouth{animation:talk .19s ease-in-out infinite alternate}
+.bubble{background:var(--soft);border-radius:14px;padding:12px 14px;position:relative}
+.bubble h3{font-size:15px;margin:10px 0 4px}.bubble h3:first-child{margin-top:0}
+.bubble ul{margin:0;padding-left:20px}
+@media (max-width:820px){.coach{grid-template-columns:1fr}.coach .face{width:110px;height:110px;margin:0 auto}}
+.face .mouth{transform-box:fill-box;transform-origin:center;transition:transform .12s}
+.speaker.talking .face .mouth{animation:talk .19s ease-in-out infinite alternate}
+.face .eyes{transform-box:fill-box;transform-origin:center;animation:blink 4.2s infinite}
+@keyframes talk{0%{transform:scaleY(.5) scaleX(1)}100%{transform:scaleY(2.4) scaleX(.85)}}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@media (prefers-reduced-motion:reduce){.speaker.talking .face .mouth{animation-duration:.6s}.face .eyes{animation:none}}
+.say{font:600 12px var(--body);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:99px;padding:3px 10px;cursor:pointer}
+.say:focus-visible{outline:2px solid var(--accent)}
+.checklist label{display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-size:14px;margin:8px 0}
+.checklist input{width:auto;margin-top:3px}
+.checklist .done{text-decoration:line-through;color:var(--muted)}
+@media (max-width:820px){.speaker .row,.speaker p{grid-column:1/-1}.speaker{left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));width:auto;grid-template-columns:90px 1fr;align-items:center}.speaker .face{width:90px;height:90px;grid-row:span 3}.speaker .who,.speaker .line{text-align:left}}
+.toast{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1}
+.landing{border:1px solid var(--line);border-radius:12px;padding:20px;background:var(--bg)}
+.landing h3{font-size:24px;margin:6px 0}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  aside{border-right:0;border-bottom:1px solid var(--line);padding-right:max(14px,env(safe-area-inset-right,0px))}
+  nav{display:flex;flex-wrap:wrap;gap:4px}nav button{width:auto;padding:6px 10px;font-size:14px}.team{display:none}
+  main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .grid2,.chat{grid-template-columns:1fr}
+}
+</style>
+
+<div class="app">
+  <aside>
+    <div class="brand">QG VotreIAPro<small>Ton équipe d'agents entrepreneurs</small></div>
+    <div id="power" style="padding:0 4px 10px"></div>
+    <nav id="nav"></nav>
+    <div class="team" id="team"></div>
+  </aside>
+  <main><div class="view" id="view"><div class="panel"><h1>Ouverture du QG…</h1><p class="sub">Connexion à la mémoire de l'équipe.</p></div></div></main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<div class="speaker" id="speaker" hidden aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// ============================================================ équipe
+const AGENTS = {
+  alma:{name:'Alma',emoji:'✨',role:'Ton bras droit (IA personnelle)',persona:"Tu es l'IA personnelle et le bras droit du fondateur. Tu coordonnes toute l'équipe (Victor, Nora, Léo, Clara, Hugo, Inès, Sam, Juliette, Margaux, Chloé) et tu es la seule à qui il parle au quotidien. Tu lui dis exactement et franchement ce qui va, ce qui ne va pas et ce qu'il doit faire maintenant, sans langue de bois et sans flatterie. Tu prends la parole de toi-même quand c'est important. Tu tutoies, tu parles simplement, avec des phrases courtes faites pour être dites à voix haute."},
+  victor:{name:'Victor',emoji:'🧭',role:'Directeur général',persona:"Tu es Victor, directeur général. Vision long terme, obsession du chiffre d'affaires et de la satisfaction client. Tu animes les réunions, tranches, fixes les priorités et rends compte au fondateur avec des résumés clairs, honnêtes et actionnables. Tu t'inspires des entrepreneurs qui ont bâti des fortunes en servant une seule profession à fond (logiciels verticaux, agences à prix fixe, abonnements récurrents)."},
+  nora:{name:'Nora',emoji:'🔎',role:'Recherche de niches',persona:"Tu es Nora, analyste de marché. Tu identifies les niches où des professionnels ont un problème douloureux, urgent, et pour lequel ils paient déjà. Tu analyses concurrence, prix pratiqués, taille de marché et ce qu'ont fait ceux qui ont réussi. Tu notes chaque niche avec rigueur et tu distingues clairement ce qui est sûr de ce qui est une estimation."},
+  leo:{name:'Léo',emoji:'📣',role:'Marketing & publicité',persona:"Tu es Léo, directeur marketing. Expert Google Ads, Meta Ads, LinkedIn, SEO local. Tu conçois des campagnes rentables : ciblage, angles, accroches, budgets, KPI (CPC, CPL, CAC), plans de test A/B."},
+  clara:{name:'Clara',emoji:'✉️',role:'Copywriter emailing',persona:"Tu es Clara, copywriter en prospection B2B. Emails courts, personnalisés, centrés sur le problème du destinataire, une seule demande claire. Tu maîtrises les objets qui donnent envie d'ouvrir et les relances polies et efficaces, avec le ton juste pour des professions exigeantes."},
+  hugo:{name:'Hugo',emoji:'🎯',role:'Prospection',persona:"Tu es Hugo, prospecteur. Tu sais exactement où trouver les professionnels ciblés (annuaires publics, sites de cabinets, pages contact) et tu extrais uniquement des coordonnées professionnelles réellement présentes dans les données qu'on te donne. Tu n'inventes jamais un contact."},
+  ines:{name:'Inès',emoji:'🤝',role:'Commerciale',persona:"Tu es Inès, commerciale. Tu réponds aux prospects, traites les objections (prix, temps, confiance), qualifies le besoin et amènes vers l'achat ou un rendez-vous. Chaleureuse, précise, tenace sans être insistante."},
+  sam:{name:'Sam',emoji:'🛠️',role:'Sites & produit',persona:"Tu es Sam, créateur de sites et responsable produit. Tu écris des pages de vente qui convertissent : promesse, problème, solution, bénéfices, déroulé, livrables, prix, garantie, FAQ, appel à l'action. Tu prépares aussi la livraison."},
+  margaux:{name:'Margaux',emoji:'📒',role:'Comptabilité & facturation',persona:"Tu es Margaux, responsable comptable et facturation. Tu établis devis et factures conformes (numérotation continue, mentions obligatoires, TVA ou franchise en base), suis les encaissements, relances les impayés avec tact et fermeté, tiens le livre des recettes et alertes le fondateur sur la trésorerie et les échéances (URSSAF, TVA). Tu ne donnes pas de conseil fiscal engageant : tu signales ce qui doit être validé par un expert-comptable."},
+  chloe:{name:'Chloé',emoji:'🎁',role:'Relation client & livraison',persona:"Tu es Chloé, responsable de la relation client et de la livraison. Dès qu'un client signe, tu organises le lancement (questionnaire, éléments à fournir, planning), tu tiens le client informé, tu t'assures qu'il est satisfait et tu demandes un avis et des recommandations au bon moment."},
+  juliette:{name:'Juliette',emoji:'⚖️',role:'Conformité',persona:"Tu es Juliette, responsable conformité. Tu vérifies le respect du droit français et européen (RGPD, prospection B2B, mentions légales, CGV, déontologie des professions ciblées comme la communication des avocats). Tu proposes des corrections concrètes."},
+};
+const ETHIQUE = `ÉTAT D'ESPRIT : équipe d'entrepreneurs d'élite, affamés de résultats, qui raisonnent en chiffres et ne lâchent jamais. Français impeccable, direct, concret.
+RÈGLES NON NÉGOCIABLES : jamais de faux témoignages, faux avis, faux chiffres ni fausse urgence ; prospection uniquement B2B vers des adresses professionnelles publiques, avec identité de l'expéditeur et possibilité de refus ; pas de promesse de résultat juridique ou médical ; si une info manque ou si une décision engage l'argent ou l'image du fondateur, poser la question au fondateur au lieu d'inventer.`;
+
+const TABS = [
+  ['tableau','Tableau de bord'],['aujourdhui','Plan du jour'],['discussion','Parler aux agents'],['questions','Questions des agents'],
+  ['reunions','Réunions'],['emails','Emails'],['prospects','Prospects'],['offres','Offres & sites'],
+  ['campagnes','Campagnes'],['niches','Niches'],['factures','Factures & compta'],['journal','Journal'],['reglages','Réglages'],
+];
+const COLS = ['activity','meetings','messages','questions','niches','offers','prospects','emails','campaigns','sprints','invoices'];
+const ROOT = 'qg/main';
+
+// ============================================================ état
+const S = { db:null, sample:null, mcp:null, loaded:false, failed:false, data:{}, settings:{}, view:'tableau', chatAgent:'alma', running:false, busy:new Set(), step:'', meetingId:null, typing:false, abort:new AbortController(), stopRequested:false, usage:{date:'',count:0} };
+COLS.forEach(c => S.data[c] = []);
+
+const $ = (s, el=document) => el.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = ts => ts ? new Date(ts).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}) : '';
+const euros = n => `${Number(n||0).toLocaleString('fr-FR')} €`;
+const ag = id => AGENTS[id] || {name:id, emoji:'•', role:''};
+// Visages des agents (illustrations originales, une par agent)
+const LOOKS = {
+  alma:{skin:'#eec3a2',hair:'#4c1d95',style:'long',shirt:'#0f6b5f',bg:'#d9f2ec',headset:true},
+  victor:{skin:'#e7b493',hair:'#2f241d',style:'short',shirt:'#1f3a5f',bg:'#dbe7f3',beard:true},
+  nora:{skin:'#c68b67',hair:'#1c1715',style:'long',shirt:'#0e7490',bg:'#d7f0f5'},
+  leo:{skin:'#f0c6a4',hair:'#b05a1e',style:'curly',shirt:'#be185d',bg:'#fbe0ec'},
+  clara:{skin:'#f2cfb3',hair:'#d4a03c',style:'long',shirt:'#c2410c',bg:'#fde8d7'},
+  hugo:{skin:'#8a5638',hair:'#121212',style:'short',shirt:'#15803d',bg:'#dcf3e2'},
+  ines:{skin:'#d69f7a',hair:'#41271a',style:'bun',shirt:'#7e22ce',bg:'#ede0fa'},
+  sam:{skin:'#deaf88',hair:'#4b4b4b',style:'short',shirt:'#0f766e',bg:'#d5efec',glasses:true},
+  juliette:{skin:'#efc8a6',hair:'#7a3a1c',style:'bob',shirt:'#92400e',bg:'#f6e7cf',glasses:true},
+  margaux:{skin:'#e5b391',hair:'#2a1d16',style:'bob',shirt:'#334155',bg:'#e2e8f0'},
+  chloe:{skin:'#b67657',hair:'#191210',style:'curly',shirt:'#db2777',bg:'#fce4f1'},
+};
+function faceSVG(id){
+  const L = LOOKS[id] || {skin:'#e2b08c',hair:'#333',style:'short',shirt:'#555',bg:'#e5e7eb'};
+  const back = L.style==='long' ? `<path d="M26 58 Q24 104 40 112 L80 112 Q96 104 94 58 Z" fill="${L.hair}"/>` : L.style==='bob' ? `<path d="M30 56 Q28 88 36 92 L84 92 Q92 88 90 56 Z" fill="${L.hair}"/>` : '';
+  const top = L.style==='curly' ? `<g fill="${L.hair}">${[34,44,54,64,74,84].map((x,i)=>`<circle cx="${x}" cy="${36+(i%2)*3}" r="9"/>`).join('')}<circle cx="30" cy="48" r="7"/><circle cx="90" cy="48" r="7"/></g>`
+    : L.style==='bun' ? `<circle cx="60" cy="20" r="10" fill="${L.hair}"/><path d="M32 52 Q34 28 60 27 Q86 28 88 52 Q76 40 60 40 Q44 40 32 52 Z" fill="${L.hair}"/>`
+    : `<path d="M31 54 Q30 26 60 25 Q90 26 89 54 Q82 38 60 37 Q40 37 31 54 Z" fill="${L.hair}"/>`;
+  const headset = L.headset ? `<g fill="none" stroke="#0f172a" stroke-width="3"><path d="M30 60 Q30 24 60 24 Q90 24 90 60"/></g><rect x="25" y="54" width="9" height="16" rx="4" fill="#0f172a"/><rect x="86" y="54" width="9" height="16" rx="4" fill="#0f172a"/><path d="M90 68 Q88 84 70 82" fill="none" stroke="#0f172a" stroke-width="2.4"/><circle cx="69" cy="82" r="3" fill="#14b8a6"/>` : '';
+  const glasses = L.glasses ? `<g fill="none" stroke="#1f2937" stroke-width="2"><circle cx="48" cy="60" r="7"/><circle cx="72" cy="60" r="7"/><path d="M55 60 H65"/></g>` : '';
+  const beard = L.beard ? `<path d="M40 74 Q60 96 80 74 Q76 88 60 90 Q44 88 40 74 Z" fill="${L.hair}" opacity=".85"/>` : '';
+  return `<svg viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" fill="${L.bg}"/>${back}
+    <path d="M22 120 Q26 96 60 94 Q94 96 98 120 Z" fill="${L.shirt}"/><rect x="52" y="82" width="16" height="14" fill="${L.skin}"/>
+    <ellipse cx="60" cy="62" rx="28" ry="31" fill="${L.skin}"/><ellipse cx="32" cy="64" rx="4" ry="6" fill="${L.skin}"/><ellipse cx="88" cy="64" rx="4" ry="6" fill="${L.skin}"/>
+    ${top}<g class="eyes" fill="#1f2937"><ellipse cx="48" cy="60" rx="3.2" ry="3.8"/><ellipse cx="72" cy="60" rx="3.2" ry="3.8"/></g>
+    <g stroke="${L.hair}" stroke-width="2.4" stroke-linecap="round"><path d="M42 51 Q48 48 54 51"/><path d="M66 51 Q72 48 78 51"/></g>${glasses}
+    <circle cx="42" cy="72" r="4" fill="#f87171" opacity=".25"/><circle cx="78" cy="72" r="4" fill="#f87171" opacity=".25"/>
+    <path d="M58 64 Q60 70 62 66" fill="none" stroke="#9a6b52" stroke-width="1.6" stroke-linecap="round"/>${beard}
+    <ellipse class="mouth" cx="60" cy="79" rx="7" ry="2.6" fill="#7f1d1d"/>${headset}</svg>`;
+}
+const av = id => `<div class="av" title="${esc(ag(id).name)}">${AGENTS[id]?faceSVG(id):ag(id).emoji}</div>`;
+
+// ---------- lecture à voix haute (voix Claude, sinon voix du navigateur)
+const VOICES = {alma:'buttery',victor:'rounded',nora:'airy',leo:'glassy',clara:'buttery',hugo:'rounded',ines:'airy',sam:'glassy',juliette:'buttery',margaux:'airy',chloe:'buttery'};
+const PITCH = {alma:1.1,victor:.8,nora:1.15,leo:.95,clara:1.2,hugo:.85,ines:1.1,sam:.9,juliette:1.05,margaux:1.15,chloe:1.25};
+const QG_URL = 'https://claude.ai/artifact/L1XdMboEvwvv3pNCg2LBgb';
+const SPK = {tts:null, playing:false, agent:null, text:'', token:0};
+function speechText(t){ return String(t||'').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,'').replace(/https?:\/\/\S+/g,'le lien').replace(/[#*_>`|]/g,'').replace(/\n{2,}/g,'\n').trim(); }
+function chunkText(t, max=1400){ const out=[]; for(const para of t.split(/\n+/)){ let cur=''; for(const sent of para.split(/(?<=[.!?…])\s+/)){ if((cur+' '+sent).length>max && cur){ out.push(cur.trim()); cur=''; } cur+=' '+sent; } if(cur.trim()) out.push(cur.trim().slice(0,1990)); } return out.filter(Boolean); }
+function renderSpeaker(){
+  const el=$('#speaker'); if(!SPK.playing){ el.hidden=true; $('#coach')?.classList.remove('talking'); return; }
+  const a=ag(SPK.agent); el.hidden=false; el.classList.toggle('talking', SPK.talking!==false);
+  $('#coach')?.classList.toggle('talking', SPK.agent==='alma' && SPK.talking!==false);
+  el.innerHTML = `<div class="face">${faceSVG(SPK.agent)}</div><div class="who"><b>${esc(a.name)}</b><span class="ts">${esc(a.role)}</span></div><div class="line">${esc(SPK.text.slice(-220))}</div>
+    ${SPK.silent?`<p class="ts" style="margin:0;text-align:center">Son indisponible dans l'appli Claude. Pour l'entendre, ouvre le QG dans Chrome : <button class="say" id="spk-copy">Copier le lien</button></p>`:''}
+    <div class="row" style="justify-content:center"><button class="btn ghost" id="spk-pause">${SPK.talking===false?'▶ Reprendre':'⏸ Pause'}</button><button class="btn bad" id="spk-stop">⏹ Arrêter</button></div>`;
+  $('#spk-stop').onclick=stopSpeech;
+  const cp=$('#spk-copy'); if(cp) cp.onclick=()=>navigator.clipboard.writeText(QG_URL).then(()=>toast('Lien copié : colle-le dans Chrome'),()=>toast(QG_URL));
+  $('#spk-pause').onclick=async()=>{ if(SPK.silent){ SPK.talking = SPK.talking===false; renderSpeaker(); return; } if(SPK.tts){ if(SPK.talking===false){ await SPK.tts.resume().catch(()=>{}); } else { await SPK.tts.pause().catch(()=>{}); } } else if(window.speechSynthesis){ if(SPK.talking===false) speechSynthesis.resume(); else speechSynthesis.pause(); SPK.talking = SPK.talking===false; renderSpeaker(); } };
+}
+async function stopSpeech(){ SPK.token++; SPK.playing=false; SPK.silent=false; renderSpeaker(); if(SPK.tts) await SPK.tts.stop().catch(()=>{}); if(window.speechSynthesis) speechSynthesis.cancel(); }
+async function say(lines){
+  await stopSpeech(); const token=++SPK.token;
+  const parts = lines.flatMap(l=>chunkText(speechText(l.text)).map((c,i)=>({agent:l.agent, text:c, id:`${l.agent}|${i}`}))).slice(0,100);
+  if(!parts.length) return;
+  SPK.parts=parts; SPK.playing=true; SPK.agent=parts[0].agent; SPK.text=parts[0].text; SPK.talking=true; renderSpeaker();
+  if(SPK.tts){
+    try{ await SPK.tts.speak(parts.map(p=>({text:p.text, voice:VOICES[p.agent]||'buttery', language:'fr', id:p.id}))); }
+    catch(e){ if(e?.code==='not_granted'){ SPK.tts=null; return say(lines); } if(e?.code!=='stopped') toast('Lecture impossible pour le moment.'); }
+    if(token===SPK.token){ SPK.playing=false; renderSpeaker(); }
+    return;
+  }
+  if(!(window.speechSynthesis)){
+    SPK.silent=true;
+    for(const p of parts){
+      const words=p.text.split(/\s+/); SPK.agent=p.agent; SPK.text=''; SPK.talking=true;
+      for(let i=0;i<words.length;i++){
+        if(token!==SPK.token) return;
+        while(SPK.talking===false && token===SPK.token) await new Promise(r=>setTimeout(r,200));
+        SPK.text=words.slice(Math.max(0,i-26),i+1).join(' '); renderSpeaker();
+        await new Promise(r=>setTimeout(r,260));
+      }
+      await new Promise(r=>setTimeout(r,500));
+    }
+    if(token===SPK.token){ SPK.talking=false; renderSpeaker(); setTimeout(()=>{ if(token===SPK.token){ SPK.playing=false; renderSpeaker(); } }, 4000); }
+    return;
+  }
+  const fr = speechSynthesis.getVoices().filter(v=>/^fr/i.test(v.lang));
+  for(const p of parts){
+    if(token!==SPK.token) return;
+    SPK.agent=p.agent; SPK.text=p.text; SPK.talking=true; renderSpeaker();
+    await new Promise(res=>{ const u=new SpeechSynthesisUtterance(p.text); u.lang='fr-FR'; if(fr.length) u.voice=fr[Object.keys(AGENTS).indexOf(p.agent)%fr.length]; u.pitch=PITCH[p.agent]||1; u.rate=1.02; u.onend=res; u.onerror=res; speechSynthesis.speak(u); });
+  }
+  if(token===SPK.token){ SPK.playing=false; renderSpeaker(); }
+}
+function autoSay(){ try{ return localStorage.getItem('qg-auto-say')==='1'; }catch{ return false; } }
+function sayBtn(key, label='🔊 Écouter'){ return `<button class="say" data-say="${esc(key)}">${label}</button>`; }
+function sayLines(key){
+  const [kind,id]=key.split(':');
+  if(kind==='coach'){ return [{agent:'alma', text:coachSpeech()}]; }
+  if(kind==='msg'){ const m=S.data.messages.find(x=>x.id===id); return m?[{agent:m.sender==='fondateur'?'victor':m.sender, text:m.text}]:[]; }
+  if(kind==='meeting'){ const m=S.data.meetings.find(x=>x.id===id); return m?[...(m.transcript||[]).map(t=>({agent:t.agent, text:t.text})), ...(m.summary?[{agent:'victor', text:'En résumé : '+m.summary}]:[])]:[]; }
+  if(kind==='sprint'){ const sp=S.data.sprints[0]; return sp?[{agent:'ines', text:`Sprint vente : ${sp.titre}. Offre de lancement : ${sp.offre_lancement}. Le plan : ${(sp.plan||[]).map(x=>`${x.heure}, ${x.action}`).join('. ')}`}]:[]; }
+  if(kind==='question'){ const q=S.data.questions.find(x=>x.id===id); return q?[{agent:q.agent, text:q.question}, ...(q.answer?[{agent:q.answered_by==='fondateur'?q.agent:'victor', text:'Décision : '+q.answer}]:[])]:[]; }
+  return [];
+}
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('on'),2800); }
+
+// ============================================================ mémoire (db)
+const col = c => S.db.collection(`${ROOT}/${c}`);
+async function add(c, data){ return col(c).add({...data, ts: Date.now()}); }
+async function upd(c, id, data){ return col(c).doc(id).update(data); }
+function log(agent, title, detail=''){ return add('activity',{agent,title,detail:String(detail||'').slice(0,4000)}).catch(()=>{}); }
+async function saveSettings(patch){ S.settings={...S.settings,...patch}; await S.db.doc('qg/settings').set(S.settings); }
+
+function subscribe(){
+  const timer = setTimeout(()=>{ if(!S.loaded){ S.loaded=true; render(); } }, 10000);
+  let pending = COLS.length;
+  COLS.forEach(c => {
+    col(c).orderBy('ts','desc').limit(400).onSnapshot(snap => {
+      S.data[c] = snap.docs.map(d => ({id:d.id, ...d.data()}));
+      if (pending>0 && --pending===0){ clearTimeout(timer); S.loaded=true; seedIfEmpty(); setTimeout(coachAutoSpeak, 1500); }
+      scheduleRender();
+    }, () => { S.failed=true; scheduleRender(); });
+  });
+  S.db.doc('qg/usage').onSnapshot(snap => { S.usage = snap.exists ? snap.data() : {date:'',count:0}; scheduleRender(); }, ()=>{});
+  S.db.doc('qg/settings').onSnapshot(snap => { S.settings = snap.exists ? snap.data() : {}; AGENTS.alma.name = S.settings.ai_name || 'Alma'; scheduleRender(); }, ()=>{});
+}
+let rq=false;
+function scheduleRender(){ if(rq) return; rq=true; requestAnimationFrame(()=>{ rq=false; if(!isTyping()) render(); else renderChrome(); }); }
+function isTyping(){ const a=document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName); }
+
+// ============================================================ agents (Claude)
+function context(){
+  const s=S.settings, d=S.data;
+  const offers=d.offers.slice(0,4).map(o=>`${o.name} (${o.niche}, ${o.price_setup} € + ${o.price_monthly} €/mois, ${o.status})`).join(' ; ')||'aucune';
+  const niches=d.niches.slice(0,6).map(n=>`${n.name} (${n.score}/10)`).join(' ; ')||'aucune';
+  const notes=[
+    ...d.questions.filter(q=>q.answer).slice(0,10).map(q=>`${q.answered_by==='fondateur'?'Réponse du fondateur':'Décision de l’équipe (Victor)'} à « ${q.question} » : ${q.answer}`),
+    ...d.meetings.filter(m=>m.founder_comment).slice(0,5).map(m=>`Avis du fondateur sur la réunion « ${m.topic} » : ${m.founder_comment}`),
+    ...d.messages.filter(m=>m.sender==='fondateur').slice(0,6).map(m=>`Message du fondateur : ${m.text}`),
+  ].map(t=>'- '+t).join('\n')||'- aucun pour l’instant';
+  const st={prospects:d.prospects.length, contactes:d.prospects.filter(p=>p.status!=='nouveau').length, reponses:d.prospects.filter(p=>['a répondu','rdv','client'].includes(p.status)).length, emails_envoyes:d.emails.filter(e=>e.status==='envoyé').length, ventes:d.prospects.filter(p=>p.status==='client').length};
+  return `CONTEXTE (au ${new Date().toLocaleDateString('fr-FR')}) — Marque : ${s.brand_name||'VotreIAPro'}. Fondateur : ${s.founder_name||'non renseigné'}.
+Vision du fondateur : ${s.vision||"Construire une entreprise rentable qui vend des services numériques à forte valeur à des professionnels (avocats, artisans, médecins...)."}
+Budget pub mensuel autorisé : ${s.ads_budget||300} €. Offres : ${offers}. Niches étudiées : ${niches}. Chiffres : ${JSON.stringify(st)}.
+CONSIGNES DU FONDATEUR (PRIORITAIRES) :\n${notes}`;
+}
+function prompt(agent, task){ return `${ag(agent).persona}\n${ETHIQUE}\n\n${context()}\n\nTA MISSION :\n${task}`; }
+
+async function think(agent, task, {json=false, tier='default', onText}={}){
+  if(!S.sample) throw Object.assign(new Error("Les agents ne sont pas disponibles sur cet affichage."),{code:'not_granted'});
+  S.busy.add(agent); renderChrome();
+  try{
+    const p = prompt(agent, task);
+    if(S.stopRequested) throw stopError();
+    if(S.settings.paused==='on') throw Object.assign(new Error("L'équipe est en pause : clique sur « Relancer l'équipe » pour qu'elle reprenne."),{code:'stopped'});
+    const today = new Date().toISOString().slice(0,10), limit = Number(S.settings.daily_limit||200);
+    const used = S.usage.date===today ? S.usage.count : 0;
+    if(used >= limit) throw Object.assign(new Error(`Limite du jour atteinte (${limit} tâches d'agents). L'équipe reprend demain, ou augmente la limite dans Réglages.`),{code:'limit'});
+    S.usage = {date:today, count:used+1};
+    S.db.doc('qg/usage').set(S.usage).catch(()=>{});
+    const signal = S.abort.signal;
+    if(json) return await S.sample.json(p + "\n\nRéponds UNIQUEMENT avec un JSON valide, sans texte autour.", {modelTier:tier, signal});
+    const r = await S.sample(p, {modelTier:tier, onText, cache:false, signal});
+    return r.text.trim();
+  } finally { S.busy.delete(agent); renderChrome(); }
+}
+function agentError(e){
+  if(e?.code==='stopped' || e?.code==='cancelled') return e?.message && e.code==='stopped' ? e.message : 'Agents arrêtés.';
+  const m = e?.code==='not_granted' ? "Autorise les agents (fenêtre d'autorisation de claude.ai) pour qu'ils puissent travailler."
+    : e?.code==='rate_limited' ? "Les agents ont atteint la limite d'utilisation pour le moment. Réessaie dans quelques minutes."
+    : (e?.message || 'Erreur inconnue');
+  return m;
+}
+function stopError(){ return Object.assign(new Error('Agents arrêtés.'),{code:'stopped'}); }
+async function pauseTeam(){
+  await saveSettings({paused:'on'});
+  stopAgents();
+}
+async function resumeTeam(){ await saveSettings({paused:'off'}); log('victor','▶ Le fondateur a relancé l’équipe'); toast('Équipe relancée'); render(); }
+function stopAgents(){
+  S.stopRequested=true; S.abort.abort(); S.abort=new AbortController();
+  log('victor','⏹ Le fondateur a arrêté les agents'); toast('Agents arrêtés : plus aucune tâche ne tourne');
+  setTimeout(()=>{ S.stopRequested=false; S.running=false; S.step=''; S.busy.clear(); render(); }, 1200);
+}
+// Une question d'un agent est tranchée par Victor tout de suite (mode autonome) ; le fondateur peut corriger ensuite.
+async function ask(agent, question, context=''){
+  const q = String(question||'').trim(); if(!q) return;
+  if(S.data.questions.some(x=>x.question===q)) return;
+  const ref = await add('questions',{agent, question:q, context});
+  if(S.settings.autonomy==='off') { log(agent,'❓ Question pour le fondateur', q); return; }
+  await decide({id:ref.id, agent, question:q, context});
+}
+async function decide(q){
+  const d = await think('victor', `${ag(q.agent).name} pose cette question : « ${q.question} » (contexte : ${q.context||'—'}).
+Tu es autonome : tranche toi-même maintenant, au mieux des intérêts de l'entreprise, pour que l'équipe avance sans attendre.
+Exceptions : n'invente jamais une information que seul le fondateur possède (identité légale, SIRET, adresse, coordonnées bancaires, mot de passe) et n'engage aucune dépense : dans ce cas, décide d'un contournement qui permet d'avancer quand même et indique ce qui reste à fournir.
+JSON : {"decision":"ta décision en 1 à 3 phrases","a_fournir_par_le_fondateur":"ce que seul le fondateur peut fournir, ou chaîne vide"}`, {json:true, tier:'quick'});
+  await upd('questions', q.id, {answer:d.decision, answered_by:'victor', answered_ts:Date.now(), needs_founder:d.a_fournir_par_le_fondateur||''});
+  log('victor', `Décision prise : ${q.question.slice(0,70)}`, d.decision + (d.a_fournir_par_le_fondateur?`\nÀ fournir par le fondateur : ${d.a_fournir_par_le_fondateur}`:''));
+}
+async function decidePending(){
+  for(const q of S.data.questions.filter(x=>!x.answer)){ setStep(`Victor tranche : ${q.question.slice(0,50)}…`); await decide(q); }
+}
+
+// ---------- étapes de travail
+async function researchNiches(focus=''){
+  setStep('Nora étudie les niches');
+  log('nora','Recherche de niches en cours…', focus);
+  const r = await think('nora', `Trouve les 3 à 5 meilleures niches où notre entreprise peut vendre RAPIDEMENT un service numérique (site, automatisation, assistant IA, contenus, génération de clients...) à des professionnels (avocats, artisans, médecins, ou autre métier plus prometteur). ${focus?`Orientation demandée : ${focus}.`:''}
+Appuie-toi sur ce que tu sais du marché français : taille de la cible, prix des concurrents, offres qui marchent, entrepreneurs qui ont réussi et comment. Signale ce qui est une estimation. Note chaque niche sur 10 (douleur × capacité à payer × facilité à joindre × rapidité de livraison × concurrence).
+JSON : {"niches":[{"name":"","sector":"","problem":"","offer_idea":"","audience":"","willingness_to_pay":"","competition":"","score":0,"reasoning":""}],"questions_fondateur":[""]}`, {json:true, tier:'complex'});
+  for(const n of r.niches||[]) await add('niches',{...n, score:Number(n.score)||0, sources:[]});
+  for(const q of r.questions_fondateur||[]) await ask('nora', q, 'Recherche de niches');
+  log('nora', `${(r.niches||[]).length} niches analysées`, (r.niches||[]).map(n=>`${n.name} — ${n.score}/10`).join('\n'));
+}
+
+async function holdMeeting(topic, {participants=['nora','leo','clara','hugo','ines','sam','juliette'], expectOffer=false, extra=''}={}){
+  const ref = await add('meetings',{topic, status:'en cours', transcript:[]});
+  S.meetingId = ref.id; log('victor', `Réunion ouverte : ${topic}`);
+  const transcript=[];
+  const save = () => upd('meetings', ref.id, {transcript});
+  const said = () => transcript.map(t=>`${ag(t.agent).name} (${ag(t.agent).role}) : ${t.text}`).join('\n\n');
+  setStep(`Réunion : ${topic}`);
+  transcript.push({agent:'victor', text: await think('victor', `${extra}\nTu ouvres une réunion d'équipe. Sujet : « ${topic} ». En 3 à 5 phrases : objectif, ce que tu attends de chacun, critère de décision.`)}); await save();
+  for(const id of participants){
+    setStep(`Réunion : ${ag(id).name} prend la parole`);
+    transcript.push({agent:id, text: await think(id, `${extra}\nRÉUNION — « ${topic} »\nCe qui a été dit :\n${said()}\n\nÀ toi. 4 à 8 phrases : propositions concrètes, chiffres, risques, désaccords argumentés. Ne répète pas les autres.`)}); await save();
+  }
+  setStep('Réunion : Victor tranche');
+  const productSchema = expectOffer ? `,"offer":{"name":"","niche":"","target":"","tagline":"","description":"","price_setup":0,"price_monthly":0,"deliverables":[""]}` : '';
+  const d = await think('victor', `${extra}\nRÉUNION — « ${topic} »\n${said()}\n\nConclus : tranche, décide, attribue les actions.${expectOffer?' Choisis UNE offre précise que l’équipe peut réellement livrer, avec un prix réaliste.':''}
+JSON : {"conclusion":"ta prise de parole finale","summary":"résumé pour le fondateur","decisions":["décision — responsable"]${productSchema},"questions_fondateur":[""]}`, {json:true, tier:'complex'});
+  transcript.push({agent:'victor', text:d.conclusion||d.summary});
+  await upd('meetings', ref.id, {transcript, summary:d.summary||'', decisions:d.decisions||[], status:'terminée'});
+  for(const q of d.questions_fondateur||[]) await ask('victor', q, `Réunion : ${topic}`);
+  log('victor', `Réunion terminée : ${topic}`, d.summary);
+  S.meetingId=null;
+  return d;
+}
+
+async function buildLanding(offerId){
+  const o = S.data.offers.find(x=>x.id===offerId) || (await col('offers').doc(offerId).get()).data();
+  setStep('Sam rédige la page de vente');
+  const L = await think('sam', `OFFRE : ${JSON.stringify(pickOffer(o))}
+Rédige la page de vente complète, persuasive et HONNÊTE (aucun faux témoignage, aucun chiffre inventé), au ton adapté à la cible.
+JSON : {"hero_title":"","hero_subtitle":"","cta":"","problems":[""],"benefits":[{"title":"","text":""}],"process":[{"step":"","text":""}],"faq":[{"q":"","a":""}],"guarantee":""}`, {json:true, tier:'complex'});
+  await upd('offers', offerId, {landing:L, status:'prête'});
+  log('sam', `Page de vente prête : ${o.name}`);
+}
+async function complianceReview(offerId){
+  const o = (await col('offers').doc(offerId).get()).data();
+  setStep('Juliette vérifie la conformité');
+  const r = await think('juliette', `Vérifie l'offre et sa page de vente : ${JSON.stringify({...pickOffer(o), landing:o.landing})}
+JSON : {"verdict":"OK | OK avec corrections | Bloquant","points":[""],"questions_fondateur":[""]}`, {json:true});
+  await upd('offers', offerId, {compliance:r});
+  for(const q of r.questions_fondateur||[]) await ask('juliette', q, `Conformité : ${o.name}`);
+  log('juliette', `Conformité « ${o.name} » : ${r.verdict}`, (r.points||[]).join('\n'));
+}
+async function planCampaigns(offerId){
+  const o = (await col('offers').doc(offerId).get()).data();
+  setStep('Léo prépare les campagnes');
+  const r = await think('leo', `OFFRE : ${JSON.stringify(pickOffer(o))}
+Conçois 2 à 3 campagnes (Google Ads, Meta, LinkedIn, SEO local, partenariats...) dans un budget total de ${S.settings.ads_budget||300} €/mois. Pour chacune : ciblage, mots-clés ou audiences, 3 accroches, budget, KPI cibles, plan de test.
+JSON : {"campaigns":[{"channel":"","name":"","budget":"","plan":""}],"questions_fondateur":[""]}`, {json:true, tier:'complex'});
+  for(const c of r.campaigns||[]) await add('campaigns',{offer_id:offerId, offer:o.name, channel:c.channel, name:c.name, budget:c.budget, plan: typeof c.plan==='string'?c.plan:JSON.stringify(c.plan,null,2), status:'proposée'});
+  for(const q of r.questions_fondateur||[]) await ask('leo', q, `Campagnes : ${o.name}`);
+  log('leo', `${(r.campaigns||[]).length} campagne(s) proposée(s) pour « ${o.name} »`);
+}
+async function prospectingPlan(offer){
+  setStep('Hugo prépare la prospection');
+  const r = await think('hugo', `OFFRE : ${offer.name} — cible : ${offer.target} (${offer.niche}).
+Le fondateur va récupérer des contacts et me les coller. Donne-lui un plan de prospection très concret : les 5 meilleures sources publiques en France où trouver ces professionnels avec leur email professionnel (annuaires officiels, sites de barreaux ou d'ordres, pages contact...), les recherches Google exactes à taper, et combien de contacts viser cette semaine. Court et actionnable.`);
+  await add('messages',{thread:'hugo', sender:'hugo', text:`🎯 Plan de prospection — ${offer.name}\n\n${r}`});
+  log('hugo', 'Plan de prospection prêt (onglet Parler aux agents → Hugo)');
+}
+async function writeEmails(offer){
+  const todo = S.data.prospects.filter(p=>p.offer_id===offer.id && !p.unsubscribed && !S.data.emails.some(e=>e.prospect_id===p.id)).slice(0,15);
+  let n=0;
+  for(const p of todo){
+    setStep(`Clara écrit à ${p.name||p.email}`);
+    try{
+      const r = await think('clara', `OFFRE : ${JSON.stringify(pickOffer(offer))}
+PROSPECT : ${JSON.stringify({name:p.name, company:p.company, role:p.role, city:p.city, website:p.website, personalization:p.personalization})}
+Expéditeur : ${S.settings.founder_name||'[prénom du fondateur]'} — ${S.settings.company_name||S.settings.brand_name||'VotreIAPro'}.
+Écris une séquence de 3 emails (premier contact personnalisé, relance J+3, dernier message J+7). Chacun : objet court, 60 à 120 mots, une seule demande claire, vouvoiement, formule adaptée à la profession. Ne mets ni signature légale ni mention de désinscription (ajoutées automatiquement).
+JSON : {"emails":[{"step":1,"subject":"","body":""},{"step":2,"subject":"","body":""},{"step":3,"subject":"","body":""}]}`, {json:true});
+      for(const e of r.emails||[]){ await add('emails',{prospect_id:p.id, to:p.email, name:p.name||'', company:p.company||'', offer_id:offer.id, step:e.step, subject:e.subject, body:e.body, status:'à valider', due: Date.now() + (e.step===2?3:e.step===3?7:0)*864e5}); n++; }
+    }catch(e){ log('clara', `Échec pour ${p.email}`, agentError(e)); }
+  }
+  if(n) log('clara', `${n} email(s) rédigé(s) — à valider dans l’onglet Emails`);
+  return n;
+}
+async function ceoReport(){
+  setStep('Victor écrit son point d’étape');
+  const recent = S.data.activity.slice(0,30).reverse().map(a=>`- ${ag(a.agent).name} : ${a.title}`).join('\n');
+  const r = await think('victor', `Activité récente :\n${recent}\n\nÉcris au fondateur un point d'étape clair (tutoiement, 120 à 250 mots) : ce qu'on a fait, résultats chiffrés, ce qu'on apprend, les 3 prochaines actions, ce dont l'équipe a besoin de sa part.`);
+  await add('messages',{thread:'victor', sender:'victor', report:true, text:`📊 Point d'étape\n\n${r}`});
+}
+
+async function runCycle(focus=''){
+  if(S.running) return;
+  S.running=true; renderChrome(); render();
+  log('victor','🚀 Nouveau cycle de travail lancé', focus);
+  try{
+    if(S.settings.autonomy!=='off') await decidePending();
+    if(S.mcp && S.data.prospects.some(p=>p.status==='contacté')) { try{ await checkReplies(); }catch(e){ log('ines','Lecture Gmail impossible pendant le cycle', gmailError(e)); } }
+    let offer = S.data.offers.find(o=>o.status!=='archivée');
+    if(!offer || focus){
+      await researchNiches(focus);
+      await new Promise(r=>setTimeout(r,800));
+      const top = S.data.niches.slice(0,5).map(n=>`- ${n.name} (${n.score}/10) — problème : ${n.problem} — idée : ${n.offer_idea}`).join('\n');
+      const d = await holdMeeting('Choix de la niche et de l’offre à lancer', {expectOffer:true, extra:`Niches étudiées par Nora :\n${top}`});
+      if(!d.offer?.name) throw new Error("La réunion n'a pas abouti à une offre.");
+      const ref = await add('offers',{...d.offer, price_setup:Number(d.offer.price_setup)||0, price_monthly:Number(d.offer.price_monthly)||0, status:'brouillon'});
+      log('victor', `Nouvelle offre décidée : ${d.offer.name}`, `${d.offer.price_setup} € + ${d.offer.price_monthly} €/mois — ${d.offer.target}`);
+      await buildLanding(ref.id); await complianceReview(ref.id); await planCampaigns(ref.id);
+      offer = {id:ref.id, ...(await col('offers').doc(ref.id).get()).data()};
+      await prospectingPlan(offer);
+    } else {
+      await holdMeeting(`Pilotage de « ${offer.name} » : chiffres, blocages, ajustements`, {participants:['leo','clara','hugo','ines']});
+    }
+    const n = await writeEmails(offer);
+    if(!n && !S.data.prospects.some(p=>p.offer_id===offer.id)) await ask('hugo', `Pour lancer la prospection de « ${offer.name} », colle-moi des contacts dans l'onglet Prospects (une page d'annuaire, une liste copiée d'un site, un tableau...). J'en extrais les coordonnées et Clara écrit les emails. Mon plan pour les trouver est dans « Parler aux agents → Hugo ».`, 'Prospection');
+    await ceoReport();
+    log('victor','✅ Cycle terminé');
+    toast('Cycle terminé');
+  }catch(e){
+    if(e?.code!=='stopped' && e?.code!=='cancelled'){ log('victor','⚠️ Le cycle s’est arrêté', agentError(e)); toast(agentError(e)); }
+  }finally{ S.running=false; S.step=''; renderChrome(); render(); }
+}
+
+// ---------- sprint « une vente en 24 h »
+async function runSprint(){
+  if(S.running) return;
+  S.running=true; render();
+  log('victor','⚡ Sprint vente 24 h lancé');
+  try{
+    if(S.settings.autonomy!=='off') await decidePending();
+    const offer = S.data.offers.find(o=>o.status!=='archivée');
+    setStep('Victor et Inès préparent le sprint');
+    const r = await think('ines', `MISSION URGENTE : obtenir une PREMIÈRE VENTE dans les 24 heures.
+Offre actuelle : ${offer?JSON.stringify(pickOffer(offer)):'Cabinet Connecté : site de cabinet + prise de rendez-vous + assistant de pré-qualification, 490 € + 79 €/mois, pour avocats indépendants'}.
+Page de vente : ${S.settings.vitrine_url||'(lien public à partager)'} — Lien de paiement : ${S.settings.payment_link||'pas encore créé'}.
+Réalité : un email froid à un inconnu convertit rarement en 24 h. Le plus rapide, ce sont les personnes qui connaissent déjà le fondateur (amis, famille, anciens collègues, réseau LinkedIn, professionnels qu'il fréquente) et un petit premier achat facile à dire oui.
+Construis un plan heure par heure pour demain, avec :
+1) une « offre de lancement » réelle, simple et facile à accepter aujourd'hui (prix d'entrée bas ou première étape payante), que le fondateur pourra vraiment honorer ;
+2) 8 messages prêts à copier-coller (WhatsApp/SMS/LinkedIn/email) pour son réseau, chacun pour un type de contact différent, courts et naturels, avec demande de recommandation ;
+3) un script d'appel de 2 minutes ;
+4) les 5 objections probables et la réponse à chacune ;
+5) comment encaisser tout de suite (lien de paiement Stripe, ou virement/facture si pas encore de Stripe).
+Aucune fausse promesse, aucune fausse urgence.
+JSON : {"titre":"","offre_lancement":"","plan":[{"heure":"","action":""}],"messages":[{"canal":"","pour":"","texte":""}],"script_appel":"","objections":[{"objection":"","reponse":""}],"encaissement":""}`, {json:true, tier:'complex'});
+    await add('sprints', r);
+    await add('messages',{thread:'victor', sender:'victor', report:true, text:`📊 Sprint vente 24 h prêt\n\nOffre de lancement : ${r.offre_lancement}\n\nTout le plan, les messages à envoyer et le script d'appel sont sur le tableau de bord, rubrique « Sprint vente 24 h ». Le plus important demain matin : envoie les messages à ton réseau dès 9 h et appelle ceux qui répondent.`});
+    log('ines','Sprint vente 24 h prêt — plan, messages et script sur le tableau de bord');
+    toast('Sprint prêt');
+  }catch(e){ if(e?.code!=='stopped' && e?.code!=='cancelled'){ log('victor','⚠️ Sprint interrompu', agentError(e)); toast(agentError(e)); } }
+  finally{ S.running=false; S.step=''; render(); }
+}
+function setStep(s){ if(S.stopRequested) throw stopError(); S.step=s; renderChrome(); if(S.view==='tableau' && !isTyping()) render(); }
+function pickOffer(o){ return {name:o.name, niche:o.niche, target:o.target, tagline:o.tagline, description:o.description, price_setup:o.price_setup, price_monthly:o.price_monthly, deliverables:o.deliverables}; }
+
+// ---------- conversation, questions, réponses prospects, extraction de contacts
+async function chat(agent, text){
+  await add('messages',{thread:agent, sender:'fondateur', text});
+  const hist = S.data.messages.filter(m=>m.thread===agent).slice(0,14).reverse().map(m=>`${m.sender==='fondateur'?'FONDATEUR':ag(agent).name.toUpperCase()} : ${m.text}`).join('\n');
+  const recent = S.data.activity.slice(0,20).reverse().map(a=>`- ${ag(a.agent).name} : ${a.title}`).join('\n');
+  S.typing=agent; render();
+  try{
+    const r = await think(agent, `Tu parles directement avec le fondateur (ton patron). Tutoie-le, sois clair, honnête et concret ; si tu as besoin d'une décision, demande-la.\nActivité récente :\n${recent}\n\nConversation :\n${hist}\nFONDATEUR : ${text}\n\nRéponds au fondateur.`);
+    await add('messages',{thread:agent, sender:agent, text:r});
+    if(autoSay()) say([{agent, text:r}]);
+  } finally { S.typing=false; }
+}
+async function answerQuestion(q, answer){
+  await upd('questions', q.id, {answer, answered_by:'fondateur', answered_ts:Date.now(), needs_founder:''});
+  log(q.agent, `Le fondateur a répondu : « ${q.question.slice(0,80)} »`, answer);
+  const r = await think(q.agent, `Tu avais demandé au fondateur : « ${q.question} ». Il répond : « ${answer} ». Accuse réception en 1 à 3 phrases et dis ce que tu vas faire concrètement.`, {tier:'quick'});
+  await add('messages',{thread:q.agent, sender:q.agent, text:r});
+}
+async function extractProspects(raw, offerId){
+  const offer = S.data.offers.find(o=>o.id===offerId);
+  const r = await think('hugo', `Voici un texte collé par le fondateur (page d'annuaire, liste, tableau...). Extrais UNIQUEMENT les professionnels dont l'email apparaît réellement dans ce texte. N'invente rien, ne devine aucun email. Ajoute un détail de personnalisation tiré du texte s'il existe.
+Cible de l'offre : ${offer?offer.target:'professionnels'}.
+TEXTE :\n"""${raw.slice(0,60000)}"""
+JSON : {"prospects":[{"name":"","company":"","role":"","email":"","phone":"","city":"","website":"","personalization":""}]}`, {json:true});
+  let n=0;
+  for(const p of r.prospects||[]){
+    const email = String(p.email||'').trim().toLowerCase();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !raw.toLowerCase().includes(email)) continue; // seulement les emails présents dans le texte
+    if(S.data.prospects.some(x=>x.email===email)) continue;
+    await add('prospects',{...p, email, offer_id:offerId||null, status:'nouveau', source:'collé par le fondateur'}); n++;
+  }
+  log('hugo', `${n} prospect(s) ajouté(s)`);
+  return n;
+}
+async function draftReply(p, incoming){
+  const offer = S.data.offers.find(o=>o.id===p.offer_id);
+  await upd('prospects', p.id, {status:'a répondu', notes:`${p.notes||''}\n[${fmt(Date.now())}] Réponse : ${incoming}`.trim()});
+  for(const e of S.data.emails.filter(e=>e.prospect_id===p.id && ['à valider','approuvé'].includes(e.status))) await upd('emails', e.id, {status:'annulé'});
+  const r = await think('ines', `OFFRE : ${offer?JSON.stringify(pickOffer(offer)):'n/a'}
+PROSPECT : ${JSON.stringify({name:p.name, company:p.company, role:p.role})}
+RÉPONSE DU PROSPECT : « ${incoming} »
+Analyse (intérêt, objection) puis rédige la meilleure réponse pour avancer vers l'achat ou un rendez-vous.
+JSON : {"analysis":"","subject":"","body":"","next_status":"a répondu | rdv | pas intéressé"}`, {json:true, tier:'complex'});
+  if(r.next_status==='pas intéressé') await upd('prospects', p.id, {status:'pas intéressé'});
+  if(r.next_status==='rdv') await upd('prospects', p.id, {status:'rdv'});
+  if(r.next_status!=='pas intéressé' && r.body) await add('emails',{prospect_id:p.id, to:p.email, name:p.name||'', company:p.company||'', offer_id:p.offer_id||null, step:10, subject:r.subject, body:r.body, status:'à valider', due:Date.now()});
+  log('ines', `Réponse de ${p.name||p.email} analysée`, r.analysis);
+  return r;
+}
+
+// ---------- envoi Gmail
+function footer(){
+  const s=S.settings;
+  const id=[s.company_name||s.brand_name||'VotreIAPro', s.company_legal, s.company_address].filter(Boolean).join(' — ');
+  return `\n\n--\n${id}\nVous recevez ce message car votre adresse professionnelle est publiée publiquement et que notre offre concerne votre activité. Pour ne plus recevoir de messages, répondez simplement « STOP ».`;
+}
+async function sendEmail(e){
+  if(!S.mcp) throw new Error("L'envoi Gmail n'est pas disponible sur cet affichage.");
+  const s=S.settings;
+  if(!s.company_name || !s.company_address) throw new Error('Renseigne d’abord ta raison sociale et ton adresse dans Réglages (obligatoire dans un email de prospection).');
+  const p = S.data.prospects.find(x=>x.id===e.prospect_id);
+  if(p && (p.unsubscribed || ['pas intéressé','client'].includes(p.status))) { await upd('emails', e.id, {status:'annulé'}); throw new Error('Ce prospect ne doit plus être contacté.'); }
+  const link = p && S.settings.vitrine_url && e.step!==20 ? `\n\nPrésentation de l'offre : ${personalLink(p)}` : '';
+  await S.mcp.callTool('Gmail','send_message',{to:[e.to], subject:e.subject, body:e.body + link + footer(), includeSignature:true});
+  await upd('emails', e.id, {status:'envoyé', sent_ts:Date.now()});
+  if(p && p.status==='nouveau') await upd('prospects', p.id, {status:'contacté', contacted_ts:Date.now(), channel:'email'});
+}
+
+// ---------- téléphone et WhatsApp
+// WhatsApp ne fonctionne qu'avec un mobile (06/07). Le message s'ouvre pré-rempli dans WhatsApp : c'est toi qui appuies sur Envoyer.
+const digits = t => String(t||'').replace(/\D/g,'');
+const intl = t => { const d=digits(t); return d.startsWith('33') ? d : d.startsWith('0') ? '33'+d.slice(1) : d; };
+const isMobile = t => /^0[67]\d{8}$/.test(digits(t)) || /^33[67]\d{8}$/.test(digits(t));
+const isLawyer = p => /avocat/i.test(p.role||'');
+function waMessage(p){
+  const s=S.settings, me=[s.founder_name||'', s.brand_name||s.company_name||'VotreIAPro'].filter(Boolean).join(', ');
+  const last=(p.name||'').trim().split(/\s+/).slice(-1)[0];
+  const hello = isLawyer(p) ? `Bonjour Maître ${last||''}`.trim() : (p.name?`Bonjour ${p.name}`:`Bonjour l'équipe ${p.company||''}`.trim());
+  const site = p.website ? ` après avoir vu votre site (${String(p.website).replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'')})` : '';
+  const pitch = isLawyer(p)
+    ? `J'aide les avocats${p.city?` de ${p.city}`:''} qui exercent seuls ou en petit cabinet à recevoir leurs demandes de rendez-vous en ligne et à relancer automatiquement les propositions d'honoraires restées sans réponse.`
+    : `J'aide les artisans${p.city?` de ${p.city}`:''} à répondre à chaque demande même quand ils sont sur chantier, et à relancer automatiquement les devis envoyés.`;
+  return `${hello}, je me permets de vous écrire${site}. Je suis ${me}. ${pitch}\nSeriez-vous d'accord pour un échange de 10 minutes cette semaine ?${s.vitrine_url?`\nPrésentation : ${personalLink(p)}`:''}\nSi ce n'est pas le sujet, répondez simplement STOP et je ne vous recontacterai pas.`;
+}
+// Lien personnel vers la page de vente : le paiement Stripe porte la référence du prospect (client_reference_id)
+const personalLink = p => S.settings.vitrine_url ? `${S.settings.vitrine_url}#r-${String(p.id).replace(/[^A-Za-z0-9-]/g,'-').slice(0,80)}` : '';
+const waLink = p => `https://wa.me/${intl(p.phone)}?text=${encodeURIComponent(waMessage(p))}`;
+async function markContacted(p, channel){
+  await upd('prospects', p.id, {status: p.status==='nouveau'?'contacté':p.status, contacted_ts:Date.now(), channel, notes:`${p.notes||''}\n[${fmt(Date.now())}] Contacté par ${channel}`.trim()});
+  log('hugo', `${p.name||p.company} contacté par ${channel}`);
+}
+function gmailError(err){
+  const c = err?.code;
+  if(c==='server_not_connected'||c==='server_not_found') return "Gmail n'est pas connecté : ajoute le connecteur Gmail dans claude.ai (Réglages → Connecteurs), puis réessaie.";
+  if(c==='needs_reauth') return 'Ta connexion Gmail a expiré : reconnecte Gmail dans les connecteurs de claude.ai.';
+  if(c==='not_granted'||c==='consent_required'||c==='approval_required') return "Autorise le QG à utiliser Gmail quand claude.ai te le demande, puis réessaie.";
+  if(c==='server_unavailable'||c==='upstream_error') return "Gmail n'a pas répondu. Vérifie dans tes « Envoyés » avant de renvoyer cet email.";
+  return err?.message || 'Envoi impossible.';
+}
+
+// ---------- réponses Gmail (détection automatique)
+function walk(o, fn){ if(o && typeof o==='object'){ fn(o); for(const k in o) walk(o[k], fn); } }
+async function checkReplies(){
+  if(!S.mcp) throw new Error("Gmail n'est pas disponible sur cet affichage.");
+  const contacted = S.data.prospects.filter(p=>p.email && ['contacté','a répondu','rdv'].includes(p.status));
+  if(!contacted.length) return {found:0};
+  let found=0;
+  for(let i=0;i<contacted.length;i+=15){
+    const chunk=contacted.slice(i,i+15);
+    setStep(`Lecture de Gmail (${Math.min(i+15,contacted.length)}/${contacted.length})`);
+    const res = await S.mcp.callTool('Gmail','search_threads',{query:`from:(${chunk.map(p=>p.email).join(' OR ')}) newer_than:30d -in:sent`, pageSize:50});
+    const blob = res.payload ?? res.structuredContent ?? res.content;
+    for(const p of chunk){
+      let snippet='', seen=false;
+      walk(blob, o=>{ const txt=JSON.stringify(o); if(!seen && /"(sender|from)"/i.test(txt) && txt.toLowerCase().includes(p.email)){ if(typeof o.snippet==='string' || typeof o.subject==='string'){ snippet=[o.subject, o.snippet].filter(Boolean).join(' — '); seen=true; } } });
+      if(!seen && !JSON.stringify(blob||'').toLowerCase().includes(p.email)) continue;
+      if(p.last_reply_snippet===snippet && p.status!=='contacté') continue;
+      found++;
+      await upd('prospects', p.id, {last_reply_snippet:snippet, replied_ts:Date.now()});
+      if(/\bstop\b|d[ée]sinscri|ne plus (me )?contacter|pas int[ée]ress/i.test(snippet)){
+        await upd('prospects', p.id, {status: /stop|d[ée]sinscri|ne plus/i.test(snippet)?'désinscrit':'pas intéressé', unsubscribed:/stop|d[ée]sinscri|ne plus/i.test(snippet)});
+        for(const e of S.data.emails.filter(e=>e.prospect_id===p.id && ['à valider','approuvé'].includes(e.status))) await upd('emails', e.id, {status:'annulé'});
+        log('ines', `${p.name||p.company} ne souhaite plus être contacté : retiré des envois`);
+      } else if(p.status==='contacté'){
+        log('ines', `📩 ${p.name||p.company} a répondu !`, snippet);
+        if(S.sample) await draftReply({...p}, snippet || '(réponse reçue dans Gmail, à lire)');
+      }
+    }
+  }
+  return {found};
+}
+
+// ---------- prochaine action recommandée pour chaque prospect
+const DAY=864e5;
+function nextAction(p){
+  const age = p.contacted_ts ? (Date.now()-p.contacted_ts)/DAY : 0;
+  const drafted = S.data.emails.some(e=>e.prospect_id===p.id);
+  const sent = S.data.emails.filter(e=>e.prospect_id===p.id && e.status==='envoyé').length;
+  if(p.unsubscribed || ['pas intéressé','désinscrit'].includes(p.status)) return null;
+  if(p.status==='client'){
+    const inv = S.data.invoices.find(i=>i.prospect_id===p.id && i.type==='facture');
+    if(!inv) return {prio:1, who:'margaux', label:'Établir la facture', go:'factures'};
+    if(inv.status!=='payée') return {prio:2, who:'margaux', label:`Suivre le paiement de ${inv.number}`, go:'factures'};
+    return {prio:5, who:'chloe', label:'Lancer la livraison et demander un avis', go:'discussion'};
+  }
+  if(p.status==='rdv') return {prio:1, who:'ines', label:'Tenir le rendez-vous, puis envoyer le lien de paiement ou un devis', go:'factures'};
+  if(p.status==='a répondu') return {prio:1, who:'ines', label:'Répondre (brouillon d’Inès dans Emails)', go:'emails'};
+  if(p.status==='nouveau') return drafted ? {prio:3, who:'clara', label:'Valider et envoyer le 1er email', go:'emails'} : {prio:4, who:'clara', label:'Faire rédiger le 1er email', go:'prospects'};
+  if(p.status==='contacté'){
+    if(age>=2 && p.phone && !p.called) return {prio:2, who:'ines', label:`Appeler (${p.phone}) — email envoyé il y a ${Math.floor(age)} j`, call:true};
+    if(age>=4 && isMobile(p.phone) && p.channel!=='WhatsApp') return {prio:3, who:'ines', label:'Message WhatsApp court (après l’appel)', wa:true};
+    if(sent<3) return {prio:4, who:'clara', label:'Relance prévue automatiquement (Emails)', go:'emails'};
+    return {prio:6, who:'ines', label:'Séquence terminée : laisser reposer 30 jours'};
+  }
+  return null;
+}
+
+// ---------- facturation (Margaux)
+function nextNumber(type){
+  const y=new Date().getFullYear(), pre = type==='devis' ? (S.settings.quote_prefix||'D') : (S.settings.invoice_prefix||'F');
+  const nums = S.data.invoices.filter(i=>i.type===type && String(i.number||'').startsWith(`${pre}-${y}-`)).map(i=>Number(String(i.number).split('-').pop())||0);
+  return `${pre}-${y}-${String((nums.length?Math.max(...nums):0)+1).padStart(4,'0')}`;
+}
+const vatRate = () => S.settings.vat_mode==='20' ? 0.2 : 0;
+function totals(lines){ const ht=lines.reduce((t,l)=>t+(Number(l.qty)||0)*(Number(l.unit)||0),0); const tva=Math.round(ht*vatRate()*100)/100; return {ht, tva, ttc:Math.round((ht+tva)*100)/100}; }
+function money(n){ return Number(n||0).toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})+' €'; }
+function legalBlock(){
+  const s=S.settings;
+  return [s.company_name||'[Raison sociale]', s.company_legal||'[Forme juridique — SIRET]', s.company_address||'[Adresse]', s.contact_email||''].filter(Boolean);
+}
+async function invoicePdf(inv){
+  if(!window.jspdf) throw new Error('Le module PDF n’a pas pu se charger : vérifie ta connexion puis recharge la page.');
+  const {jsPDF}=window.jspdf, doc=new jsPDF({unit:'mm', format:'a4'}), s=S.settings, t=totals(inv.lines);
+  let y=20; const L=(txt,x,yy,opt)=>doc.text(String(txt),x,yy,opt);
+  doc.setFont('helvetica','bold'); doc.setFontSize(18); L(inv.type==='devis'?'DEVIS':'FACTURE',20,y); doc.setFontSize(10); doc.setFont('helvetica','normal');
+  L(`N° ${inv.number}`,190,y,{align:'right'}); y+=6; L(`Date : ${new Date(inv.date).toLocaleDateString('fr-FR')}`,190,y,{align:'right'});
+  if(inv.type==='facture'){ y+=5; L(`Échéance : ${new Date(inv.due).toLocaleDateString('fr-FR')}`,190,y,{align:'right'}); }
+  else { y+=5; L(`Valable jusqu'au : ${new Date(inv.due).toLocaleDateString('fr-FR')}`,190,y,{align:'right'}); }
+  y=34; doc.setFont('helvetica','bold'); L('Émetteur',20,y); L('Client',115,y); doc.setFont('helvetica','normal'); y+=5;
+  const em=legalBlock(), cl=[inv.client.company||inv.client.name, inv.client.name&&inv.client.company?inv.client.name:'', inv.client.address||'', inv.client.siret?`SIRET ${inv.client.siret}`:'', inv.client.email||''].filter(Boolean);
+  em.forEach((l,i)=>L(l,20,y+i*5)); cl.forEach((l,i)=>L(l,115,y+i*5)); y+=Math.max(em.length,cl.length)*5+8;
+  doc.setFillColor(235,240,238); doc.rect(20,y-5,170,8,'F'); doc.setFont('helvetica','bold'); L('Désignation',22,y); L('Qté',130,y,{align:'right'}); L('PU HT',158,y,{align:'right'}); L('Total HT',188,y,{align:'right'}); doc.setFont('helvetica','normal'); y+=8;
+  for(const l of inv.lines){ const wrapped=doc.splitTextToSize(l.label,100); L(wrapped,22,y); L(l.qty,130,y,{align:'right'}); L(money(l.unit),158,y,{align:'right'}); L(money(l.qty*l.unit),188,y,{align:'right'}); y+=wrapped.length*5+3; }
+  y+=4; doc.line(120,y,190,y); y+=6; L('Total HT',150,y,{align:'right'}); L(money(t.ht),188,y,{align:'right'}); y+=5;
+  if(vatRate()){ L('TVA 20 %',150,y,{align:'right'}); L(money(t.tva),188,y,{align:'right'}); y+=5; }
+  doc.setFont('helvetica','bold'); L(vatRate()?'Total TTC':'Total à payer',150,y,{align:'right'}); L(money(t.ttc),188,y,{align:'right'}); doc.setFont('helvetica','normal'); y+=10;
+  const notes=[];
+  if(!vatRate()) notes.push('TVA non applicable, art. 293 B du CGI.');
+  if(inv.type==='facture'){
+    notes.push(`Paiement à réception, au plus tard le ${new Date(inv.due).toLocaleDateString('fr-FR')}.${s.iban?` Virement : IBAN ${s.iban}${s.bic?` — BIC ${s.bic}`:''}.`:''}${s.payment_link?` Paiement en ligne : ${s.payment_link}`:''}`);
+    notes.push('En cas de retard de paiement : pénalités au taux de trois fois le taux d’intérêt légal, et indemnité forfaitaire pour frais de recouvrement de 40 € (art. L441-10 du Code de commerce). Pas d’escompte pour paiement anticipé.');
+  } else notes.push('Bon pour accord : date et signature du client.');
+  doc.setFontSize(9); for(const n of notes){ const w=doc.splitTextToSize(n,170); L(w,20,y); y+=w.length*4.5+2; }
+  return doc.output('blob');
+}
+const b64 = blob => new Promise((ok,ko)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result).split(',')[1]); r.onerror=ko; r.readAsDataURL(blob); });
+async function saveFile(filename, blob){
+  if(!S.downloads) throw new Error('Le téléchargement n’est pas disponible sur cet affichage.');
+  await S.downloads.save({filename, data: blob});
+}
+async function sendInvoice(inv){
+  if(!S.mcp) throw new Error("Gmail n'est pas disponible sur cet affichage.");
+  if(!inv.client.email) throw new Error('Ajoute l’email du client.');
+  const s=S.settings, blob=await invoicePdf(inv), t=totals(inv.lines);
+  const body = inv.type==='devis'
+    ? `Bonjour,
+
+Comme convenu, vous trouverez ci-joint le devis ${inv.number} d'un montant de ${money(t.ttc)}.
+Pour l'accepter, il suffit de me le renvoyer signé ou de répondre « Bon pour accord » à ce message.
+
+Bien cordialement,
+${s.founder_name||''}
+${s.company_name||s.brand_name||''}`
+    : `Bonjour,
+
+Vous trouverez ci-joint la facture ${inv.number} d'un montant de ${money(t.ttc)}, à régler avant le ${new Date(inv.due).toLocaleDateString('fr-FR')}.${s.payment_link?`
+Paiement en ligne : ${s.payment_link}`:''}${s.iban?`
+Virement : IBAN ${s.iban}`:''}
+
+Merci pour votre confiance.
+
+Bien cordialement,
+${s.founder_name||''}
+${s.company_name||s.brand_name||''}`;
+  await S.mcp.callTool('Gmail','send_message',{to:[inv.client.email], subject:`${inv.type==='devis'?'Devis':'Facture'} ${inv.number} — ${s.company_name||s.brand_name||''}`, body, includeSignature:true, attachments:[{content: await b64(blob), filename:`${inv.number}.pdf`, mimeType:'application/pdf'}]});
+  await upd('invoices', inv.id, {status: inv.type==='devis'?'envoyé':'envoyée', sent_ts:Date.now()});
+  log('margaux', `${inv.type==='devis'?'Devis':'Facture'} ${inv.number} envoyé(e) à ${inv.client.company||inv.client.name}`);
+}
+async function remindInvoice(inv){
+  const t=totals(inv.lines), late=Math.floor((Date.now()-inv.due)/DAY);
+  const r = await think('margaux', `Rédige une relance de paiement pour la facture ${inv.number} (${money(t.ttc)}), échue depuis ${late} jour(s), client : ${inv.client.company||inv.client.name}. Ton : courtois et ferme, rappelle le montant, l'échéance et les moyens de paiement${S.settings.payment_link?` (lien : ${S.settings.payment_link})`:''}${S.settings.iban?` (IBAN : ${S.settings.iban})`:''}. 80 mots maximum.
+JSON : {"subject":"","body":""}`, {json:true, tier:'quick'});
+  await add('emails',{prospect_id:inv.prospect_id||null, to:inv.client.email, name:inv.client.name||'', company:inv.client.company||'', step:20, subject:r.subject, body:r.body, status:'à valider', due:Date.now(), kind:'relance-facture'});
+  log('margaux', `Relance de ${inv.number} rédigée — à valider dans Emails`);
+}
+function csvLedger(){
+  const rows=[['Date encaissement','N° facture','Client','Montant HT','TVA','Montant TTC','Mode']];
+  for(const i of S.data.invoices.filter(i=>i.type==='facture' && i.status==='payée').sort((a,b)=>a.paid_ts-b.paid_ts)){ const t=totals(i.lines); rows.push([new Date(i.paid_ts).toLocaleDateString('fr-FR'), i.number, i.client.company||i.client.name, t.ht.toFixed(2), t.tva.toFixed(2), t.ttc.toFixed(2), i.paid_with||'']); }
+  return new Blob(['\ufeff'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n')], {type:'text/csv'});
+}
+
+// ============================================================ données de départ
+let seeded=false;
+async function seedIfEmpty(){
+  if(seeded || S.data.messages.length || S.data.activity.length) return; seeded=true;
+  // Les données d'amorçage sont écrites par Claude Code après publication ; ceci ne sert que si la mémoire est vide.
+}
+
+// ============================================================ affichage
+function renderChrome(){
+  const counts = { questions: S.data.questions.filter(q=>!q.answer).length||'', emails: S.data.emails.filter(e=>e.status==='à valider').length||'' };
+  $('#nav').innerHTML = TABS.map(([id,label])=>`<button data-v="${id}" class="${S.view===id?'on':''}"><span>${label}</span><span class="count">${counts[id]||''}</span></button>`).join('');
+  $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+  const paused = S.settings.paused==='on';
+  $('#power').innerHTML = paused
+    ? `<button class="btn ok" id="side-resume" style="width:100%">▶ Relancer l'équipe</button><p class="ts" style="margin:6px 2px 0">L'équipe est en pause : aucun agent ne travaille.</p>`
+    : `<button class="btn bad" id="side-pause" style="width:100%">⏸ Arrêter les agents</button><p class="ts" style="margin:6px 2px 0">${usageText()}</p>`;
+  const bp=$('#side-pause'); if(bp) bp.onclick=pauseTeam;
+  const br=$('#side-resume'); if(br) br.onclick=resumeTeam;
+  $('#team').innerHTML = `<div class="lbl">L'équipe</div>` + Object.entries(AGENTS).map(([id,a])=>`<div class="member ${S.busy.has(id)?'busy':''}">${av(id)}<div><b>${a.name}</b><span>${a.role}</span></div></div>`).join('');
+}
+function usageText(){
+  const today=new Date().toISOString().slice(0,10), used=S.usage.date===today?S.usage.count:0, limit=Number(S.settings.daily_limit||200);
+  return `${used} / ${limit} tâches d'agents aujourd'hui`;
+}
+function go(v){ S.view=v; if(location.hash!=='#'+v) location.hash=v; render(); window.scrollTo(0,0); }
+window.addEventListener('hashchange',()=>{ const v=location.hash.slice(1); if(TABS.some(t=>t[0]===v) && v!==S.view){ S.view=v; render(); } });
+
+function render(){
+  renderChrome();
+  const v=$('#view');
+  if(!S.db){ v.innerHTML = `<div class="panel"><h1>QG VotreIAPro</h1><p class="sub">Ouvre ce QG depuis claude.ai en étant connecté : c'est là que vivent ton équipe et sa mémoire.</p></div>`; return; }
+  if(!S.loaded){ v.innerHTML = `<div class="panel"><h1><span class="spin">⟳</span> Ouverture du QG…</h1><p class="sub">Chargement de la mémoire de l'équipe.</p></div>`; return; }
+  (VIEWS[S.view]||VIEWS.tableau)(v);
+  bind(v);
+}
+const CHECKLIST = [
+  ['entreprise','Créer ton entreprise (micro-entreprise : gratuit sur formalites.entreprises.gouv.fr) et obtenir ton SIRET'],
+  ['identite','Renseigner raison sociale, SIRET et adresse dans Réglages (débloque les emails et les factures)'],
+  ['banque','Ouvrir un compte bancaire dédié à l’activité (plus simple pour la compta, obligatoire au-delà d’un certain chiffre d’affaires)'],
+  ['stripe','Créer ton compte Stripe et ton lien de paiement, puis le coller sur la page de vente'],
+  ['public','Rendre la page de vente publique (Partager → lien public)'],
+  ['assurance','Souscrire une assurance responsabilité civile professionnelle (recommandée quand on livre des sites à des clients)'],
+  ['cgv','Faire relire les CGV et le contrat d’abonnement (Juliette en prépare un modèle sur demande)'],
+  ['domaine','Créer une adresse email pro sur ton domaine IONOS (SPF/DKIM configurés) pour prospecter sans risquer ton Gmail perso'],
+  ['demo','Avoir un site de démonstration à montrer pendant les appels (c’est ce qui convainc le plus)'],
+  ['urssaf','Noter tes déclarations de chiffre d’affaires URSSAF (mensuelles ou trimestrielles)'],
+  ['avis','Après chaque livraison : demander un avis Google et 2 recommandations (Chloé s’en charge)'],
+];
+function checklistPanel(){
+  const c=S.settings.checklist||{}, done=CHECKLIST.filter(([k])=>c[k]).length;
+  if(done===CHECKLIST.length) return '';
+  return `<div class="panel checklist"><details ${done<3?'open':''}><summary>✅ Lancement de l'entreprise : ce qu'il ne faut pas oublier (${done}/${CHECKLIST.length})</summary>
+    ${CHECKLIST.map(([k,l])=>`<label><input type="checkbox" data-check="${k}" ${c[k]?'checked':''}><span class="${c[k]?'done':''}">${esc(l)}</span></label>`).join('')}</details></div>`;
+}
+function coachFacts(){
+  const d=S.data, s=S.settings, ok=[], ko=[], todo=[];
+  const sent=d.emails.filter(e=>e.status==='envoyé'), sentToday=sent.filter(e=>Date.now()-(e.sent_ts||0)<864e5).length;
+  const toValidate=d.emails.filter(e=>e.status==='à valider').length, replied=d.prospects.filter(p=>['a répondu','rdv'].includes(p.status));
+  const clients=d.prospects.filter(p=>p.status==='client').length, overdue=d.invoices.filter(i=>i.type==='facture'&&i.status!=='payée'&&i.due<Date.now());
+  const toCall=d.prospects.filter(p=>p.status==='contacté'&&p.phone&&!p.called&&p.contacted_ts&&Date.now()-p.contacted_ts>2*864e5).length;
+  if(d.prospects.length) ok.push(`${d.prospects.length} prospects vérifiés prêts à être contactés.`);
+  if(clients) ok.push(`${clients} client${clients>1?'s':''} signé${clients>1?'s':''}.`);
+  if(sent.length) ok.push(`${sent.length} emails déjà envoyés.`);
+  if(replied.length) ok.push(`${replied.length} prospect${replied.length>1?'s ont':' a'} répondu ou pris rendez-vous.`);
+  if(!s.company_name||!s.company_address) { ko.push('Ton entreprise n’est pas renseignée : aucun email ni facture ne peut partir.'); todo.push('Remplis raison sociale, SIRET et adresse dans Réglages.'); }
+  if(s.paused==='on') { ko.push('L’équipe est en pause.'); todo.push('Relance l’équipe quand tu veux qu’elle travaille.'); }
+  if(!s.payment_link && !s.iban) { ko.push('Aucun moyen d’encaisser : ni lien Stripe, ni IBAN.'); todo.push('Ajoute ton IBAN ou ton lien de paiement dans Réglages.'); }
+  if(toValidate) todo.push(`Valide les ${toValidate} emails qui attendent dans l’onglet Emails.`);
+  if(!d.prospects.some(p=>p.status!=='nouveau') && d.prospects.length) ko.push('Aucun prospect contacté pour l’instant : pas de contact, pas de vente.');
+  if(replied.length) todo.push(`Réponds en priorité à ${replied.slice(0,3).map(p=>p.name||p.company).join(', ')}.`);
+  if(toCall) todo.push(toCall>1?`Appelle les ${toCall} prospects contactés il y a plus de 2 jours.`:'Appelle le prospect contacté il y a plus de 2 jours.');
+  if(overdue.length) { ko.push(`${overdue.length} facture${overdue.length>1?'s':''} en retard de paiement.`); todo.push('Fais relancer les factures en retard par Margaux.'); }
+  if(sent.length && !sentToday && s.company_name) todo.push('Envoie ta série d’emails du jour (25 environ).');
+  return {ok, ko, todo};
+}
+function coachPanel(){
+  const a=ag('alma'), b=S.data.messages.find(m=>m.thread==='alma' && m.brief), f=coachFacts();
+  const brief = b?.brief, today = b && new Date(b.ts).toDateString()===new Date().toDateString();
+  const list = (arr) => `<ul>${arr.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
+  const ok = (brief&&today?brief.ok:f.ok), ko=(brief&&today?brief.ko:f.ko), todo=(brief&&today?brief.todo:f.todo);
+  return `<div class="panel coach ${SPK.playing&&SPK.agent==='alma'?'talking':''}" id="coach"><div class="face">${faceSVG('alma')}</div><div style="min-width:0">
+    <div class="row" style="justify-content:space-between"><div><h2 style="margin:0">${esc(a.name)}</h2><span class="ts">${esc(a.role)}${brief&&today?` · point du ${new Date(b.ts).toLocaleDateString('fr-FR')}`:''}</span></div>
+      <div class="row">${sayBtn('coach:now','🔊 Écouter son point')}<button class="btn ghost" id="coach-talk">💬 Lui parler</button>${S.sample?`<button class="btn ghost" id="coach-brief" ${S.running?'disabled':''}>↻ Refaire le point</button>`:''}</div></div>
+    <div class="bubble" style="margin-top:10px">${brief&&today&&brief.mot?`<p style="margin:0 0 6px"><b>${esc(brief.mot)}</b></p>`:''}
+      <h3>✅ Ce qui va</h3>${ok.length?list(ok):'<p class="ts" style="margin:0">Pas encore grand-chose : on démarre.</p>'}
+      <h3>⚠️ Ce qui ne va pas</h3>${ko.length?list(ko):'<p class="ts" style="margin:0">Rien de bloquant.</p>'}
+      <h3>👉 À faire maintenant</h3>${todo.length?list(todo.slice(0,5)):'<p class="ts" style="margin:0">Continue sur ta lancée.</p>'}</div></div></div>`;
+}
+function coachSpeech(){
+  const b=S.data.messages.find(m=>m.thread==='alma' && m.brief), today=b && new Date(b.ts).toDateString()===new Date().toDateString();
+  const x = today ? b.brief : coachFacts();
+  const nom = S.settings.founder_name ? S.settings.founder_name.split(' ')[0] : '';
+  return `Salut${nom?' '+nom:''}. ${today&&b.brief.mot?b.brief.mot+' ':''}${x.ok.length?'Ce qui va : '+x.ok.join(' '):''} ${x.ko.length?'Ce qui ne va pas : '+x.ko.join(' '):'Rien de bloquant.'} ${x.todo.length?'Ce que tu dois faire maintenant : '+x.todo.slice(0,5).join(' '):''}`;
+}
+async function makeBrief(){
+  const f=coachFacts(), d=S.data;
+  const stats={prospects:d.prospects.length, contactes:d.prospects.filter(p=>p.status!=='nouveau').length, reponses:d.prospects.filter(p=>['a répondu','rdv'].includes(p.status)).length, clients:d.prospects.filter(p=>p.status==='client').length, emails_envoyes:d.emails.filter(e=>e.status==='envoyé').length, emails_a_valider:d.emails.filter(e=>e.status==='à valider').length, factures_en_retard:d.invoices.filter(i=>i.type==='facture'&&i.status!=='payée'&&i.due<Date.now()).length};
+  const recent=d.activity.slice(0,15).map(a=>`- ${ag(a.agent).name} : ${a.title}`).join('\n');
+  const r = await think('alma', `Fais le point du jour au fondateur. Chiffres : ${JSON.stringify(stats)}. Constats automatiques : ${JSON.stringify(f)}. Activité récente :\n${recent}
+Sois franche et concrète. 2 à 4 éléments par rubrique, une phrase courte chacun, faits pour être dits à voix haute.
+JSON : {"mot":"une phrase d'accroche honnête","ok":[""],"ko":[""],"todo":[""]}`, {json:true, tier:'quick'});
+  await add('messages',{thread:'alma', sender:'alma', report:true, brief:r, text:`Point du jour\n\n${r.mot}\n\nCe qui va :\n- ${(r.ok||[]).join('\n- ')}\n\nCe qui ne va pas :\n- ${(r.ko||[]).join('\n- ')}\n\nÀ faire :\n- ${(r.todo||[]).join('\n- ')}`});
+  await saveSettings({brief_date:new Date().toDateString()});
+}
+// Alma prend la parole d'elle-même : à l'ouverture (point du jour) et quand une alerte nouvelle apparaît
+let lastAlertKey = null;
+async function coachAutoSpeak(){
+  if(!S.loaded) return;
+  const today=new Date().toDateString();
+  let key=''; try{ key=localStorage.getItem('qg-alma-said')||''; }catch{}
+  if(S.sample && S.settings.paused!=='on' && S.settings.brief_date!==today && !S.running){
+    S.running=true; try{ await makeBrief(); }catch(e){} finally{ S.running=false; }
+  }
+  const f=coachFacts(), sig=today+'|'+f.ko.join('|')+'|'+f.todo.slice(0,2).join('|');
+  if(sig===key || sig===lastAlertKey) return;
+  lastAlertKey=sig; try{ localStorage.setItem('qg-alma-said', sig); }catch{}
+  say([{agent:'alma', text:coachSpeech()}]);
+}
+function sprintPanel(){
+  const sp = S.data.sprints[0]; if(!sp) return '';
+  const copyBtn = (i) => `<button class="btn ghost" data-copy="${i}">Copier</button>`;
+  return `<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">⚡ Sprint vente 24 h — ${esc(sp.titre||'')}</h2><div class="row">${sayBtn('sprint:1')}<span class="ts">${fmt(sp.ts)}</span></div></div>
+    <p><b>Offre de lancement :</b> ${esc(sp.offre_lancement)}</p>
+    <details open><summary>Plan de demain, heure par heure</summary><ol>${(sp.plan||[]).map(x=>`<li><b>${esc(x.heure)}</b> — ${esc(x.action)}</li>`).join('')}</ol></details>
+    <details><summary>Messages prêts à envoyer à ton réseau (${(sp.messages||[]).length})</summary>${(sp.messages||[]).map((m,i)=>`<div class="panel" style="margin-top:8px"><div class="row" style="justify-content:space-between"><span class="pill">${esc(m.canal)} · ${esc(m.pour)}</span>${copyBtn(i)}</div><pre id="sp-msg-${i}" style="margin-top:8px">${esc(m.texte)}</pre></div>`).join('')}</details>
+    <details><summary>Script d'appel</summary><pre style="margin-top:8px">${esc(sp.script_appel)}</pre></details>
+    <details><summary>Objections et réponses</summary>${(sp.objections||[]).map(o=>`<p><b>« ${esc(o.objection)} »</b><br>${esc(o.reponse)}</p>`).join('')}</details>
+    <details><summary>Encaisser</summary><p>${esc(sp.encaissement)}</p></details></div>`;
+}
+const feed = list => list.map(a=>`<div class="item">${av(a.agent)}<div style="min-width:0"><div class="t">${esc(ag(a.agent).name)} · ${esc(a.title)}</div>${a.detail?`<div class="d">${esc(String(a.detail).slice(0,500))}</div>`:''}<div class="ts">${fmt(a.ts)}</div></div></div>`).join('') || '<p class="ts">Rien pour le moment.</p>';
+const empty = (t) => `<div class="panel"><p class="ts" style="margin:0">${t}</p></div>`;
+
+const VIEWS = {
+  tableau(v){
+    const d=S.data, sent=d.emails.filter(e=>e.status==='envoyé').length;
+    const report = d.messages.find(m=>m.thread==='victor' && m.report) || d.messages.find(m=>m.thread==='victor' && m.sender==='victor');
+    const banners = [];
+    if(S.settings.paused==='on') banners.push(`L'équipe est en pause. <button class="btn ok" id="banner-resume">▶ Relancer l'équipe</button>`);
+    if(!S.sample) banners.push("Les agents ne peuvent pas travailler sur cet affichage. Ouvre le QG sur claude.ai, connecté à ton compte.");
+    if(!S.settings.company_name) banners.push(`Avant d'envoyer des emails : renseigne ta raison sociale et ton adresse dans <button class="btn ghost" data-go="reglages">Réglages</button>`);
+    v.innerHTML = `
+      <div><h1>Bonjour${S.settings.founder_name?' '+esc(S.settings.founder_name.split(' ')[0]):''} 👋</h1><p class="sub">Voici où en est ton entreprise. L'équipe travaille tant que cette page est ouverte ; tu gardes la main sur chaque décision qui engage ton argent ou ton image.</p></div>
+      ${coachPanel()}
+      ${banners.map(b=>`<div class="banner">${b}</div>`).join('')}
+      <div class="kpis">
+        <div class="kpi"><div class="v">${d.prospects.filter(p=>p.status==='client').length}</div><div class="l">Clients</div></div>
+        <div class="kpi"><div class="v">${d.offers.filter(o=>o.status!=='archivée').length}</div><div class="l">Offres</div></div>
+        <div class="kpi"><div class="v">${d.prospects.length}</div><div class="l">Prospects</div></div>
+        <div class="kpi"><div class="v">${d.prospects.filter(p=>p.status!=='nouveau').length}</div><div class="l">Prospects contactés</div></div>
+        <div class="kpi"><div class="v">${sent}</div><div class="l">Emails envoyés</div></div>
+        <div class="kpi"><div class="v">${d.prospects.filter(p=>['a répondu','rdv','client'].includes(p.status)).length}</div><div class="l">Réponses / RDV</div></div>
+        <div class="kpi"><div class="v">${d.questions.filter(q=>q.needs_founder && q.answered_by!=='fondateur').length}</div><div class="l">Infos à fournir</div></div>
+      </div>
+      <div class="panel">
+        <div class="row" style="justify-content:space-between"><h2 style="margin:0">Mission</h2><div class="row">${S.running||S.busy.size?`<span class="pill warn"><span class="spin">⟳</span> ${esc(S.step||'Au travail')}</span><button class="btn bad" data-stop>⏸ Arrêter les agents</button>`:'<span class="pill ok">Équipe disponible</span>'}</div></div>
+        <div class="row" style="margin-top:10px"><input id="focus" placeholder="Orientation facultative : « plombiers en Île-de-France », « kinés », « nouvelle niche santé »…" style="flex:1;min-width:220px"><button class="btn" id="go-cycle" ${S.running||!S.sample?'disabled':''}>🚀 Lancer un cycle complet</button><button class="btn ok" id="go-sprint" ${S.running||!S.sample?'disabled':''}>⚡ Sprint : une vente en 24 h</button></div>
+        <p class="ts">Un cycle : étude des niches (si besoin) → réunion de décision → page de vente → conformité → campagnes → plan de prospection → emails → point d'étape. Compte 5 à 15 minutes ; garde la page ouverte.</p>
+      </div>
+      ${checklistPanel()}
+      ${sprintPanel()}
+      <div class="grid2">
+        <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Dernier point de Victor</h2><div class="row">${report?sayBtn('msg:'+report.id):''}<button class="btn ghost" data-go="discussion">Répondre</button></div></div>
+          <p style="white-space:pre-wrap">${esc(report?.text||'Pas encore de point d’étape : lance un premier cycle.')}</p><span class="ts">${fmt(report?.ts)}</span></div>
+        <div class="panel"><h2 style="margin-top:0">En direct de l'équipe</h2><div class="feed">${feed(d.activity.slice(0,12))}</div></div>
+      </div>`;
+  },
+  discussion(v){
+    const a=ag(S.chatAgent), msgs=S.data.messages.filter(m=>m.thread===S.chatAgent).slice().reverse();
+    v.innerHTML = `<div><h1>Parler aux agents</h1><p class="sub">Pose tes questions, donne tes consignes. Chaque agent connaît l'état de l'entreprise et tient compte de tes messages dans tout son travail.</p></div>
+      <div class="chat">
+        <div class="panel agents">${Object.entries(AGENTS).map(([id,x])=>`<button data-agent="${id}" class="${id===S.chatAgent?'on':''}">${av(id)}<span><b>${x.name}</b><small>${x.role}</small></span></button>`).join('')}</div>
+        <div class="panel thread">
+          <div class="row" style="padding:10px 14px;border-bottom:1px solid var(--line)">${av(S.chatAgent)}<b>${a.name}</b><span class="ts">${a.role}</span></div>
+          <div class="msgs" id="msgs">${msgs.map(m=>`<div class="msg ${m.sender==='fondateur'?'me':'them'}">${esc(m.text)}<div class="ts" style="color:inherit;opacity:.7">${fmt(m.ts)} ${m.sender!=='fondateur'?sayBtn('msg:'+m.id,'🔊'):''}</div></div>`).join('') || `<p class="ts">Écris ton premier message à ${a.name}.</p>`}${S.typing===S.chatAgent?`<div class="msg them"><span class="spin">⟳</span> ${a.name} réfléchit…</div>`:''}</div>
+          <div class="row" style="padding:0 12px"><label style="margin:6px 0;display:flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" id="auto-say" style="width:auto" ${autoSay()?'checked':''}> Lire automatiquement les réponses à voix haute</label></div>
+          <div class="composer"><textarea id="chat-text" rows="2" placeholder="Écris à ${a.name}… (Entrée pour envoyer)"></textarea><button class="btn" id="chat-send" ${S.typing||!S.sample?'disabled':''}>Envoyer</button></div>
+        </div>
+      </div>`;
+    const box=$('#msgs'); box.scrollTop=box.scrollHeight;
+  },
+  questions(v){
+    const qs=S.data.questions.slice().sort((a,b)=>(!!a.answer)-(!!b.answer)||b.ts-a.ts);
+    const auto = S.settings.autonomy!=='off', pending = qs.filter(q=>!q.answer).length;
+    v.innerHTML = `<div><h1>Questions des agents</h1><p class="sub">${auto?'Mode autonome : Victor tranche lui-même chaque question pour que l’équipe avance sans t’attendre. Tu peux corriger n’importe quelle décision ; ta réponse passe alors avant tout.':'Mode validation : les agents attendent ta réponse.'}</p></div>
+      <div class="panel row"><span class="pill ${auto?'ok':''}">${auto?'Mode autonome':'Mode validation'}</span><button class="btn ghost" id="toggle-auto">${auto?'Passer en mode validation':'Passer en mode autonome'}</button>${pending?`<button class="btn" id="decide-all" ${S.sample&&!S.running?'':'disabled'}>Laisser Victor trancher les ${pending} question(s)</button>`:''}</div>
+      ${qs.map(q=>`<div class="panel"><div class="row">${av(q.agent)}<b>${esc(ag(q.agent).name)}</b><span class="ts">${fmt(q.ts)} · ${esc(q.context||'')}</span>${!q.answer?'<span class="pill warn">en attente</span>':q.answered_by==='fondateur'?'<span class="pill ok">ta réponse</span>':'<span class="pill">décidé par Victor</span>'}${q.needs_founder&&q.answered_by!=='fondateur'?'<span class="pill warn">info à fournir</span>':''}</div>
+        <p style="white-space:pre-wrap">${esc(q.question)}</p>
+        ${q.answer?`<p><b>${q.answered_by==='fondateur'?'Ta réponse':'Décision'} :</b> ${esc(q.answer)}</p>${q.needs_founder&&q.answered_by!=='fondateur'?`<p class="ts"><b>Seul toi peux fournir :</b> ${esc(q.needs_founder)}</p>`:''}`:''}
+        ${q.answered_by==='fondateur'?'':`<details ${q.answer?'':'open'}><summary>${q.answer?'Corriger cette décision':'Répondre moi-même'}</summary><textarea rows="2" id="ans-${q.id}" placeholder="Ta réponse…" style="margin-top:8px"></textarea><div class="row" style="margin-top:8px"><button class="btn" data-answer="${q.id}" ${S.sample?'':'disabled'}>Envoyer</button></div></details>`}</div>`).join('') || empty('Aucune question pour le moment.')}`;
+  },
+  reunions(v){
+    if(S.openMeeting){ return meetingView(v, S.data.meetings.find(m=>m.id===S.openMeeting)); }
+    v.innerHTML = `<div><h1>Réunions</h1><p class="sub">Assiste à toutes les réunions de l'équipe, donne ton avis, ou convoque-en une sur le sujet de ton choix.</p></div>
+      <div class="panel"><h2 style="margin-top:0">Convoquer une réunion</h2>
+        <div class="row"><input id="topic" placeholder="Ex : « Comment doubler le taux de réponse aux emails ? »" style="flex:1;min-width:220px"><button class="btn" id="convene" ${S.running||!S.sample?'disabled':''}>Convoquer</button></div>
+        <div class="row" style="margin-top:8px">${Object.entries(AGENTS).filter(([id])=>id!=='victor').map(([id,a])=>`<label style="margin:0;display:flex;gap:4px;align-items:center;color:var(--ink)"><input type="checkbox" class="part" value="${id}" checked style="width:auto"> ${a.emoji} ${a.name}</label>`).join('')}</div></div>
+      ${S.data.meetings.map(m=>`<div class="panel" role="button" tabindex="0" data-meeting="${m.id}" style="cursor:pointer"><div class="row"><b>${esc(m.topic)}</b><span class="pill ${m.status==='terminée'?'ok':'warn'}">${esc(m.status)}</span>${m.founder_comment?'<span class="pill">ton avis</span>':''}<span class="ts">${fmt(m.ts)}</span></div><p class="ts" style="margin-bottom:0">${esc(m.summary||'')}</p></div>`).join('') || empty('Aucune réunion pour le moment.')}`;
+  },
+  emails(v){
+    const drafts=S.data.emails.filter(e=>e.status==='à valider').sort((a,b)=>a.step-b.step);
+    const approved=S.data.emails.filter(e=>e.status==='approuvé');
+    const ready=approved.filter(e=>(e.due||0)<=Date.now());
+    const others=S.data.emails.filter(e=>!['à valider','approuvé'].includes(e.status));
+    v.innerHTML = `<div><h1>Emails</h1><p class="sub">Relis, modifie, approuve. Les emails approuvés partent depuis <b>ton Gmail</b>, uniquement quand tu cliques sur « Envoyer ». Chaque email porte ton identité et la possibilité de refuser.</p></div>
+      <div class="panel row"><span class="pill">${drafts.length} à valider</span><span class="pill">${approved.length} approuvé(s), dont ${ready.length} à envoyer maintenant</span>
+        <button class="btn ok" id="approve-all" ${drafts.length?'':'disabled'}>Tout approuver</button>
+        <button class="btn" id="send-ready" ${ready.length&&S.mcp?'':'disabled'}>📤 Envoyer les ${ready.length} prêts via Gmail</button></div>
+      ${drafts.map(e=>`<div class="panel"><div class="row"><b>${esc(e.name)}</b><span class="ts">${esc(e.company)} · ${esc(e.to)} · ${e.step===10?'réponse':`étape ${e.step}`}${e.step>1&&e.step<10?` · prévu le ${new Date(e.due).toLocaleDateString('fr-FR')}`:''}</span></div>
+        <label for="s-${e.id}">Objet</label><input id="s-${e.id}" value="${esc(e.subject)}"><label for="b-${e.id}">Message</label><textarea id="b-${e.id}" rows="7">${esc(e.body)}</textarea>
+        <div class="row" style="margin-top:8px"><button class="btn ok" data-email="${e.id}" data-act="approve">Approuver</button><button class="btn ghost" data-email="${e.id}" data-act="save">Enregistrer</button><button class="btn bad" data-email="${e.id}" data-act="reject">Rejeter</button></div></div>`).join('') || empty('Aucun email à valider.')}
+      ${approved.length?`<h2>Approuvés</h2><div class="panel tablewrap"><table><tr><th>Destinataire</th><th>Objet</th><th>Envoi</th><th></th></tr>${approved.map(e=>`<tr><td>${esc(e.name||e.to)}<div class="ts">${esc(e.to)}</div></td><td>${esc(e.subject)}</td><td class="ts">${(e.due||0)<=Date.now()?'maintenant':new Date(e.due).toLocaleDateString('fr-FR')}</td><td><button class="btn ghost" data-send="${e.id}" ${S.mcp?'':'disabled'}>Envoyer</button></td></tr>`).join('')}</table></div>`:''}
+      ${others.length?`<h2>Historique</h2><div class="panel tablewrap"><table><tr><th>Destinataire</th><th>Objet</th><th>Statut</th><th>Date</th></tr>${others.map(e=>`<tr><td>${esc(e.name||e.to)}</td><td>${esc(e.subject)}</td><td><span class="pill ${e.status==='envoyé'?'ok':e.status==='échec'?'bad':''}">${esc(e.status)}</span>${e.error?`<div class="ts">${esc(e.error)}</div>`:''}</td><td class="ts">${fmt(e.sent_ts||e.ts)}</td></tr>`).join('')}</table></div>`:''}`;
+  },
+  prospects(v){
+    const offers=S.data.offers.filter(o=>o.status!=='archivée');
+    const statuses=['nouveau','contacté','a répondu','rdv','client','pas intéressé','désinscrit'];
+    v.innerHTML = `<div><h1>Prospects</h1><p class="sub">Colle n'importe quel texte contenant des contacts professionnels (page d'annuaire, liste, tableau) : Hugo en extrait uniquement les emails réellement présents. Quand un prospect te répond, colle sa réponse : Inès prépare la meilleure suite.</p></div>
+      <div class="panel"><h2 style="margin-top:0">Ajouter des prospects</h2>
+        <label for="p-offer">Pour l'offre</label><select id="p-offer">${offers.map(o=>`<option value="${o.id}">${esc(o.name)}</option>`).join('')||'<option value="">Aucune offre pour l’instant</option>'}</select>
+        <label for="p-raw">Texte contenant les contacts</label><textarea id="p-raw" rows="5" placeholder="Colle ici une page d'annuaire, une liste de cabinets avec leurs emails…"></textarea>
+        <div class="row" style="margin-top:8px"><button class="btn" id="p-extract" ${S.sample?'':'disabled'}>🎯 Extraire les contacts</button><button class="btn ghost" data-go="discussion" data-agent-go="hugo">Où trouver des contacts ? (Hugo)</button></div></div>
+      ${(()=>{ const n=S.data.prospects.filter(p=>!p.unsubscribed && !S.data.emails.some(e=>e.prospect_id===p.id)).length; return n?`<div class="panel row"><span>${n} prospect(s) n'ont pas encore d'email rédigé.</span><button class="btn" id="write-all" ${S.running||!S.sample?'disabled':''}>✉️ Clara, écris leurs emails</button></div>`:''; })()}
+      ${(()=>{ const done=S.data.prospects.filter(p=>p.status!=='nouveau').sort((a,b)=>(b.contacted_ts||b.ts)-(a.contacted_ts||a.ts)); return `<div class="panel"><h2 style="margin-top:0">Déjà contactés (${done.length})</h2>${done.length?`<div class="tablewrap"><table><tr><th>Contact</th><th>Métier</th><th>Canal</th><th>Date</th><th>Statut</th></tr>${done.map(p=>`<tr><td><b>${esc(p.name||p.company)}</b><div class="ts">${esc(p.company||'')} · ${esc(p.city||'')}</div></td><td>${esc(p.role||'')}</td><td>${esc(p.channel||'email')}</td><td class="ts">${fmt(p.contacted_ts)}</td><td><span class="pill">${esc(p.status)}</span></td></tr>`).join('')}</table></div>`:'<p class="ts" style="margin:0">Personne pour l’instant. Envoie un email validé ou un WhatsApp, puis clique « ✓ Envoyé » : le contact apparaît ici.</p>'}</div>`; })()}
+      ${S.data.prospects.length?`<div class="panel tablewrap"><table><tr><th>Contact</th><th>Ville</th><th>Personnalisation</th><th>Téléphone</th><th>Statut</th><th></th></tr>
+        ${S.data.prospects.map(p=>`<tr><td><b>${esc(p.name||p.company)}</b><div>${esc(p.name?p.company||'':p.role||'')}</div><div class="ts">${esc(p.email)}</div></td><td>${esc(p.city||'')}</td><td class="ts">${esc(p.personalization||'')}</td>
+        <td>${p.phone?`<a href="tel:+${intl(p.phone)}">${esc(p.phone)}</a>${isMobile(p.phone)?`<div class="row" style="margin-top:6px;gap:6px"><a class="btn ok" href="${esc(waLink(p))}" target="_blank" rel="noopener">WhatsApp</a><button class="btn ghost" data-wa-done="${p.id}" title="À cliquer une fois le message envoyé">✓ Envoyé</button></div>`:'<div class="ts">fixe : appel seulement</div>'}`:'<span class="ts">—</span>'}</td>
+        <td><select data-pstatus="${p.id}" aria-label="Statut">${statuses.map(s=>`<option ${s===p.status?'selected':''}>${s}</option>`).join('')}</select></td>
+        <td><button class="btn ghost" data-reply="${p.id}">Il a répondu</button></td></tr>
+        <tr id="reply-${p.id}" hidden><td colspan="6"><textarea rows="3" id="reply-text-${p.id}" placeholder="Colle la réponse du prospect…"></textarea><div class="row" style="margin-top:6px"><button class="btn" data-reply-go="${p.id}" ${S.sample?'':'disabled'}>Inès, prépare la réponse</button></div></td></tr>`).join('')}</table></div>`:empty('Aucun prospect pour le moment.')}`;
+  },
+  offres(v){
+    v.innerHTML = `<div><h1>Offres & sites</h1><p class="sub">Chaque offre décidée en réunion, avec la page de vente rédigée par Sam et l'avis de Juliette.</p></div>
+      ${S.data.offers.map(o=>{const L=o.landing||{};return `<div class="panel"><div class="row"><h2 style="margin:0">${esc(o.name)}</h2><span class="pill ${o.status==='archivée'?'':'ok'}">${esc(o.status)}</span><span class="ts">${esc(o.niche)}</span></div>
+        <p>${esc(o.tagline)}</p><p class="ts">${esc(o.description)}</p><p><b>${euros(o.price_setup)}</b> de mise en place + <b>${euros(o.price_monthly)}</b>/mois · Cible : ${esc(o.target)}</p>
+        ${o.compliance?`<p class="ts"><b>Conformité (Juliette) :</b> ${esc(o.compliance.verdict)} — ${esc((o.compliance.points||[]).join(' · '))}</p>`:''}
+        ${o.landing?`<details><summary>Voir la page de vente</summary><div class="landing" style="margin-top:10px"><span class="pill">${esc(o.niche)}</span><h3>${esc(L.hero_title)}</h3><p>${esc(L.hero_subtitle)}</p>
+          ${(L.problems||[]).length?`<h4>Vous reconnaissez-vous ?</h4><ul>${L.problems.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+          ${(L.benefits||[]).map(b=>`<p><b>${esc(b.title)}</b> — ${esc(b.text)}</p>`).join('')}
+          ${(L.process||[]).length?`<h4>Comment ça se passe</h4><ol>${L.process.map(x=>`<li><b>${esc(x.step)}</b> — ${esc(x.text)}</li>`).join('')}</ol>`:''}
+          <h4>Inclus</h4><ul>${(o.deliverables||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+          ${L.guarantee?`<p><b>Garantie :</b> ${esc(L.guarantee)}</p>`:''}
+          ${(L.faq||[]).map(f=>`<p><b>${esc(f.q)}</b><br>${esc(f.a)}</p>`).join('')}
+          <p class="btn" style="cursor:default">${esc(L.cta||'Commander')}</p></div></details>`:''}
+        <div class="row" style="margin-top:10px">${S.settings.payment_link?`<a class="btn ghost" href="${esc(S.settings.payment_link)}" target="_blank" rel="noopener">Lien de paiement ↗</a>`:''}${S.settings.vitrine_url?`<a class="btn ghost" href="${esc(S.settings.vitrine_url)}" target="_blank" rel="noopener">Page de vente publique ↗</a>`:''}
+          ${o.status==='archivée'?`<button class="btn ok" data-offer="${o.id}" data-st="prête">Réactiver</button>`:`<button class="btn ghost" data-offer="${o.id}" data-st="archivée">Archiver</button>`}</div></div>`;}).join('') || empty('Aucune offre : lance un cycle depuis le tableau de bord.')}`;
+  },
+  campagnes(v){
+    v.innerHTML = `<div><h1>Campagnes</h1><p class="sub">Les plans de Léo. Rien n'est dépensé sans toi : valide un plan, puis lance-le dans ton compte publicitaire.</p></div>
+      ${S.data.campaigns.map(c=>`<div class="panel"><div class="row"><b>${esc(c.channel)} — ${esc(c.name)}</b><span class="pill">${esc(c.budget)}</span><span class="pill ${c.status==='validée'?'ok':c.status==='refusée'?'bad':''}">${esc(c.status)}</span><span class="ts">${esc(c.offer||'')}</span></div>
+        <pre style="margin-top:8px">${esc(c.plan)}</pre><div class="row" style="margin-top:8px"><button class="btn ok" data-camp="${c.id}" data-st="validée">Valider</button><button class="btn ghost" data-camp="${c.id}" data-st="refusée">Refuser</button></div></div>`).join('') || empty('Aucune campagne pour le moment.')}`;
+  },
+  niches(v){
+    v.innerHTML = `<div><h1>Niches</h1><p class="sub">Les analyses de Nora. Celles marquées « sources » ont été vérifiées sur Internet.</p></div>
+      <div class="panel row"><input id="n-focus" placeholder="Étudier une niche précise : « kinésithérapeutes », « couvreurs »…" style="flex:1;min-width:220px"><button class="btn" id="n-go" ${S.running||!S.sample?'disabled':''}>🔎 Lancer l'étude</button><button class="btn ok" id="n-new" ${S.running||!S.sample?'disabled':''}>🔭 Trouver d'autres secteurs</button></div>
+      ${S.data.niches.slice().sort((a,b)=>b.score-a.score).map(n=>`<div class="panel"><div class="row"><b>${esc(n.name)}</b><span class="pill ${n.score>=8?'ok':n.score>=6.5?'warn':'bad'}">${n.score}/10</span><span class="ts">${esc(n.sector)} · ${fmt(n.ts)}</span>${(n.sources||[]).length?'<span class="pill">sources</span>':''}</div>
+        <p><b>Problème :</b> ${esc(n.problem)}</p><p><b>Offre possible :</b> ${esc(n.offer_idea)}</p>
+        <p class="ts"><b>Cible :</b> ${esc(n.audience)} · <b>Capacité à payer :</b> ${esc(n.willingness_to_pay)} · <b>Concurrence :</b> ${esc(n.competition)}</p><p class="ts">${esc(n.reasoning)}</p>
+        ${(n.sources||[]).map(s=>`<a class="ts" href="${esc(s)}" target="_blank" rel="noopener">${esc(String(s).replace(/^https?:\/\//,'').slice(0,60))}</a>`).join(' · ')}</div>`).join('') || empty('Aucune niche étudiée.')}`;
+  },
+  aujourdhui(v){
+    const items = S.data.prospects.map(p=>({p, a:nextAction(p)})).filter(x=>x.a).sort((x,y)=>x.a.prio-y.a.prio);
+    const overdue = S.data.invoices.filter(i=>i.type==='facture' && i.status!=='payée' && i.due<Date.now());
+    const stages=[['nouveau','Nouveaux'],['contacté','Contactés'],['a répondu','Ont répondu'],['rdv','Rendez-vous'],['client','Clients']];
+    v.innerHTML = `<div><h1>Plan du jour</h1><p class="sub">Les actions qui rapprochent le plus d'une vente, dans l'ordre. La séquence qui marche le mieux en B2B : email personnalisé (J0) → appel (J+2) → relance email (J+3) → WhatsApp court seulement après l'appel (J+4) → dernier email (J+7).</p></div>
+      <div class="kpis">${stages.map(([k,l])=>`<div class="kpi"><div class="v">${S.data.prospects.filter(p=>p.status===k).length}</div><div class="l">${l}</div></div>`).join('')}</div>
+      <div class="panel row"><button class="btn" id="check-replies" ${S.mcp&&!S.running?'':'disabled'}>📥 Vérifier les réponses dans Gmail</button><span class="ts">Repère les prospects qui t'ont répondu, retire ceux qui disent STOP, et fait préparer la réponse par Inès.</span></div>
+      ${overdue.length?`<div class="banner">${overdue.length} facture(s) en retard de paiement. <button class="btn ghost" data-go="factures">Voir</button></div>`:''}
+      ${items.length?`<div class="panel tablewrap"><table><tr><th></th><th>Prospect</th><th>Action</th><th></th></tr>${items.slice(0,80).map(({p,a})=>`<tr><td>${av(a.who)}</td><td><b>${esc(p.name||p.company)}</b><div class="ts">${esc(p.role||'')} · ${esc(p.city||'')} · ${esc(p.status)}</div></td><td>${esc(a.label)}</td>
+        <td><div class="row" style="gap:6px">${a.call?`<a class="btn ghost" href="tel:+${intl(p.phone)}">📞 ${esc(p.phone)}</a><button class="btn ghost" data-called="${p.id}">✓ Appelé</button>`:''}${a.wa?`<a class="btn ok" href="${esc(waLink(p))}" target="_blank" rel="noopener">WhatsApp</a><button class="btn ghost" data-wa-done="${p.id}">✓ Envoyé</button>`:''}${a.go?`<button class="btn ghost" data-go="${a.go}">Ouvrir</button>`:''}</div></td></tr>`).join('')}</table></div>`:empty('Rien à faire pour l’instant : ajoute des prospects ou lance un cycle.')}`;
+  },
+  factures(v){
+    const inv=S.data.invoices.slice().sort((a,b)=>b.ts-a.ts), y=new Date().getFullYear(), m=new Date().getMonth();
+    const paid=inv.filter(i=>i.type==='facture'&&i.status==='payée'), open=inv.filter(i=>i.type==='facture'&&i.status!=='payée');
+    const sum=list=>list.reduce((t,i)=>t+totals(i.lines).ttc,0);
+    const caYear=sum(paid.filter(i=>new Date(i.paid_ts).getFullYear()===y)), caMonth=sum(paid.filter(i=>new Date(i.paid_ts).getFullYear()===y&&new Date(i.paid_ts).getMonth()===m));
+    const rate=Number(S.settings.social_rate||0);
+    const clients=S.data.prospects.filter(p=>['client','rdv','a répondu'].includes(p.status));
+    const offers=S.data.offers.filter(o=>o.status!=='archivée');
+    const missing=['company_name','company_legal','company_address'].filter(k=>!S.settings[k]);
+    v.innerHTML = `<div><h1>Factures & compta</h1><p class="sub">Margaux établit tes devis et factures conformes (numérotation continue, mentions obligatoires), les envoie en PDF depuis ton Gmail, suit les paiements et relance les retards. À faire valider par un expert-comptable pour tes déclarations.</p></div>
+      ${missing.length?`<div class="banner">Pour des factures valables, renseigne dans Réglages : raison sociale, forme juridique et SIRET, adresse. <button class="btn ghost" data-go="reglages">Réglages</button></div>`:''}
+      <div class="kpis"><div class="kpi"><div class="v">${money(caMonth)}</div><div class="l">Encaissé ce mois</div></div><div class="kpi"><div class="v">${money(caYear)}</div><div class="l">Encaissé en ${y}</div></div>
+        <div class="kpi"><div class="v">${money(sum(open))}</div><div class="l">À encaisser (${open.length})</div></div><div class="kpi"><div class="v">${open.filter(i=>i.due<Date.now()).length}</div><div class="l">En retard</div></div>
+        ${rate?`<div class="kpi"><div class="v">${money(caYear*rate/100)}</div><div class="l">Cotisations estimées (${rate} %)</div></div>`:''}</div>
+      <div class="panel"><h2 style="margin-top:0">Nouveau devis ou facture</h2>
+        <div class="grid2"><div><label for="i-type">Type</label><select id="i-type"><option value="facture">Facture</option><option value="devis">Devis</option></select>
+          <label for="i-client">Client</label><select id="i-client"><option value="">— saisie libre —</option>${clients.map(p=>`<option value="${p.id}">${esc(p.company||p.name)} (${esc(p.status)})</option>`).join('')}</select>
+          <label for="i-offer">Offre</label><select id="i-offer">${offers.map(o=>`<option value="${o.id}">${esc(o.name)} — ${o.price_setup} € + ${o.price_monthly} €/mois</option>`).join('')}</select></div>
+        <div><label for="i-name">Nom du client</label><input id="i-name"><label for="i-company">Société / cabinet</label><input id="i-company"><label for="i-email">Email</label><input id="i-email" type="email"><label for="i-address">Adresse</label><input id="i-address"><label for="i-siret">SIRET du client (facultatif)</label><input id="i-siret"></div></div>
+        <div class="row" style="margin-top:10px"><button class="btn" id="i-create">Créer</button><span class="ts">Lignes pré-remplies : mise en place + premier mois. Tu peux les modifier ensuite.</span></div></div>
+      ${inv.map(i=>{const t=totals(i.lines), late=i.type==='facture'&&i.status!=='payée'&&i.due<Date.now(); return `<div class="panel"><div class="row"><b>${esc(i.number)}</b><span class="pill">${i.type}</span><span class="pill ${i.status==='payée'?'ok':late?'bad':'warn'}">${late?'en retard':esc(i.status)}</span><span>${esc(i.client.company||i.client.name)}</span><b>${money(t.ttc)}</b><span class="ts">${new Date(i.date).toLocaleDateString('fr-FR')} · échéance ${new Date(i.due).toLocaleDateString('fr-FR')}</span></div>
+        <details style="margin-top:6px"><summary>Lignes</summary><textarea id="lines-${i.id}" rows="3" style="margin-top:6px" ${i.status==='brouillon'?'':'disabled'}>${esc(i.lines.map(l=>`${l.label} | ${l.qty} | ${l.unit}`).join('\n'))}</textarea>${i.status==='brouillon'?`<div class="row" style="margin-top:6px"><button class="btn ghost" data-inv-lines="${i.id}">Enregistrer les lignes</button><span class="ts">Une ligne par prestation : désignation | quantité | prix unitaire HT</span></div>`:''}</details>
+        <div class="row" style="margin-top:8px"><button class="btn ghost" data-inv-pdf="${i.id}" ${S.downloads?'':'disabled'}>⬇️ PDF</button><button class="btn" data-inv-send="${i.id}" ${S.mcp?'':'disabled'}>📤 Envoyer par Gmail</button>
+          ${i.type==='facture'&&i.status!=='payée'?`<select id="paid-with-${i.id}" style="width:auto"><option>virement</option><option>Stripe</option><option>chèque</option><option>espèces</option></select><button class="btn ok" data-inv-paid="${i.id}">Marquer payée</button>`:''}
+          ${late?`<button class="btn bad" data-inv-remind="${i.id}" ${S.sample?'':'disabled'}>Relancer (Margaux)</button>`:''}
+          ${i.type==='devis'&&i.status!=='accepté'?`<button class="btn ok" data-quote-ok="${i.id}">Devis accepté → facture</button>`:''}</div></div>`;}).join('') || empty('Aucune facture pour le moment.')}
+      <div class="panel row"><button class="btn ghost" id="ledger" ${S.downloads?'':'disabled'}>⬇️ Livre des recettes (CSV)</button><button class="btn ghost" id="finance" ${S.sample?'':'disabled'}>📒 Point trésorerie de Margaux</button></div>`;
+  },
+  journal(v){ v.innerHTML = `<div><h1>Journal</h1><p class="sub">Tout ce que fait l'équipe.</p></div><div class="panel feed">${feed(S.data.activity)}</div>`; },
+  reglages(v){
+    const s=S.settings, f=(k,l,ph='')=>`<label for="set-${k}">${l}</label><input id="set-${k}" name="${k}" value="${esc(s[k]||'')}" placeholder="${esc(ph)}">`;
+    v.innerHTML = `<div><h1>Réglages</h1><p class="sub">Aucune clé à saisir : les agents tournent sur ton compte claude.ai, et les emails partent de ton Gmail.</p></div>
+      <form id="set-form" class="grid2">
+        <div class="panel"><h2 style="margin-top:0">Ton entreprise</h2><p class="ts">Obligatoire avant d'envoyer des emails de prospection (identité de l'expéditeur).</p>
+          ${f('ai_name','Le prénom de ton IA personnelle','Alma')}${f('founder_name','Ton prénom et nom (signature)')}${f('brand_name','Nom de marque','VotreIAPro')}${f('company_name','Raison sociale')}${f('company_legal','Forme juridique et SIRET')}${f('company_address','Adresse')}</div>
+        <div class="panel"><h2 style="margin-top:0">Vente & pilotage</h2>
+          ${f('payment_link','Lien de paiement Stripe','https://buy.stripe.com/…')}
+          <p class="ts">Dans Stripe : Catalogue de produits → Liens de paiement → Créer. Colle le lien ici.</p>
+          ${f('vitrine_url','Adresse de ta page de vente publique')}
+          ${f('ads_budget','Budget pub mensuel autorisé (€)','300')}
+          ${f('daily_limit','Nombre maximum de tâches d’agents par jour','200')}
+          <p class="ts">Une tâche = une réponse d'un agent (un message, une prise de parole en réunion, un email rédigé). Un cycle complet en compte environ 15 à 30.</p>
+          <label for="set-vision">Ta vision (guide toutes les décisions)</label><textarea id="set-vision" name="vision" rows="4">${esc(s.vision||'')}</textarea></div>
+        <div class="panel"><h2 style="margin-top:0">Facturation (Margaux)</h2>
+          <label for="set-vat_mode">TVA</label><select id="set-vat_mode" name="vat_mode"><option value="franchise" ${s.vat_mode!=='20'?'selected':''}>Franchise en base (micro-entreprise) : pas de TVA</option><option value="20" ${s.vat_mode==='20'?'selected':''}>TVA 20 %</option></select>
+          ${f('iban','IBAN (affiché sur les factures)','FR76 …')}${f('bic','BIC')}
+          ${f('payment_days','Délai de paiement des factures (jours)','15')}
+          ${f('social_rate','Taux de cotisations sociales pour l’estimation (%)','à vérifier selon ton statut')}
+          ${f('contact_email','Email affiché sur les factures')}
+</div>
+        <div><button class="btn">Enregistrer</button></div></form>
+      <div class="panel"><h2 style="margin-top:0">Combien ça coûte ?</h2>
+        <div class="tablewrap"><table><tr><th>Poste</th><th>Coût</th></tr>
+        <tr><td>Hébergement du QG et de la page de vente (claude.ai)</td><td>0 €</td></tr>
+        <tr><td>Travail des agents</td><td>Inclus dans ton abonnement Claude, sans facture en plus. Il consomme ton quota d'utilisation : si la limite est atteinte, les agents s'arrêtent jusqu'à sa remise à zéro.</td></tr>
+        <tr><td>Envoi des emails (ton Gmail)</td><td>0 €</td></tr>
+        <tr><td>Paiements Stripe</td><td>Aucun abonnement ; une commission prélevée sur chaque vente encaissée (voir la grille tarifaire Stripe).</td></tr>
+        <tr><td>Publicité</td><td>0 € tant que tu ne valides aucune campagne.</td></tr></table></div>
+        <p class="ts">Pour maîtriser ta consommation : le bouton « ⏸ Arrêter les agents » en haut à gauche, et la limite de tâches par jour ci-dessus.</p></div>
+      <div class="panel"><h2 style="margin-top:0">Connexions</h2><div class="row"><span class="pill ${S.sample?'ok':'bad'}">Agents ${S.sample?'actifs':'indisponibles'}</span><span class="pill ${S.mcp?'ok':'bad'}">Gmail ${S.mcp?'prêt (autorisation demandée au 1er envoi)':'indisponible'}</span></div></div>`;
+  },
+};
+function meetingView(v, m){
+  if(!m){ S.openMeeting=null; return VIEWS.reunions(v); }
+  v.innerHTML = `<div><button class="btn ghost" id="back-meetings">← Réunions</button><h1 style="margin-top:12px">${esc(m.topic)}</h1><p class="sub">${fmt(m.ts)} · <span class="pill ${m.status==='terminée'?'ok':'warn'}">${esc(m.status)}</span></p></div>
+    ${(m.transcript||[]).length?`<div class="row">${sayBtn('meeting:'+m.id,'🔊 Écouter la réunion (chaque agent avec sa voix)')}</div>`:''}
+    <div class="panel transcript">${(m.transcript||[]).map(t=>`<div class="line">${av(t.agent)}<div style="min-width:0"><div class="who">${esc(ag(t.agent).name)} <span class="ts">${esc(ag(t.agent).role)}</span></div><div class="txt">${esc(t.text)}</div></div></div>`).join('') || '<p class="ts"><span class="spin">⟳</span> La réunion commence…</p>'}
+    ${m.status!=='terminée'?'<p class="ts"><span class="spin">⟳</span> La réunion continue…</p>':''}</div>
+    ${m.summary?`<div class="panel"><h2 style="margin-top:0">Résumé</h2><p>${esc(m.summary)}</p><h2>Décisions</h2><ul>${(m.decisions||[]).map(d=>`<li>${esc(d)}</li>`).join('')}</ul></div>`:''}
+    <div class="panel"><h2 style="margin-top:0">Ton avis</h2><p class="ts">Toute l'équipe en tiendra compte dans les prochains cycles et réunions.</p>
+      <textarea id="m-comment" rows="3">${esc(m.founder_comment||'')}</textarea><div class="row" style="margin-top:8px"><button class="btn" id="m-save">Donner mon avis</button></div></div>`;
+}
+
+// ============================================================ actions
+function busyBtn(b, label){ b.disabled=true; b.dataset.label=b.textContent; b.textContent=label; }
+function bind(v){
+  v.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ if(b.dataset.agentGo) S.chatAgent=b.dataset.agentGo; go(b.dataset.go); });
+  const on=(sel,fn)=>{ const el=v.querySelector(sel); if(el) el.onclick=fn; };
+  on('#go-cycle', ()=>runCycle($('#focus').value.trim()));
+  on('#go-sprint', ()=>runSprint());
+  on('#banner-resume', resumeTeam);
+  on('#coach-talk', ()=>{ S.chatAgent='alma'; go('discussion'); });
+  on('#coach-brief', async(ev)=>{ busyBtn(ev.currentTarget,'Alma prépare…'); try{ await makeBrief(); lastAlertKey=null; try{ localStorage.removeItem('qg-alma-said'); }catch{} say([{agent:'alma', text:coachSpeech()}]); }catch(e){ toast(agentError(e)); } render(); });
+  v.querySelectorAll('[data-say]').forEach(b=>b.onclick=(ev)=>{ ev.stopPropagation(); say(sayLines(b.dataset.say)); });
+  const as=$('#auto-say'); if(as) as.onchange=()=>{ try{ localStorage.setItem('qg-auto-say', as.checked?'1':'0'); }catch{} };
+  v.querySelectorAll('[data-check]').forEach(c=>c.onchange=async()=>{ await saveSettings({checklist:{...(S.settings.checklist||{}), [c.dataset.check]:c.checked}}); });
+  on('#check-replies', async()=>{ S.running=true; render(); try{ const r=await checkReplies(); toast(r.found?`${r.found} réponse(s) trouvée(s)`:'Aucune nouvelle réponse'); }catch(e){ toast(gmailError(e)); } finally{ S.running=false; S.step=''; render(); } });
+  v.querySelectorAll('[data-called]').forEach(b=>b.onclick=async()=>{ const p=S.data.prospects.find(x=>x.id===b.dataset.called); await upd('prospects', p.id, {called:true, notes:`${p.notes||''}\n[${fmt(Date.now())}] Appelé`.trim()}); log('ines', `Appel passé : ${p.name||p.company}`); toast('Appel noté'); });
+  const ic=$('#i-client'); if(ic) ic.onchange=()=>{ const p=S.data.prospects.find(x=>x.id===ic.value); if(!p) return; $('#i-name').value=p.name||''; $('#i-company').value=p.company||''; $('#i-email').value=p.email||''; if(p.offer_id && $('#i-offer').querySelector(`option[value="${p.offer_id}"]`)) $('#i-offer').value=p.offer_id; };
+  on('#i-create', async()=>{ const type=$('#i-type').value, o=S.data.offers.find(x=>x.id===$('#i-offer').value), now=Date.now();
+    const client={name:$('#i-name').value.trim(), company:$('#i-company').value.trim(), email:$('#i-email').value.trim(), address:$('#i-address').value.trim(), siret:$('#i-siret').value.trim()};
+    if(!client.name && !client.company){ toast('Indique le nom du client'); return; }
+    const lines = o ? [{label:`${o.name} — mise en place`, qty:1, unit:Number(o.price_setup)||0}, ...(Number(o.price_monthly)?[{label:`${o.name} — abonnement, 1er mois`, qty:1, unit:Number(o.price_monthly)}]:[])] : [{label:'Prestation', qty:1, unit:0}];
+    await add('invoices',{type, number:nextNumber(type), client, lines, prospect_id:$('#i-client').value||null, offer_id:o?.id||null, date:now, due: now + (type==='devis'?30:Number(S.settings.payment_days||15))*DAY, status:'brouillon'});
+    log('margaux', `${type==='devis'?'Devis':'Facture'} créé(e) pour ${client.company||client.name}`); document.activeElement?.blur(); toast('Créé(e) : vérifie puis envoie'); });
+  v.querySelectorAll('[data-inv-lines]').forEach(b=>b.onclick=async()=>{ const id=b.dataset.invLines; const lines=$('#lines-'+id).value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(x=>x[0]).map(([label,qty,unit])=>({label, qty:Number(qty)||1, unit:Number(String(unit||'0').replace(',','.'))||0})); await upd('invoices', id, {lines}); document.activeElement?.blur(); toast('Lignes enregistrées'); });
+  v.querySelectorAll('[data-inv-pdf]').forEach(b=>b.onclick=async()=>{ const i=S.data.invoices.find(x=>x.id===b.dataset.invPdf); try{ await saveFile(`${i.number}.pdf`, await invoicePdf(i)); }catch(e){ toast(e?.message||'Téléchargement refusé'); } });
+  v.querySelectorAll('[data-inv-send]').forEach(b=>b.onclick=async()=>{ const i=S.data.invoices.find(x=>x.id===b.dataset.invSend); busyBtn(b,'Envoi…'); try{ await sendInvoice(i); toast('Envoyé(e) depuis ton Gmail'); }catch(e){ toast(gmailError(e)); } render(); });
+  v.querySelectorAll('[data-inv-paid]').forEach(b=>b.onclick=async()=>{ const i=S.data.invoices.find(x=>x.id===b.dataset.invPaid); await upd('invoices', i.id, {status:'payée', paid_ts:Date.now(), paid_with:$('#paid-with-'+i.id).value}); if(i.prospect_id) await upd('prospects', i.prospect_id, {status:'client'}); log('margaux', `💶 ${i.number} payée : ${money(totals(i.lines).ttc)}`); toast('Paiement enregistré'); });
+  v.querySelectorAll('[data-inv-remind]').forEach(b=>b.onclick=async()=>{ busyBtn(b,'Margaux rédige…'); try{ await remindInvoice(S.data.invoices.find(x=>x.id===b.dataset.invRemind)); toast('Relance prête dans Emails'); }catch(e){ toast(agentError(e)); } render(); });
+  v.querySelectorAll('[data-quote-ok]').forEach(b=>b.onclick=async()=>{ const q=S.data.invoices.find(x=>x.id===b.dataset.quoteOk), now=Date.now(); await upd('invoices', q.id, {status:'accepté'}); const {id:_qid, ...qrest}=q; await add('invoices',{...qrest, type:'facture', number:nextNumber('facture'), date:now, due:now+Number(S.settings.payment_days||15)*DAY, status:'brouillon', from_quote:q.number}); if(q.prospect_id) await upd('prospects', q.prospect_id, {status:'client', client_ts:now}); log('margaux', `Devis ${q.number} accepté : facture créée`); toast('Facture créée'); });
+  on('#ledger', async()=>{ try{ await saveFile(`livre-des-recettes-${new Date().getFullYear()}.csv`, csvLedger()); }catch(e){ toast(e?.message||'Téléchargement refusé'); } });
+  on('#finance', async(ev)=>{ busyBtn(ev.currentTarget,'Margaux analyse…'); try{ const list=S.data.invoices.map(i=>({n:i.number,type:i.type,statut:i.status,client:i.client.company||i.client.name,ttc:totals(i.lines).ttc,echeance:new Date(i.due).toLocaleDateString('fr-FR')})); const r=await think('margaux', `Fais au fondateur un point trésorerie clair et court (tutoiement, 120 mots) à partir de ces devis et factures : ${JSON.stringify(list)}. Donne : encaissé, à encaisser, retards et quoi faire, prochaines échéances à anticiper (cotisations, TVA si applicable), et une recommandation.`); await add('messages',{thread:'margaux', sender:'margaux', text:r}); S.chatAgent='margaux'; go('discussion'); }catch(e){ toast(agentError(e)); render(); } });
+  on('#write-all', async()=>{ S.running=true; render(); try{ let n=0; for(const o of S.data.offers.filter(o=>o.status!=='archivée')) n+=await writeEmails(o); toast(`${n} email(s) rédigé(s) : à valider dans Emails`); }catch(e){ toast(agentError(e)); } finally{ S.running=false; S.step=''; render(); } });
+  v.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{ const t=$('#sp-msg-'+b.dataset.copy).textContent; navigator.clipboard.writeText(t).then(()=>toast('Message copié'),()=>{ const r=document.createRange(); r.selectNodeContents($('#sp-msg-'+b.dataset.copy)); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast('Texte sélectionné : fais Copier'); }); });
+  v.querySelectorAll('[data-stop]').forEach(b=>b.onclick=pauseTeam);
+  on('#toggle-auto', async()=>{ await saveSettings({autonomy: S.settings.autonomy==='off'?'on':'off'}); toast('Mode mis à jour'); });
+  on('#decide-all', async()=>{ S.running=true; render(); try{ await decidePending(); toast('Questions tranchées'); }catch(e){ toast(agentError(e)); } finally{ S.running=false; S.step=''; render(); } });
+  v.querySelectorAll('[data-agent]').forEach(b=>b.onclick=()=>{ S.chatAgent=b.dataset.agent; render(); });
+  const sendChat = async ()=>{ const t=$('#chat-text').value.trim(); if(!t||S.typing) return; $('#chat-text').value=''; try{ await chat(S.chatAgent,t); }catch(e){ toast(agentError(e)); } render(); };
+  on('#chat-send', sendChat);
+  const ta=$('#chat-text'); if(ta) ta.onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); ta.blur(); sendChat(); } };
+  v.querySelectorAll('[data-answer]').forEach(b=>b.onclick=async()=>{ const q=S.data.questions.find(x=>x.id===b.dataset.answer), a=$('#ans-'+q.id).value.trim(); if(!a) return; busyBtn(b,'Envoi…'); try{ await answerQuestion(q,a); toast('Réponse transmise'); }catch(e){ toast(agentError(e)); } $('#ans-'+q.id)?.blur(); render(); });
+  on('#convene', async()=>{ const t=$('#topic').value.trim(); if(!t) return; const parts=[...v.querySelectorAll('.part:checked')].map(c=>c.value); $('#topic').blur(); S.running=true; toast('Réunion convoquée');
+    holdMeeting(t,{participants:parts}).catch(e=>{ if(e?.code!=='stopped'&&e?.code!=='cancelled') toast(agentError(e)); }).finally(()=>{ S.running=false; S.step=''; render(); });
+    setTimeout(()=>{ if(S.meetingId){ S.openMeeting=S.meetingId; render(); } },1500); });
+  v.querySelectorAll('[data-meeting]').forEach(el=>{ const open=()=>{ S.openMeeting=el.dataset.meeting; render(); }; el.onclick=open; el.onkeydown=e=>{ if(e.key==='Enter') open(); }; });
+  on('#back-meetings', ()=>{ S.openMeeting=null; render(); });
+  on('#m-save', async()=>{ await upd('meetings', S.openMeeting, {founder_comment:$('#m-comment').value}); log('victor','Le fondateur a donné son avis sur une réunion', $('#m-comment').value); $('#m-comment').blur(); toast('Avis transmis à l’équipe'); });
+  on('#approve-all', async()=>{ for(const e of S.data.emails.filter(e=>e.status==='à valider')) await upd('emails', e.id, {status:'approuvé'}); log('clara','Le fondateur a approuvé les emails'); toast('Emails approuvés'); });
+  v.querySelectorAll('[data-email]').forEach(b=>b.onclick=async()=>{ const id=b.dataset.email, act=b.dataset.act; const patch={subject:$('#s-'+id).value, body:$('#b-'+id).value}; if(act==='approve') patch.status='approuvé'; if(act==='reject') patch.status='rejeté'; await upd('emails', id, patch); document.activeElement?.blur(); toast(act==='approve'?'Approuvé':act==='reject'?'Rejeté':'Enregistré'); });
+  const sendOne = async (e, b) => { try{ await sendEmail(e); return true; }catch(err){ const m=gmailError(err); await upd('emails', e.id, {error:m}).catch(()=>{}); toast(m); return false; } };
+  v.querySelectorAll('[data-send]').forEach(b=>b.onclick=async()=>{ busyBtn(b,'Envoi…'); const e=S.data.emails.find(x=>x.id===b.dataset.send); if(await sendOne(e)) toast('Email envoyé'); render(); });
+  on('#send-ready', async(ev)=>{ const b=ev.currentTarget; busyBtn(b,'Envoi en cours…'); const list=S.data.emails.filter(e=>e.status==='approuvé' && (e.due||0)<=Date.now()); let n=0;
+    for(const e of list){ if(!(await sendOne(e))) break; n++; await new Promise(r=>setTimeout(r,3000)); }
+    if(n) log('clara', `${n} email(s) envoyé(s) depuis Gmail`); toast(`${n} email(s) envoyé(s)`); render(); });
+  on('#p-extract', async(ev)=>{ const raw=$('#p-raw').value.trim(); if(!raw) return; const b=ev.currentTarget; busyBtn(b,'Hugo extrait…'); try{ const n=await extractProspects(raw, $('#p-offer').value); toast(`${n} prospect(s) ajouté(s)`); $('#p-raw').value=''; const o=S.data.offers.find(x=>x.id===$('#p-offer').value); if(n&&o){ toast('Clara écrit les emails…'); await writeEmails(o); toast('Emails prêts dans l’onglet Emails'); } }catch(e){ toast(agentError(e)); } document.activeElement?.blur(); render(); });
+  v.querySelectorAll('[data-pstatus]').forEach(s=>s.onchange=async()=>{ await upd('prospects', s.dataset.pstatus, {status:s.value, ...(s.value==='désinscrit'?{unsubscribed:true}:{}), ...(s.value==='client'?{client_ts:Date.now()}:{})}); s.blur();
+    if(s.value==='client'){ const p=S.data.prospects.find(x=>x.id===s.dataset.pstatus); log('chloe', `🎉 Nouveau client : ${p.name||p.company}`, 'Margaux prépare la facture, Chloé lance la livraison.'); toast('Nouveau client ! Facture à établir dans Factures & compta'); }
+    else toast('Statut mis à jour'); });
+  v.querySelectorAll('[data-wa-done]').forEach(b=>b.onclick=async()=>{ const p=S.data.prospects.find(x=>x.id===b.dataset.waDone); busyBtn(b,'…'); await markContacted(p,'WhatsApp'); toast('Noté : contacté par WhatsApp'); });
+  v.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>{ const r=$('#reply-'+b.dataset.reply); r.hidden=!r.hidden; });
+  v.querySelectorAll('[data-reply-go]').forEach(b=>b.onclick=async()=>{ const p=S.data.prospects.find(x=>x.id===b.dataset.replyGo), t=$('#reply-text-'+p.id).value.trim(); if(!t) return; busyBtn(b,'Inès analyse…'); try{ const r=await draftReply(p,t); toast('Réponse prête dans Emails'); $('#reply-text-'+p.id).blur(); }catch(e){ toast(agentError(e)); } render(); });
+  v.querySelectorAll('[data-offer]').forEach(b=>b.onclick=async()=>{ await upd('offers', b.dataset.offer, {status:b.dataset.st}); });
+  v.querySelectorAll('[data-camp]').forEach(b=>b.onclick=async()=>{ await upd('campaigns', b.dataset.camp, {status:b.dataset.st}); log('leo', `Campagne ${b.dataset.st} par le fondateur`); });
+  on('#n-new', ()=>{ S.running=true; render(); const known=S.data.niches.map(n=>n.name).join(' ; '); researchNiches(`explore des secteurs NOUVEAUX, autres que ceux déjà étudiés (${known}). Cherche des métiers qui souffrent d'un problème concret et coûteux (rendez-vous non honorés, devis non relancés, appels manqués, avis en ligne, paperasse, recrutement…) et qui paient déjà pour s'en sortir`).catch(e=>toast(agentError(e))).finally(()=>{ S.running=false; S.step=''; render(); }); });
+  on('#n-go', ()=>{ const f=$('#n-focus').value.trim(); $('#n-focus').blur(); S.running=true; render(); researchNiches(f).catch(e=>toast(agentError(e))).finally(()=>{ S.running=false; S.step=''; render(); }); });
+  const form=$('#set-form'); if(form) form.onsubmit=async e=>{ e.preventDefault(); await saveSettings(Object.fromEntries(new FormData(form))); document.activeElement?.blur(); toast('Réglages enregistrés'); render(); };
+}
+
+// ============================================================ démarrage
+(async function start(){
+  const v=location.hash.slice(1); if(TABS.some(t=>t[0]===v)) S.view=v;
+  render();
+  const use = n => (window.claude?.use ? window.claude.use(n) : Promise.resolve(null)).catch(()=>null);
+  const [db, sample, mcp, downloads, tts] = await Promise.all([use('db'), use('sample'), use('mcp'), use('downloads'), use('tts')]);
+  S.db=db; S.sample=sample; S.mcp=mcp; S.downloads=downloads; SPK.tts=tts;
+  if(tts){ tts.onState(({state})=>{ SPK.talking = state==='speaking' || state==='starting'; if(state==='idle'){ SPK.playing=false; } renderSpeaker(); }); tts.onLine(({line,id})=>{ const p=(SPK.parts||[])[line]; const part=p?.agent || String(id||'').split('|')[0]; if(AGENTS[part]){ SPK.agent=part; if(p) SPK.text=p.text; renderSpeaker(); } }); }
+  if(db) subscribe(); else render();
+})();
+</script>

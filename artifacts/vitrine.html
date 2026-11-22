@@ -1,0 +1,233 @@
+<title>Cabinet Connecté</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style id="css">
+/* Mise en page : une plaquette de cabinet — colonne de lecture sobre, une carte tarifaire, des repères en laiton */
+:root{
+  --bg:#f7f8fa; --paper:#ffffff; --ink:#14213d; --muted:#55607a; --line:#dfe3ea;
+  --brass:#8a6420; --brass-soft:#f4ecdc; --cta:#14213d; --cta-ink:#ffffff; --ok:#1f6f43;
+  --display:"Spectral", Georgia, "Times New Roman", serif;
+  --body:"Public Sans", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1220; --paper:#131b2e; --ink:#e6eaf3; --muted:#9aa5bd; --line:#253150;
+  --brass:#d9b36a; --brass-soft:#2a2418; --cta:#d9b36a; --cta-ink:#14110a; --ok:#7fd3a2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1220; --paper:#131b2e; --ink:#e6eaf3; --muted:#9aa5bd; --line:#253150;
+  --brass:#d9b36a; --brass-soft:#2a2418; --cta:#d9b36a; --cta-ink:#14110a; --ok:#7fd3a2; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:17px/1.65 var(--body)}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(34px,6vw,54px);font-weight:700}
+h2{font-size:clamp(26px,4vw,34px);font-weight:700;margin-bottom:18px}
+h3{font-size:20px;font-weight:700}
+p{margin:0}
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--brass)}
+header.top{border-bottom:1px solid var(--line);background:var(--paper)}
+header.top .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:14px}
+.mark{font-family:var(--display);font-weight:700;font-size:20px}
+.hero{background:var(--paper);border-bottom:1px solid var(--line)}
+.hero .wrap{display:grid;gap:18px;padding-block:56px 48px}
+.lead{font-size:20px;color:var(--muted);max-width:62ch}
+.btn{font:700 16px var(--body);display:inline-block;background:var(--cta);color:var(--cta-ink);border:0;border-radius:10px;padding:14px 24px;cursor:pointer;text-decoration:none}
+.btn:hover{filter:brightness(1.08)}.btn:focus-visible{outline:3px solid var(--brass);outline-offset:3px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.small{font-size:14px;color:var(--muted)}
+section.block{padding-block:48px}
+.checks{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.checks li{padding-left:30px;position:relative}
+.checks li::before{content:"§";position:absolute;left:0;top:0;color:var(--brass);font-family:var(--display);font-weight:700}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px;display:grid;gap:8px;align-content:start}
+.steps{counter-reset:s;display:grid;gap:14px;padding:0;margin:0;list-style:none}
+.steps li{counter-increment:s;display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:start}
+.steps li::before{content:counter(s);font-family:var(--display);font-weight:700;font-size:22px;color:var(--brass);border:1px solid var(--line);border-radius:50%;width:44px;height:44px;display:grid;place-items:center;background:var(--paper)}
+.price{background:var(--paper);border:2px solid var(--ink);border-radius:16px;padding:26px;display:grid;gap:14px;max-width:560px}
+.amount{font-family:var(--display);font-size:44px;font-weight:700;font-variant-numeric:tabular-nums}
+.was{text-decoration:line-through;color:var(--muted);font-size:20px;margin-left:8px}
+.launch{background:var(--brass-soft);color:var(--ink);border-radius:10px;padding:10px 14px;font-weight:600}
+.guarantee{border-left:4px solid var(--brass);background:var(--paper);padding:14px 18px;border-radius:6px}
+details{border-bottom:1px solid var(--line);padding-block:16px}
+summary{font-weight:700;cursor:pointer}
+details p{margin-top:8px;color:var(--muted)}
+.contact{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px;display:grid;gap:10px}
+.copy{font:600 14px var(--body);background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer}
+footer{border-top:1px solid var(--line);padding-block:28px;font-size:14px;color:var(--muted)}
+footer .wrap{display:grid;gap:8px}
+/* panneau propriétaire */
+.owner-bar{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5}
+.editor{position:fixed;inset:0;background:rgba(10,15,30,.55);z-index:6;display:grid;place-items:center;padding:16px}
+.editor form{background:var(--paper);color:var(--ink);border-radius:14px;padding:22px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;display:grid;gap:6px}
+.editor label{font-size:14px;color:var(--muted);margin-top:8px}
+.editor input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%}
+.note{background:var(--brass-soft);border-radius:10px;padding:10px 14px;font-size:14px}
+@media (prefers-reduced-motion:no-preference){.hero .wrap>*{animation:rise .5s ease both}.hero .wrap>*:nth-child(2){animation-delay:.06s}.hero .wrap>*:nth-child(3){animation-delay:.12s}@keyframes rise{from{transform:translateY(6px)}to{transform:none}}}
+</style>
+<script type="application/json" id="state">{"payment_link":"","contact_email":"","contact_phone":"","company_name":"","company_legal":"","company_address":"","price_setup":490,"price_monthly":79,"launch_active":true,"launch_price":245,"launch_spots":10}</script>
+<div id="app"></div>
+<script id="main">
+(function(){
+const SKELETON_HEAD = '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>';
+const FONTS = 'https://fonts.googleapis.com/css2?family=Spectral:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap';
+let state = JSON.parse(document.getElementById('state').textContent);
+const CSS = document.getElementById('css').textContent;
+const MAIN = document.getElementById('main').textContent;
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur = n => `${Number(n||0).toLocaleString('fr-FR')} €`;
+let canEdit = false, artifact = null, editing = false;
+// Lien personnel envoyé au prospect (#r-xxx) : transmis à Stripe pour savoir qui a payé
+const REF = (location.hash.match(/^#r-([A-Za-z0-9-]{1,80})$/)||[])[1] || '';
+function payUrl(){
+  if(!state.payment_link) return '';
+  if(!REF) return state.payment_link;
+  try{ const u=new URL(state.payment_link); u.searchParams.set('client_reference_id', REF); return u.toString(); }catch{ return state.payment_link; }
+}
+
+function buyBlock(){
+  const setup = state.launch_active ? state.launch_price : state.price_setup;
+  if(state.payment_link) return `<a class="btn" href="${esc(payUrl())}" target="_blank" rel="noopener">Réserver ma place — ${eur(setup)}</a>`;
+  return `<a class="btn" href="#contact">Réserver un appel de 20 minutes</a>`;
+}
+function contactBlock(){
+  const items = [];
+  if(state.contact_email) items.push(`<div class="row"><span>Email : <b id="c-email">${esc(state.contact_email)}</b></span><button class="copy" data-copy="c-email">Copier</button></div>`);
+  if(state.contact_phone) items.push(`<div class="row"><span>Téléphone : <b id="c-phone">${esc(state.contact_phone)}</b></span><button class="copy" data-copy="c-phone">Copier</button></div>`);
+  return items.length ? items.join('') : `<p class="small">Les coordonnées de contact arrivent très bientôt.</p>`;
+}
+
+function render(){
+  const s = state, setup = s.launch_active ? s.launch_price : s.price_setup;
+  document.getElementById('app').innerHTML = `
+  <header class="top"><div class="wrap"><span class="mark">Cabinet Connecté</span><a class="btn ghost" href="#tarif">Tarif</a></div></header>
+  <section class="hero"><div class="wrap">
+    <span class="eyebrow">Pour les avocats qui exercent seuls ou en petit cabinet</span>
+    <h1>Votre cabinet en ligne, prêt en 7 jours, sans y passer vos soirées.</h1>
+    <p class="lead">Un site clair qui respecte les règles de communication de la profession, la prise de rendez-vous en ligne, et un assistant qui recueille les demandes des clients 24 h/24 pour que vous les traitiez au calme le lendemain.</p>
+    <div class="row">${buyBlock()}<span class="small">${eur(setup)} de mise en place, puis ${eur(s.price_monthly)}/mois.</span></div>
+  </div></section>
+
+  <section class="block"><div class="wrap">
+    <h2>Ce que vivent beaucoup de cabinets individuels</h2>
+    <ul class="checks">
+      <li>Des demandes arrivent le soir et le week-end, et repartent sans réponse.</li>
+      <li>Un site daté, ou une simple fiche d'annuaire, qui ne dit pas clairement vos domaines d'intervention.</li>
+      <li>Des appels pour des questions pratiques (honoraires, documents à apporter, délais) qui coupent vos journées.</li>
+      <li>Pas le temps de s'occuper de son site, et pas l'envie de confier son image à une agence généraliste.</li>
+    </ul>
+  </div></section>
+
+  <section class="block" style="padding-top:0"><div class="wrap">
+    <h2>Ce que comprend Cabinet Connecté</h2>
+    <div class="grid3">
+      <div class="card"><h3>Un site de cabinet sobre et conforme</h3><p class="small">Cinq pages : le cabinet, vos domaines, vos honoraires, l'accès, le contact. Rédigé avec vous, dans le respect des principes de dignité, de loyauté et d'information propres à la communication des avocats.</p></div>
+      <div class="card"><h3>La prise de rendez-vous en ligne</h3><p class="small">Vos clients choisissent un créneau parmi ceux que vous ouvrez. Vous recevez la demande avec l'objet du rendez-vous.</p></div>
+      <div class="card"><h3>Un assistant qui recueille les demandes</h3><p class="small">Il répond aux questions pratiques et note la situation du client, sans jamais donner de consultation. Vous reprenez la main sur chaque dossier.</p></div>
+      <div class="card"><h3>Votre fiche Google soignée</h3><p class="small">Informations, horaires et lien de rendez-vous à jour, pour être trouvé par les clients de votre ville.</p></div>
+      <div class="card"><h3>Maintenance comprise</h3><p class="small">Hébergement, sécurité, sauvegardes et petites mises à jour de textes chaque mois.</p></div>
+      <div class="card"><h3>Données protégées</h3><p class="small">Formulaires et rendez-vous pensés pour le RGPD et le secret professionnel : le strict nécessaire est collecté.</p></div>
+    </div>
+  </div></section>
+
+  <section class="block" style="padding-top:0"><div class="wrap">
+    <h2>Comment ça se passe</h2>
+    <ol class="steps">
+      <li><div><b>Appel de cadrage, 20 minutes.</b><p class="small">Vos domaines, votre clientèle, le ton de votre cabinet.</p></div></li>
+      <li><div><b>Création en 7 jours.</b><p class="small">Nous rédigeons et construisons ; vous relisez et validez chaque texte.</p></div></li>
+      <li><div><b>Mise en ligne, puis suivi mensuel.</b><p class="small">Vous recevez les demandes ; nous entretenons le site.</p></div></li>
+    </ol>
+  </div></section>
+
+  <section class="block" id="tarif" style="padding-top:0"><div class="wrap">
+    <h2>Tarif</h2>
+    <div class="price">
+      ${s.launch_active?`<div class="launch">Tarif de lancement réservé aux ${esc(s.launch_spots)} premiers cabinets : mise en place à ${eur(s.launch_price)} au lieu de ${eur(s.price_setup)}.</div>`:''}
+      <div><span class="amount">${eur(setup)}</span>${s.launch_active?`<span class="was">${eur(s.price_setup)}</span>`:''}<div class="small">mise en place, une seule fois</div></div>
+      <div><span class="amount" style="font-size:32px">${eur(s.price_monthly)}</span> <span class="small">par mois, sans engagement au-delà de 3 mois</span></div>
+      <div>${buyBlock()}</div>
+      <p class="small">${state.payment_link?'Paiement sécurisé par Stripe. Facture envoyée automatiquement.':'Réservez un appel : nous vous envoyons ensuite le lien de paiement sécurisé.'}</p>
+    </div>
+    <p class="guarantee" style="margin-top:18px">Si votre site n'est pas en ligne 15 jours ouvrés après réception de vos éléments, la mise en place vous est remboursée.</p>
+  </div></section>
+
+  <section class="block" style="padding-top:0"><div class="wrap">
+    <h2>Questions fréquentes</h2>
+    <details><summary>Le site respecte-t-il les règles de communication des avocats ?</summary><p>Oui. Les textes restent informatifs, sans comparaison avec des confrères ni promesse de résultat, et vous validez chaque page avant la mise en ligne.</p></details>
+    <details><summary>L'assistant donne-t-il des conseils juridiques ?</summary><p>Non. Il répond aux questions pratiques et recueille la situation du client pour vous. Toute consultation reste de votre fait.</p></details>
+    <details><summary>Ai-je déjà un nom de domaine ?</summary><p>Si vous en avez un, nous l'utilisons. Sinon, nous vous aidons à en choisir un à votre nom.</p></details>
+    <details><summary>Puis-je arrêter ?</summary><p>Oui, l'abonnement est sans engagement au-delà des 3 premiers mois. Le site et ses textes restent les vôtres.</p></details>
+    <details><summary>Combien de temps vais-je y passer ?</summary><p>Environ 20 minutes d'appel, puis une relecture des textes. Nous faisons le reste.</p></details>
+  </div></section>
+
+  <section class="block" id="contact" style="padding-top:0"><div class="wrap">
+    <h2>Parlons de votre cabinet</h2>
+    <div class="contact"><p>Un appel de 20 minutes pour voir si Cabinet Connecté vous convient, sans engagement.</p>${contactBlock()}</div>
+  </div></section>
+
+  <footer><div class="wrap">
+    <div>${esc(s.company_name||'Cabinet Connecté')}${s.company_legal?' — '+esc(s.company_legal):''}${s.company_address?' — '+esc(s.company_address):''}</div>
+    <div>Service de création et de maintenance de sites pour les professionnels. Cabinet Connecté n'est pas un cabinet d'avocats et ne fournit aucun conseil juridique.</div>
+  </div></footer>
+  ${canEdit?`<div class="owner-bar"><button class="btn" id="edit-open">✏️ Modifier la page</button></div>`:''}
+  ${canEdit&&editing?editorHTML():''}`;
+  bind();
+}
+
+function editorHTML(){
+  const s=state, f=(k,l,ph='',type='text')=>`<label for="e-${k}">${l}</label><input id="e-${k}" name="${k}" type="${type}" value="${esc(s[k])}" placeholder="${esc(ph)}">`;
+  return `<div class="editor" role="dialog" aria-label="Modifier la page"><form id="edit-form">
+    <h3>Modifier la page de vente</h3>
+    <p class="note">Toi seul vois ce bouton. Pour rendre la page visible par tes clients : menu <b>Partager</b> de claude.ai → lien public.</p>
+    ${f('payment_link','Lien de paiement Stripe','https://buy.stripe.com/…','url')}
+    ${f('contact_email','Email de contact','contact@…','email')}
+    ${f('contact_phone','Téléphone','06 …')}
+    ${f('company_name','Raison sociale (pied de page)')}
+    ${f('company_legal','Forme juridique et SIRET')}
+    ${f('company_address','Adresse')}
+    ${f('price_setup','Mise en place, prix normal (€)','490','number')}
+    ${f('price_monthly','Abonnement mensuel (€)','79','number')}
+    ${f('launch_price','Mise en place, tarif de lancement (€)','245','number')}
+    ${f('launch_spots','Nombre de places au tarif de lancement','10','number')}
+    <label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" name="launch_active" style="width:auto" ${s.launch_active?'checked':''}> Afficher le tarif de lancement</label>
+    <div class="row" style="margin-top:12px"><button class="btn" type="submit">Enregistrer et publier</button><button class="btn ghost" type="button" id="edit-cancel">Annuler</button></div>
+    <p class="small" id="edit-msg" role="status"></p>
+  </form></div>`;
+}
+
+function documentFromState(next){
+  const json = JSON.stringify(next).replace(/</g,'\\u003c');
+  return SKELETON_HEAD + '\n<title>Cabinet Connecté</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n<link rel="stylesheet" href="' + FONTS + '">\n<style id="css">' + CSS + '</style>\n<script type="application/json" id="state">' + json + '<\/script>\n<div id="app"></div>\n<script id="main">' + MAIN + '<\/script>\n</body></html>';
+}
+
+function bind(){
+  document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{
+    const el=document.getElementById(b.dataset.copy), t=el.textContent;
+    navigator.clipboard.writeText(t).then(()=>{ b.textContent='Copié'; },()=>{ const r=document.createRange(); r.selectNodeContents(el); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); });
+  });
+  const open=document.getElementById('edit-open'); if(open) open.onclick=()=>{ editing=true; render(); document.getElementById('e-payment_link')?.focus(); };
+  const cancel=document.getElementById('edit-cancel'); if(cancel) cancel.onclick=()=>{ editing=false; render(); };
+  const form=document.getElementById('edit-form');
+  if(form) form.onsubmit=async e=>{
+    e.preventDefault();
+    const fd=new FormData(form), next={...state};
+    for(const k of ['payment_link','contact_email','contact_phone','company_name','company_legal','company_address']) next[k]=String(fd.get(k)||'').trim();
+    for(const k of ['price_setup','price_monthly','launch_price','launch_spots']) next[k]=Number(fd.get(k))||0;
+    next.launch_active = fd.get('launch_active')==='on';
+    if(next.payment_link && !/^https:\/\//.test(next.payment_link)){ document.getElementById('edit-msg').textContent='Le lien de paiement doit commencer par https://'; return; }
+    const msg=document.getElementById('edit-msg'); msg.textContent='Publication…';
+    try{ await artifact.publish(documentFromState(next)); }
+    catch(err){ msg.textContent = err?.code==='conflict' ? 'La page a été modifiée ailleurs : elle se recharge.' : (err?.code==='not_granted'||err?.code==='not_writer') ? "Tu n'as pas les droits pour modifier cette page." : 'Publication impossible : ' + (err?.message||'erreur'); }
+  };
+}
+
+render();
+(async ()=>{
+  const use = n => (window.claude?.use ? window.claude.use(n) : Promise.resolve(null)).catch(()=>null);
+  const [user, art] = await Promise.all([use('user'), use('artifact')]);
+  artifact = art;
+  canEdit = Boolean(art && user && (await user.canEdit().catch(()=>false)));
+  if(canEdit) render();
+})();
+})();
+</script>
