@@ -133,11 +133,11 @@ const TABS = [
   ['reunions','Réunions'],['emails','Emails'],['prospects','Prospects'],['offres','Offres & sites'],
   ['campagnes','Campagnes'],['niches','Niches'],['journal','Journal'],['reglages','Réglages'],
 ];
-const COLS = ['activity','meetings','messages','questions','niches','offers','prospects','emails','campaigns'];
+const COLS = ['activity','meetings','messages','questions','niches','offers','prospects','emails','campaigns','sprints'];
 const ROOT = 'qg/main';
 
 // ============================================================ état
-const S = { db:null, sample:null, mcp:null, loaded:false, failed:false, data:{}, settings:{}, view:'tableau', chatAgent:'victor', running:false, busy:new Set(), step:'', meetingId:null, typing:false };
+const S = { db:null, sample:null, mcp:null, loaded:false, failed:false, data:{}, settings:{}, view:'tableau', chatAgent:'victor', running:false, busy:new Set(), step:'', meetingId:null, typing:false, abort:new AbortController(), stopRequested:false };
 COLS.forEach(c => S.data[c] = []);
 
 const $ = (s, el=document) => el.querySelector(s);
@@ -177,7 +177,7 @@ function context(){
   const offers=d.offers.slice(0,4).map(o=>`${o.name} (${o.niche}, ${o.price_setup} € + ${o.price_monthly} €/mois, ${o.status})`).join(' ; ')||'aucune';
   const niches=d.niches.slice(0,6).map(n=>`${n.name} (${n.score}/10)`).join(' ; ')||'aucune';
   const notes=[
-    ...d.questions.filter(q=>q.answer).slice(0,8).map(q=>`Réponse du fondateur à « ${q.question} » : ${q.answer}`),
+    ...d.questions.filter(q=>q.answer).slice(0,10).map(q=>`${q.answered_by==='fondateur'?'Réponse du fondateur':'Décision de l’équipe (Victor)'} à « ${q.question} » : ${q.answer}`),
     ...d.meetings.filter(m=>m.founder_comment).slice(0,5).map(m=>`Avis du fondateur sur la réunion « ${m.topic} » : ${m.founder_comment}`),
     ...d.messages.filter(m=>m.sender==='fondateur').slice(0,6).map(m=>`Message du fondateur : ${m.text}`),
   ].map(t=>'- '+t).join('\n')||'- aucun pour l’instant';
@@ -194,21 +194,44 @@ async function think(agent, task, {json=false, tier='default', onText}={}){
   S.busy.add(agent); renderChrome();
   try{
     const p = prompt(agent, task);
-    if(json) return await S.sample.json(p + "\n\nRéponds UNIQUEMENT avec un JSON valide, sans texte autour.", {modelTier:tier});
-    const r = await S.sample(p, {modelTier:tier, onText, cache:false});
+    if(S.stopRequested) throw stopError();
+    const signal = S.abort.signal;
+    if(json) return await S.sample.json(p + "\n\nRéponds UNIQUEMENT avec un JSON valide, sans texte autour.", {modelTier:tier, signal});
+    const r = await S.sample(p, {modelTier:tier, onText, cache:false, signal});
     return r.text.trim();
   } finally { S.busy.delete(agent); renderChrome(); }
 }
 function agentError(e){
+  if(e?.code==='stopped' || e?.code==='cancelled') return 'Agents arrêtés.';
   const m = e?.code==='not_granted' ? "Autorise les agents (fenêtre d'autorisation de claude.ai) pour qu'ils puissent travailler."
     : e?.code==='rate_limited' ? "Les agents ont atteint la limite d'utilisation pour le moment. Réessaie dans quelques minutes."
     : (e?.message || 'Erreur inconnue');
   return m;
 }
+function stopError(){ return Object.assign(new Error('Agents arrêtés.'),{code:'stopped'}); }
+function stopAgents(){
+  S.stopRequested=true; S.abort.abort(); S.abort=new AbortController();
+  log('victor','⏹ Le fondateur a arrêté les agents'); toast('Agents arrêtés');
+  setTimeout(()=>{ S.stopRequested=false; S.running=false; S.step=''; S.busy.clear(); render(); }, 1200);
+}
+// Une question d'un agent est tranchée par Victor tout de suite (mode autonome) ; le fondateur peut corriger ensuite.
 async function ask(agent, question, context=''){
   const q = String(question||'').trim(); if(!q) return;
-  if(S.data.questions.some(x=>x.question===q && !x.answer)) return;
-  await add('questions',{agent, question:q, context}); log(agent,'❓ Question pour le fondateur', q);
+  if(S.data.questions.some(x=>x.question===q)) return;
+  const ref = await add('questions',{agent, question:q, context});
+  if(S.settings.autonomy==='off') { log(agent,'❓ Question pour le fondateur', q); return; }
+  await decide({id:ref.id, agent, question:q, context});
+}
+async function decide(q){
+  const d = await think('victor', `${ag(q.agent).name} pose cette question : « ${q.question} » (contexte : ${q.context||'—'}).
+Tu es autonome : tranche toi-même maintenant, au mieux des intérêts de l'entreprise, pour que l'équipe avance sans attendre.
+Exceptions : n'invente jamais une information que seul le fondateur possède (identité légale, SIRET, adresse, coordonnées bancaires, mot de passe) et n'engage aucune dépense : dans ce cas, décide d'un contournement qui permet d'avancer quand même et indique ce qui reste à fournir.
+JSON : {"decision":"ta décision en 1 à 3 phrases","a_fournir_par_le_fondateur":"ce que seul le fondateur peut fournir, ou chaîne vide"}`, {json:true, tier:'quick'});
+  await upd('questions', q.id, {answer:d.decision, answered_by:'victor', answered_ts:Date.now(), needs_founder:d.a_fournir_par_le_fondateur||''});
+  log('victor', `Décision prise : ${q.question.slice(0,70)}`, d.decision + (d.a_fournir_par_le_fondateur?`\nÀ fournir par le fondateur : ${d.a_fournir_par_le_fondateur}`:''));
+}
+async function decidePending(){
+  for(const q of S.data.questions.filter(x=>!x.answer)){ setStep(`Victor tranche : ${q.question.slice(0,50)}…`); await decide(q); }
 }
 
 // ---------- étapes de travail
@@ -311,6 +334,7 @@ async function runCycle(focus=''){
   S.running=true; renderChrome(); render();
   log('victor','🚀 Nouveau cycle de travail lancé', focus);
   try{
+    if(S.settings.autonomy!=='off') await decidePending();
     let offer = S.data.offers.find(o=>o.status!=='archivée');
     if(!offer || focus){
       await researchNiches(focus);
@@ -332,11 +356,39 @@ async function runCycle(focus=''){
     log('victor','✅ Cycle terminé');
     toast('Cycle terminé');
   }catch(e){
-    log('victor','⚠️ Le cycle s’est arrêté', agentError(e));
-    toast(agentError(e));
+    if(e?.code!=='stopped' && e?.code!=='cancelled'){ log('victor','⚠️ Le cycle s’est arrêté', agentError(e)); toast(agentError(e)); }
   }finally{ S.running=false; S.step=''; renderChrome(); render(); }
 }
-function setStep(s){ S.step=s; renderChrome(); if(S.view==='tableau' && !isTyping()) render(); }
+
+// ---------- sprint « une vente en 24 h »
+async function runSprint(){
+  if(S.running) return;
+  S.running=true; render();
+  log('victor','⚡ Sprint vente 24 h lancé');
+  try{
+    if(S.settings.autonomy!=='off') await decidePending();
+    const offer = S.data.offers.find(o=>o.status!=='archivée');
+    setStep('Victor et Inès préparent le sprint');
+    const r = await think('ines', `MISSION URGENTE : obtenir une PREMIÈRE VENTE dans les 24 heures.
+Offre actuelle : ${offer?JSON.stringify(pickOffer(offer)):'Cabinet Connecté : site de cabinet + prise de rendez-vous + assistant de pré-qualification, 490 € + 79 €/mois, pour avocats indépendants'}.
+Page de vente : ${S.settings.vitrine_url||'(lien public à partager)'} — Lien de paiement : ${S.settings.payment_link||'pas encore créé'}.
+Réalité : un email froid à un inconnu convertit rarement en 24 h. Le plus rapide, ce sont les personnes qui connaissent déjà le fondateur (amis, famille, anciens collègues, réseau LinkedIn, professionnels qu'il fréquente) et un petit premier achat facile à dire oui.
+Construis un plan heure par heure pour demain, avec :
+1) une « offre de lancement » réelle, simple et facile à accepter aujourd'hui (prix d'entrée bas ou première étape payante), que le fondateur pourra vraiment honorer ;
+2) 8 messages prêts à copier-coller (WhatsApp/SMS/LinkedIn/email) pour son réseau, chacun pour un type de contact différent, courts et naturels, avec demande de recommandation ;
+3) un script d'appel de 2 minutes ;
+4) les 5 objections probables et la réponse à chacune ;
+5) comment encaisser tout de suite (lien de paiement Stripe, ou virement/facture si pas encore de Stripe).
+Aucune fausse promesse, aucune fausse urgence.
+JSON : {"titre":"","offre_lancement":"","plan":[{"heure":"","action":""}],"messages":[{"canal":"","pour":"","texte":""}],"script_appel":"","objections":[{"objection":"","reponse":""}],"encaissement":""}`, {json:true, tier:'complex'});
+    await add('sprints', r);
+    await add('messages',{thread:'victor', sender:'victor', report:true, text:`📊 Sprint vente 24 h prêt\n\nOffre de lancement : ${r.offre_lancement}\n\nTout le plan, les messages à envoyer et le script d'appel sont sur le tableau de bord, rubrique « Sprint vente 24 h ». Le plus important demain matin : envoie les messages à ton réseau dès 9 h et appelle ceux qui répondent.`});
+    log('ines','Sprint vente 24 h prêt — plan, messages et script sur le tableau de bord');
+    toast('Sprint prêt');
+  }catch(e){ if(e?.code!=='stopped' && e?.code!=='cancelled'){ log('victor','⚠️ Sprint interrompu', agentError(e)); toast(agentError(e)); } }
+  finally{ S.running=false; S.step=''; render(); }
+}
+function setStep(s){ if(S.stopRequested) throw stopError(); S.step=s; renderChrome(); if(S.view==='tableau' && !isTyping()) render(); }
 function pickOffer(o){ return {name:o.name, niche:o.niche, target:o.target, tagline:o.tagline, description:o.description, price_setup:o.price_setup, price_monthly:o.price_monthly, deliverables:o.deliverables}; }
 
 // ---------- conversation, questions, réponses prospects, extraction de contacts
@@ -351,7 +403,7 @@ async function chat(agent, text){
   } finally { S.typing=false; }
 }
 async function answerQuestion(q, answer){
-  await upd('questions', q.id, {answer, answered_ts:Date.now()});
+  await upd('questions', q.id, {answer, answered_by:'fondateur', answered_ts:Date.now(), needs_founder:''});
   log(q.agent, `Le fondateur a répondu : « ${q.question.slice(0,80)} »`, answer);
   const r = await think(q.agent, `Tu avais demandé au fondateur : « ${q.question} ». Il répond : « ${answer} ». Accuse réception en 1 à 3 phrases et dis ce que tu vas faire concrètement.`, {tier:'quick'});
   await add('messages',{thread:q.agent, sender:q.agent, text:r});
@@ -425,7 +477,8 @@ function renderChrome(){
   const counts = { questions: S.data.questions.filter(q=>!q.answer).length||'', emails: S.data.emails.filter(e=>e.status==='à valider').length||'' };
   $('#nav').innerHTML = TABS.map(([id,label])=>`<button data-v="${id}" class="${S.view===id?'on':''}"><span>${label}</span><span class="count">${counts[id]||''}</span></button>`).join('');
   $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.v));
-  $('#team').innerHTML = `<div class="lbl">L'équipe</div>` + Object.entries(AGENTS).map(([id,a])=>`<div class="member ${S.busy.has(id)?'busy':''}">${av(id)}<div><b>${a.name}</b><span>${a.role}</span></div></div>`).join('');
+  setTimeout(()=>{ const b=$('#side-stop'); if(b) b.onclick=stopAgents; });
+  $('#team').innerHTML = (S.running||S.busy.size?`<button class="btn bad" id="side-stop" style="margin:0 8px 6px">⏹ Arrêter les agents</button>`:'') + `<div class="lbl">L'équipe</div>` + Object.entries(AGENTS).map(([id,a])=>`<div class="member ${S.busy.has(id)?'busy':''}">${av(id)}<div><b>${a.name}</b><span>${a.role}</span></div></div>`).join('');
 }
 function go(v){ S.view=v; if(location.hash!=='#'+v) location.hash=v; render(); window.scrollTo(0,0); }
 window.addEventListener('hashchange',()=>{ const v=location.hash.slice(1); if(TABS.some(t=>t[0]===v) && v!==S.view){ S.view=v; render(); } });
@@ -437,6 +490,17 @@ function render(){
   if(!S.loaded){ v.innerHTML = `<div class="panel"><h1><span class="spin">⟳</span> Ouverture du QG…</h1><p class="sub">Chargement de la mémoire de l'équipe.</p></div>`; return; }
   (VIEWS[S.view]||VIEWS.tableau)(v);
   bind(v);
+}
+function sprintPanel(){
+  const sp = S.data.sprints[0]; if(!sp) return '';
+  const copyBtn = (i) => `<button class="btn ghost" data-copy="${i}">Copier</button>`;
+  return `<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">⚡ Sprint vente 24 h — ${esc(sp.titre||'')}</h2><span class="ts">${fmt(sp.ts)}</span></div>
+    <p><b>Offre de lancement :</b> ${esc(sp.offre_lancement)}</p>
+    <details open><summary>Plan de demain, heure par heure</summary><ol>${(sp.plan||[]).map(x=>`<li><b>${esc(x.heure)}</b> — ${esc(x.action)}</li>`).join('')}</ol></details>
+    <details><summary>Messages prêts à envoyer à ton réseau (${(sp.messages||[]).length})</summary>${(sp.messages||[]).map((m,i)=>`<div class="panel" style="margin-top:8px"><div class="row" style="justify-content:space-between"><span class="pill">${esc(m.canal)} · ${esc(m.pour)}</span>${copyBtn(i)}</div><pre id="sp-msg-${i}" style="margin-top:8px">${esc(m.texte)}</pre></div>`).join('')}</details>
+    <details><summary>Script d'appel</summary><pre style="margin-top:8px">${esc(sp.script_appel)}</pre></details>
+    <details><summary>Objections et réponses</summary>${(sp.objections||[]).map(o=>`<p><b>« ${esc(o.objection)} »</b><br>${esc(o.reponse)}</p>`).join('')}</details>
+    <details><summary>Encaisser</summary><p>${esc(sp.encaissement)}</p></details></div>`;
 }
 const feed = list => list.map(a=>`<div class="item">${av(a.agent)}<div style="min-width:0"><div class="t">${esc(ag(a.agent).name)} · ${esc(a.title)}</div>${a.detail?`<div class="d">${esc(String(a.detail).slice(0,500))}</div>`:''}<div class="ts">${fmt(a.ts)}</div></div></div>`).join('') || '<p class="ts">Rien pour le moment.</p>';
 const empty = (t) => `<div class="panel"><p class="ts" style="margin:0">${t}</p></div>`;
@@ -457,13 +521,14 @@ const VIEWS = {
         <div class="kpi"><div class="v">${d.prospects.length}</div><div class="l">Prospects</div></div>
         <div class="kpi"><div class="v">${sent}</div><div class="l">Emails envoyés</div></div>
         <div class="kpi"><div class="v">${d.prospects.filter(p=>['a répondu','rdv','client'].includes(p.status)).length}</div><div class="l">Réponses / RDV</div></div>
-        <div class="kpi"><div class="v">${d.questions.filter(q=>!q.answer).length}</div><div class="l">Questions pour toi</div></div>
+        <div class="kpi"><div class="v">${d.questions.filter(q=>q.needs_founder && q.answered_by!=='fondateur').length}</div><div class="l">Infos à fournir</div></div>
       </div>
       <div class="panel">
-        <div class="row" style="justify-content:space-between"><h2 style="margin:0">Mission</h2>${S.running?`<span class="pill warn"><span class="spin">⟳</span> ${esc(S.step||'En cours')}</span>`:'<span class="pill ok">Équipe disponible</span>'}</div>
-        <div class="row" style="margin-top:10px"><input id="focus" placeholder="Orientation facultative : « plombiers en Île-de-France », « kinés », « nouvelle niche santé »…" style="flex:1;min-width:220px"><button class="btn" id="go-cycle" ${S.running||!S.sample?'disabled':''}>🚀 Lancer un cycle complet</button></div>
+        <div class="row" style="justify-content:space-between"><h2 style="margin:0">Mission</h2><div class="row">${S.running||S.busy.size?`<span class="pill warn"><span class="spin">⟳</span> ${esc(S.step||'Au travail')}</span><button class="btn bad" data-stop>⏹ Arrêter les agents</button>`:'<span class="pill ok">Équipe disponible</span>'}</div></div>
+        <div class="row" style="margin-top:10px"><input id="focus" placeholder="Orientation facultative : « plombiers en Île-de-France », « kinés », « nouvelle niche santé »…" style="flex:1;min-width:220px"><button class="btn" id="go-cycle" ${S.running||!S.sample?'disabled':''}>🚀 Lancer un cycle complet</button><button class="btn ok" id="go-sprint" ${S.running||!S.sample?'disabled':''}>⚡ Sprint : une vente en 24 h</button></div>
         <p class="ts">Un cycle : étude des niches (si besoin) → réunion de décision → page de vente → conformité → campagnes → plan de prospection → emails → point d'étape. Compte 5 à 15 minutes ; garde la page ouverte.</p>
       </div>
+      ${sprintPanel()}
       <div class="grid2">
         <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Dernier point de Victor</h2><button class="btn ghost" data-go="discussion">Répondre</button></div>
           <p style="white-space:pre-wrap">${esc(report?.text||'Pas encore de point d’étape : lance un premier cycle.')}</p><span class="ts">${fmt(report?.ts)}</span></div>
@@ -485,10 +550,13 @@ const VIEWS = {
   },
   questions(v){
     const qs=S.data.questions.slice().sort((a,b)=>(!!a.answer)-(!!b.answer)||b.ts-a.ts);
-    v.innerHTML = `<div><h1>Questions des agents</h1><p class="sub">Quand une décision dépend de toi, ils te la posent ici. Tes réponses passent avant tout le reste dans leur travail.</p></div>
-      ${qs.map(q=>`<div class="panel"><div class="row">${av(q.agent)}<b>${esc(ag(q.agent).name)}</b><span class="ts">${fmt(q.ts)} · ${esc(q.context||'')}</span>${q.answer?'<span class="pill ok">répondue</span>':'<span class="pill warn">en attente</span>'}</div>
+    const auto = S.settings.autonomy!=='off', pending = qs.filter(q=>!q.answer).length;
+    v.innerHTML = `<div><h1>Questions des agents</h1><p class="sub">${auto?'Mode autonome : Victor tranche lui-même chaque question pour que l’équipe avance sans t’attendre. Tu peux corriger n’importe quelle décision ; ta réponse passe alors avant tout.':'Mode validation : les agents attendent ta réponse.'}</p></div>
+      <div class="panel row"><span class="pill ${auto?'ok':''}">${auto?'Mode autonome':'Mode validation'}</span><button class="btn ghost" id="toggle-auto">${auto?'Passer en mode validation':'Passer en mode autonome'}</button>${pending?`<button class="btn" id="decide-all" ${S.sample&&!S.running?'':'disabled'}>Laisser Victor trancher les ${pending} question(s)</button>`:''}</div>
+      ${qs.map(q=>`<div class="panel"><div class="row">${av(q.agent)}<b>${esc(ag(q.agent).name)}</b><span class="ts">${fmt(q.ts)} · ${esc(q.context||'')}</span>${!q.answer?'<span class="pill warn">en attente</span>':q.answered_by==='fondateur'?'<span class="pill ok">ta réponse</span>':'<span class="pill">décidé par Victor</span>'}${q.needs_founder&&q.answered_by!=='fondateur'?'<span class="pill warn">info à fournir</span>':''}</div>
         <p style="white-space:pre-wrap">${esc(q.question)}</p>
-        ${q.answer?`<p><b>Ta réponse :</b> ${esc(q.answer)}</p>`:`<textarea rows="2" id="ans-${q.id}" placeholder="Ta réponse…"></textarea><div class="row" style="margin-top:8px"><button class="btn" data-answer="${q.id}" ${S.sample?'':'disabled'}>Répondre</button></div>`}</div>`).join('') || empty('Aucune question pour le moment.')}`;
+        ${q.answer?`<p><b>${q.answered_by==='fondateur'?'Ta réponse':'Décision'} :</b> ${esc(q.answer)}</p>${q.needs_founder&&q.answered_by!=='fondateur'?`<p class="ts"><b>Seul toi peux fournir :</b> ${esc(q.needs_founder)}</p>`:''}`:''}
+        ${q.answered_by==='fondateur'?'':`<details ${q.answer?'':'open'}><summary>${q.answer?'Corriger cette décision':'Répondre moi-même'}</summary><textarea rows="2" id="ans-${q.id}" placeholder="Ta réponse…" style="margin-top:8px"></textarea><div class="row" style="margin-top:8px"><button class="btn" data-answer="${q.id}" ${S.sample?'':'disabled'}>Envoyer</button></div></details>`}</div>`).join('') || empty('Aucune question pour le moment.')}`;
   },
   reunions(v){
     if(S.openMeeting){ return meetingView(v, S.data.meetings.find(m=>m.id===S.openMeeting)); }
@@ -589,13 +657,18 @@ function bind(v){
   v.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ if(b.dataset.agentGo) S.chatAgent=b.dataset.agentGo; go(b.dataset.go); });
   const on=(sel,fn)=>{ const el=v.querySelector(sel); if(el) el.onclick=fn; };
   on('#go-cycle', ()=>runCycle($('#focus').value.trim()));
+  on('#go-sprint', ()=>runSprint());
+  v.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{ const t=$('#sp-msg-'+b.dataset.copy).textContent; navigator.clipboard.writeText(t).then(()=>toast('Message copié'),()=>{ const r=document.createRange(); r.selectNodeContents($('#sp-msg-'+b.dataset.copy)); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast('Texte sélectionné : fais Copier'); }); });
+  v.querySelectorAll('[data-stop]').forEach(b=>b.onclick=stopAgents);
+  on('#toggle-auto', async()=>{ await saveSettings({autonomy: S.settings.autonomy==='off'?'on':'off'}); toast('Mode mis à jour'); });
+  on('#decide-all', async()=>{ S.running=true; render(); try{ await decidePending(); toast('Questions tranchées'); }catch(e){ toast(agentError(e)); } finally{ S.running=false; S.step=''; render(); } });
   v.querySelectorAll('[data-agent]').forEach(b=>b.onclick=()=>{ S.chatAgent=b.dataset.agent; render(); });
   const sendChat = async ()=>{ const t=$('#chat-text').value.trim(); if(!t||S.typing) return; $('#chat-text').value=''; try{ await chat(S.chatAgent,t); }catch(e){ toast(agentError(e)); } render(); };
   on('#chat-send', sendChat);
   const ta=$('#chat-text'); if(ta) ta.onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); ta.blur(); sendChat(); } };
   v.querySelectorAll('[data-answer]').forEach(b=>b.onclick=async()=>{ const q=S.data.questions.find(x=>x.id===b.dataset.answer), a=$('#ans-'+q.id).value.trim(); if(!a) return; busyBtn(b,'Envoi…'); try{ await answerQuestion(q,a); toast('Réponse transmise'); }catch(e){ toast(agentError(e)); } $('#ans-'+q.id)?.blur(); render(); });
   on('#convene', async()=>{ const t=$('#topic').value.trim(); if(!t) return; const parts=[...v.querySelectorAll('.part:checked')].map(c=>c.value); $('#topic').blur(); S.running=true; toast('Réunion convoquée');
-    holdMeeting(t,{participants:parts}).catch(e=>toast(agentError(e))).finally(()=>{ S.running=false; S.step=''; render(); });
+    holdMeeting(t,{participants:parts}).catch(e=>{ if(e?.code!=='stopped'&&e?.code!=='cancelled') toast(agentError(e)); }).finally(()=>{ S.running=false; S.step=''; render(); });
     setTimeout(()=>{ if(S.meetingId){ S.openMeeting=S.meetingId; render(); } },1500); });
   v.querySelectorAll('[data-meeting]').forEach(el=>{ const open=()=>{ S.openMeeting=el.dataset.meeting; render(); }; el.onclick=open; el.onkeydown=e=>{ if(e.key==='Enter') open(); }; });
   on('#back-meetings', ()=>{ S.openMeeting=null; render(); });
