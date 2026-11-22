@@ -77,10 +77,17 @@ const MAIN = document.getElementById('main').textContent;
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const eur = n => `${Number(n||0).toLocaleString('fr-FR')} €`;
 let canEdit = false, artifact = null, editing = false;
+// Lien personnel envoyé au prospect (#r-xxx) : transmis à Stripe pour savoir qui a payé
+const REF = (location.hash.match(/^#r-([A-Za-z0-9-]{1,80})$/)||[])[1] || '';
+function payUrl(){
+  if(!state.payment_link) return '';
+  if(!REF) return state.payment_link;
+  try{ const u=new URL(state.payment_link); u.searchParams.set('client_reference_id', REF); return u.toString(); }catch{ return state.payment_link; }
+}
 
 function buyBlock(){
   const setup = state.launch_active ? state.launch_price : state.price_setup;
-  if(state.payment_link) return `<a class="btn" href="${esc(state.payment_link)}" target="_blank" rel="noopener">Réserver ma place — ${eur(setup)}</a>`;
+  if(state.payment_link) return `<a class="btn" href="${esc(payUrl())}" target="_blank" rel="noopener">Réserver ma place — ${eur(setup)}</a>`;
   return `<a class="btn" href="#contact">Réserver un appel de 20 minutes</a>`;
 }
 function contactBlock(){
