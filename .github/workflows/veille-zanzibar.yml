@@ -1,0 +1,45 @@
+name: Veille Zanzibar quotidienne
+
+on:
+  schedule:
+    - cron: "17 5 * * *"   # tous les jours vers 8h17 heure de Zanzibar (05:17 UTC)
+  workflow_dispatch:        # bouton "Run workflow" pour lancer à la main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: veille-zanzibar
+  cancel-in-progress: false
+
+jobs:
+  veille:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r zanzibar-veille/requirements.txt
+
+      - name: Lancer la veille et les agents IA
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: python zanzibar-veille/veille.py
+
+      - name: Enregistrer le rapport
+        run: |
+          git config user.name "veille-zanzibar-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add zanzibar-veille/data zanzibar-veille/rapports docs
+          git diff --cached --quiet || git commit -m "Veille Zanzibar $(date -u +%F)"
+          git pull --rebase
+          git push
