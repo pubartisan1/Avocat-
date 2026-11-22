@@ -1,0 +1,282 @@
+[
+  {
+    "titre": "Karibu Langues : académie de français/italien hôtelier pour jeunes Zanzibarites, payée par les hôtels",
+    "concept": "Modules hybrides de 4 à 6 mois (plateforme en ligne + formateurs zanzibarites) pour le personnel en contact avec les clients : réception, restaurant, spa, chauffeurs. Badge reconnu par les hôtels partenaires. Société en France, enseignement via un organisme local déjà enregistré, jamais de prête-nom.",
+    "notes": {
+      "demande": 7,
+      "cout_faible": 8,
+      "faisabilite_legale": 8,
+      "faible_concurrence": 7,
+      "acceptation_sociale": 10,
+      "gerable_a_distance": 8
+    },
+    "score_total": 80,
+    "verdict": "GO",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md",
+    "cible": "Hôtels moyen et haut de gamme à clientèle italienne et française ; jeunes Zanzibarites en recherche d'emploi",
+    "budget_eur": "20 000 à 23 000 € la 1re année",
+    "modele_revenus": "Environ 200 € par apprenant et par session, payés par l'hôtel ; subventions en plus",
+    "strategie": {
+      "concept": "Modules hybrides de 4 à 6 mois (plateforme en ligne + formateurs zanzibarites) pour le personnel en contact avec les clients : réception, restaurant, spa, chauffeurs. Badge reconnu par les hôtels partenaires. Société en France, enseignement via un organisme local déjà enregistré, jamais de prête-nom.",
+      "impact_actus_du_jour": "Point de départ issu de la recherche initiale.",
+      "plan_30_jours": [
+        "Jours 1-5 : liste de 60 hôtels très fréquentés par les Italiens et les Français (bulletins OCGS)",
+        "Jours 6-12 : 20 entretiens avec des DRH/DG, objectif 3 lettres d'intention",
+        "Jours 8-15 : contacts avec l'Alliance française (AFZ), le ZCET et le ministère du Travail",
+        "Jours 10-20 : avocat zanzibarite (retenue à la source, enregistrement VTA, licence)",
+        "Jours 15-25 : module de 20 h « réception en français »",
+        "Jours 20-30 : voyage, recrutement de 2 formateurs, pilote avec un hôtel"
+      ],
+      "test_rapide_a_faible_cout": "Envoyer une offre d'une page à 60 hôtels et viser 3 lettres d'intention avant de dépenser plus.",
+      "indicateurs_de_succes": [
+        "3 lettres d'intention à J+30",
+        "1 pilote payé à J+60"
+      ],
+      "risques": [
+        "Les hôtels ne paient pas → préventes et pilote",
+        "Flou réglementaire → partenaire local enregistré et avocat",
+        "Turnover du personnel formé → engagement de rétention avec l'hôtel"
+      ]
+    }
+  },
+  {
+    "titre": "Agence de marketing digital à distance pour guesthouses locales",
+    "concept": "Capacité de paiement des guesthouses non prouvée ; forte concurrence des freelances.",
+    "notes": {
+      "demande": 4,
+      "cout_faible": 9,
+      "faisabilite_legale": 7,
+      "faible_concurrence": 5,
+      "acceptation_sociale": 8,
+      "gerable_a_distance": 8
+    },
+    "score_total": 68,
+    "verdict": "À CREUSER",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "Plateforme en France vendant des séjours via des opérateurs zanzibarites agréés",
+    "concept": "Marché saturé (Evaneos déjà présent).",
+    "notes": {
+      "demande": 7,
+      "cout_faible": 8,
+      "faisabilite_legale": 6,
+      "faible_concurrence": 3,
+      "acceptation_sociale": 7,
+      "gerable_a_distance": 8
+    },
+    "score_total": 65,
+    "verdict": "NON",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "Logiciel de réservation pour petits prestataires locaux",
+    "concept": "",
+    "notes": {
+      "demande": 5,
+      "cout_faible": 7,
+      "faisabilite_legale": 7,
+      "faible_concurrence": 5,
+      "acceptation_sociale": 7,
+      "gerable_a_distance": 8
+    },
+    "score_total": 65,
+    "verdict": "À CREUSER",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "Import en France de cosmétiques aux algues de coopératives de femmes",
+    "concept": "",
+    "notes": {
+      "demande": 5,
+      "cout_faible": 6,
+      "faisabilite_legale": 7,
+      "faible_concurrence": 4,
+      "acceptation_sociale": 9,
+      "gerable_a_distance": 7
+    },
+    "score_total": 63,
+    "verdict": "À CREUSER",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "Collecte et recyclage des déchets hôteliers",
+    "concept": "Zanrec est déjà en place avec environ 106 hôtels.",
+    "notes": {
+      "demande": 8,
+      "cout_faible": 4,
+      "faisabilite_legale": 3,
+      "faible_concurrence": 5,
+      "acceptation_sociale": 9,
+      "gerable_a_distance": 5
+    },
+    "score_total": 57,
+    "verdict": "NON",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "Centrale d'achat de produits locaux pour les hôtels",
+    "concept": "Seuls 16 % des achats des resorts se font sur l'île.",
+    "notes": {
+      "demande": 7,
+      "cout_faible": 5,
+      "faisabilite_legale": 3,
+      "faible_concurrence": 6,
+      "acceptation_sociale": 9,
+      "gerable_a_distance": 4
+    },
+    "score_total": 57,
+    "verdict": "À CREUSER",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "Import d'épices bio",
+    "concept": "Monopole de l'office d'État ZSTC sur le clou de girofle.",
+    "notes": {
+      "demande": 5,
+      "cout_faible": 6,
+      "faisabilite_legale": 4,
+      "faible_concurrence": 5,
+      "acceptation_sociale": 8,
+      "gerable_a_distance": 6
+    },
+    "score_total": 57,
+    "verdict": "NON",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "Fontaines d'eau filtrée pour remplacer les bouteilles plastique",
+    "concept": "",
+    "notes": {
+      "demande": 6,
+      "cout_faible": 5,
+      "faisabilite_legale": 3,
+      "faible_concurrence": 6,
+      "acceptation_sociale": 8,
+      "gerable_a_distance": 5
+    },
+    "score_total": 55,
+    "verdict": "À CREUSER",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "Solaire et économies d'énergie pour hôtels",
+    "concept": "",
+    "notes": {
+      "demande": 6,
+      "cout_faible": 3,
+      "faisabilite_legale": 3,
+      "faible_concurrence": 5,
+      "acceptation_sociale": 7,
+      "gerable_a_distance": 5
+    },
+    "score_total": 48,
+    "verdict": "À CREUSER",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "Excursions et tours",
+    "concept": "Activité réservée aux Zanzibarites (Tourism Act 2009).",
+    "notes": {
+      "demande": 8,
+      "cout_faible": 7,
+      "faisabilite_legale": 1,
+      "faible_concurrence": 2,
+      "acceptation_sociale": 4,
+      "gerable_a_distance": 5
+    },
+    "score_total": 45,
+    "verdict": "NON",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "Conciergerie Airbnb",
+    "concept": "Location non déclarée et terrain : la ZIPA met en garde.",
+    "notes": {
+      "demande": 6,
+      "cout_faible": 5,
+      "faisabilite_legale": 2,
+      "faible_concurrence": 4,
+      "acceptation_sociale": 3,
+      "gerable_a_distance": 6
+    },
+    "score_total": 43,
+    "verdict": "NON",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "École de kitesurf",
+    "concept": "Conflits avec les algocultrices à Paje.",
+    "notes": {
+      "demande": 6,
+      "cout_faible": 5,
+      "faisabilite_legale": 2,
+      "faible_concurrence": 3,
+      "acceptation_sociale": 5,
+      "gerable_a_distance": 4
+    },
+    "score_total": 42,
+    "verdict": "NON",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "Table d'hôtes et expériences culinaires",
+    "concept": "",
+    "notes": {
+      "demande": 6,
+      "cout_faible": 4,
+      "faisabilite_legale": 2,
+      "faible_concurrence": 4,
+      "acceptation_sociale": 6,
+      "gerable_a_distance": 3
+    },
+    "score_total": 42,
+    "verdict": "NON",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  },
+  {
+    "titre": "Petit hôtel de charme",
+    "concept": "Seuil ZIPA de 2,5 M USD.",
+    "notes": {
+      "demande": 8,
+      "cout_faible": 1,
+      "faisabilite_legale": 1,
+      "faible_concurrence": 3,
+      "acceptation_sociale": 4,
+      "gerable_a_distance": 3
+    },
+    "score_total": 33,
+    "verdict": "NON",
+    "premiere_vue": "2026-11-22",
+    "derniere_maj": "2026-11-22",
+    "source": "recherche-initiale/idee-business-2026-11-22.md"
+  }
+]
