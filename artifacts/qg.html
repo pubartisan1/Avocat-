@@ -106,6 +106,7 @@ details summary{cursor:pointer;font-weight:600}
 <div class="app">
   <aside>
     <div class="brand">QG VotreIAPro<small>Ton équipe d'agents entrepreneurs</small></div>
+    <div id="power" style="padding:0 4px 10px"></div>
     <nav id="nav"></nav>
     <div class="team" id="team"></div>
   </aside>
@@ -137,7 +138,7 @@ const COLS = ['activity','meetings','messages','questions','niches','offers','pr
 const ROOT = 'qg/main';
 
 // ============================================================ état
-const S = { db:null, sample:null, mcp:null, loaded:false, failed:false, data:{}, settings:{}, view:'tableau', chatAgent:'victor', running:false, busy:new Set(), step:'', meetingId:null, typing:false, abort:new AbortController(), stopRequested:false };
+const S = { db:null, sample:null, mcp:null, loaded:false, failed:false, data:{}, settings:{}, view:'tableau', chatAgent:'victor', running:false, busy:new Set(), step:'', meetingId:null, typing:false, abort:new AbortController(), stopRequested:false, usage:{date:'',count:0} };
 COLS.forEach(c => S.data[c] = []);
 
 const $ = (s, el=document) => el.querySelector(s);
@@ -165,6 +166,7 @@ function subscribe(){
       scheduleRender();
     }, () => { S.failed=true; scheduleRender(); });
   });
+  S.db.doc('qg/usage').onSnapshot(snap => { S.usage = snap.exists ? snap.data() : {date:'',count:0}; scheduleRender(); }, ()=>{});
   S.db.doc('qg/settings').onSnapshot(snap => { S.settings = snap.exists ? snap.data() : {}; scheduleRender(); }, ()=>{});
 }
 let rq=false;
@@ -195,6 +197,12 @@ async function think(agent, task, {json=false, tier='default', onText}={}){
   try{
     const p = prompt(agent, task);
     if(S.stopRequested) throw stopError();
+    if(S.settings.paused==='on') throw Object.assign(new Error("L'équipe est en pause : clique sur « Relancer l'équipe » pour qu'elle reprenne."),{code:'stopped'});
+    const today = new Date().toISOString().slice(0,10), limit = Number(S.settings.daily_limit||200);
+    const used = S.usage.date===today ? S.usage.count : 0;
+    if(used >= limit) throw Object.assign(new Error(`Limite du jour atteinte (${limit} tâches d'agents). L'équipe reprend demain, ou augmente la limite dans Réglages.`),{code:'limit'});
+    S.usage = {date:today, count:used+1};
+    S.db.doc('qg/usage').set(S.usage).catch(()=>{});
     const signal = S.abort.signal;
     if(json) return await S.sample.json(p + "\n\nRéponds UNIQUEMENT avec un JSON valide, sans texte autour.", {modelTier:tier, signal});
     const r = await S.sample(p, {modelTier:tier, onText, cache:false, signal});
@@ -202,16 +210,21 @@ async function think(agent, task, {json=false, tier='default', onText}={}){
   } finally { S.busy.delete(agent); renderChrome(); }
 }
 function agentError(e){
-  if(e?.code==='stopped' || e?.code==='cancelled') return 'Agents arrêtés.';
+  if(e?.code==='stopped' || e?.code==='cancelled') return e?.message && e.code==='stopped' ? e.message : 'Agents arrêtés.';
   const m = e?.code==='not_granted' ? "Autorise les agents (fenêtre d'autorisation de claude.ai) pour qu'ils puissent travailler."
     : e?.code==='rate_limited' ? "Les agents ont atteint la limite d'utilisation pour le moment. Réessaie dans quelques minutes."
     : (e?.message || 'Erreur inconnue');
   return m;
 }
 function stopError(){ return Object.assign(new Error('Agents arrêtés.'),{code:'stopped'}); }
+async function pauseTeam(){
+  await saveSettings({paused:'on'});
+  stopAgents();
+}
+async function resumeTeam(){ await saveSettings({paused:'off'}); log('victor','▶ Le fondateur a relancé l’équipe'); toast('Équipe relancée'); render(); }
 function stopAgents(){
   S.stopRequested=true; S.abort.abort(); S.abort=new AbortController();
-  log('victor','⏹ Le fondateur a arrêté les agents'); toast('Agents arrêtés');
+  log('victor','⏹ Le fondateur a arrêté les agents'); toast('Agents arrêtés : plus aucune tâche ne tourne');
   setTimeout(()=>{ S.stopRequested=false; S.running=false; S.step=''; S.busy.clear(); render(); }, 1200);
 }
 // Une question d'un agent est tranchée par Victor tout de suite (mode autonome) ; le fondateur peut corriger ensuite.
@@ -477,8 +490,17 @@ function renderChrome(){
   const counts = { questions: S.data.questions.filter(q=>!q.answer).length||'', emails: S.data.emails.filter(e=>e.status==='à valider').length||'' };
   $('#nav').innerHTML = TABS.map(([id,label])=>`<button data-v="${id}" class="${S.view===id?'on':''}"><span>${label}</span><span class="count">${counts[id]||''}</span></button>`).join('');
   $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.v));
-  setTimeout(()=>{ const b=$('#side-stop'); if(b) b.onclick=stopAgents; });
-  $('#team').innerHTML = (S.running||S.busy.size?`<button class="btn bad" id="side-stop" style="margin:0 8px 6px">⏹ Arrêter les agents</button>`:'') + `<div class="lbl">L'équipe</div>` + Object.entries(AGENTS).map(([id,a])=>`<div class="member ${S.busy.has(id)?'busy':''}">${av(id)}<div><b>${a.name}</b><span>${a.role}</span></div></div>`).join('');
+  const paused = S.settings.paused==='on';
+  $('#power').innerHTML = paused
+    ? `<button class="btn ok" id="side-resume" style="width:100%">▶ Relancer l'équipe</button><p class="ts" style="margin:6px 2px 0">L'équipe est en pause : aucun agent ne travaille.</p>`
+    : `<button class="btn bad" id="side-pause" style="width:100%">⏸ Arrêter les agents</button><p class="ts" style="margin:6px 2px 0">${usageText()}</p>`;
+  const bp=$('#side-pause'); if(bp) bp.onclick=pauseTeam;
+  const br=$('#side-resume'); if(br) br.onclick=resumeTeam;
+  $('#team').innerHTML = `<div class="lbl">L'équipe</div>` + Object.entries(AGENTS).map(([id,a])=>`<div class="member ${S.busy.has(id)?'busy':''}">${av(id)}<div><b>${a.name}</b><span>${a.role}</span></div></div>`).join('');
+}
+function usageText(){
+  const today=new Date().toISOString().slice(0,10), used=S.usage.date===today?S.usage.count:0, limit=Number(S.settings.daily_limit||200);
+  return `${used} / ${limit} tâches d'agents aujourd'hui`;
 }
 function go(v){ S.view=v; if(location.hash!=='#'+v) location.hash=v; render(); window.scrollTo(0,0); }
 window.addEventListener('hashchange',()=>{ const v=location.hash.slice(1); if(TABS.some(t=>t[0]===v) && v!==S.view){ S.view=v; render(); } });
@@ -510,6 +532,7 @@ const VIEWS = {
     const d=S.data, sent=d.emails.filter(e=>e.status==='envoyé').length;
     const report = d.messages.find(m=>m.thread==='victor' && m.report) || d.messages.find(m=>m.thread==='victor' && m.sender==='victor');
     const banners = [];
+    if(S.settings.paused==='on') banners.push(`L'équipe est en pause. <button class="btn ok" id="banner-resume">▶ Relancer l'équipe</button>`);
     if(!S.sample) banners.push("Les agents ne peuvent pas travailler sur cet affichage. Ouvre le QG sur claude.ai, connecté à ton compte.");
     if(!S.settings.company_name) banners.push(`Avant d'envoyer des emails : renseigne ta raison sociale et ton adresse dans <button class="btn ghost" data-go="reglages">Réglages</button>`);
     v.innerHTML = `
@@ -524,7 +547,7 @@ const VIEWS = {
         <div class="kpi"><div class="v">${d.questions.filter(q=>q.needs_founder && q.answered_by!=='fondateur').length}</div><div class="l">Infos à fournir</div></div>
       </div>
       <div class="panel">
-        <div class="row" style="justify-content:space-between"><h2 style="margin:0">Mission</h2><div class="row">${S.running||S.busy.size?`<span class="pill warn"><span class="spin">⟳</span> ${esc(S.step||'Au travail')}</span><button class="btn bad" data-stop>⏹ Arrêter les agents</button>`:'<span class="pill ok">Équipe disponible</span>'}</div></div>
+        <div class="row" style="justify-content:space-between"><h2 style="margin:0">Mission</h2><div class="row">${S.running||S.busy.size?`<span class="pill warn"><span class="spin">⟳</span> ${esc(S.step||'Au travail')}</span><button class="btn bad" data-stop>⏸ Arrêter les agents</button>`:'<span class="pill ok">Équipe disponible</span>'}</div></div>
         <div class="row" style="margin-top:10px"><input id="focus" placeholder="Orientation facultative : « plombiers en Île-de-France », « kinés », « nouvelle niche santé »…" style="flex:1;min-width:220px"><button class="btn" id="go-cycle" ${S.running||!S.sample?'disabled':''}>🚀 Lancer un cycle complet</button><button class="btn ok" id="go-sprint" ${S.running||!S.sample?'disabled':''}>⚡ Sprint : une vente en 24 h</button></div>
         <p class="ts">Un cycle : étude des niches (si besoin) → réunion de décision → page de vente → conformité → campagnes → plan de prospection → emails → point d'étape. Compte 5 à 15 minutes ; garde la page ouverte.</p>
       </div>
@@ -589,6 +612,7 @@ const VIEWS = {
         <label for="p-offer">Pour l'offre</label><select id="p-offer">${offers.map(o=>`<option value="${o.id}">${esc(o.name)}</option>`).join('')||'<option value="">Aucune offre pour l’instant</option>'}</select>
         <label for="p-raw">Texte contenant les contacts</label><textarea id="p-raw" rows="5" placeholder="Colle ici une page d'annuaire, une liste de cabinets avec leurs emails…"></textarea>
         <div class="row" style="margin-top:8px"><button class="btn" id="p-extract" ${S.sample?'':'disabled'}>🎯 Extraire les contacts</button><button class="btn ghost" data-go="discussion" data-agent-go="hugo">Où trouver des contacts ? (Hugo)</button></div></div>
+      ${(()=>{ const n=S.data.prospects.filter(p=>!p.unsubscribed && !S.data.emails.some(e=>e.prospect_id===p.id)).length; return n?`<div class="panel row"><span>${n} prospect(s) n'ont pas encore d'email rédigé.</span><button class="btn" id="write-all" ${S.running||!S.sample?'disabled':''}>✉️ Clara, écris leurs emails</button></div>`:''; })()}
       ${S.data.prospects.length?`<div class="panel tablewrap"><table><tr><th>Contact</th><th>Ville</th><th>Personnalisation</th><th>Statut</th><th></th></tr>
         ${S.data.prospects.map(p=>`<tr><td><b>${esc(p.name)}</b><div>${esc(p.company||'')}</div><div class="ts">${esc(p.email)}</div></td><td>${esc(p.city||'')}</td><td class="ts">${esc(p.personalization||'')}</td>
         <td><select data-pstatus="${p.id}" aria-label="Statut">${statuses.map(s=>`<option ${s===p.status?'selected':''}>${s}</option>`).join('')}</select></td>
@@ -618,7 +642,7 @@ const VIEWS = {
   },
   niches(v){
     v.innerHTML = `<div><h1>Niches</h1><p class="sub">Les analyses de Nora. Celles marquées « sources » ont été vérifiées sur Internet.</p></div>
-      <div class="panel row"><input id="n-focus" placeholder="Étudier une niche précise : « kinésithérapeutes », « couvreurs »…" style="flex:1;min-width:220px"><button class="btn" id="n-go" ${S.running||!S.sample?'disabled':''}>🔎 Lancer l'étude</button></div>
+      <div class="panel row"><input id="n-focus" placeholder="Étudier une niche précise : « kinésithérapeutes », « couvreurs »…" style="flex:1;min-width:220px"><button class="btn" id="n-go" ${S.running||!S.sample?'disabled':''}>🔎 Lancer l'étude</button><button class="btn ok" id="n-new" ${S.running||!S.sample?'disabled':''}>🔭 Trouver d'autres secteurs</button></div>
       ${S.data.niches.slice().sort((a,b)=>b.score-a.score).map(n=>`<div class="panel"><div class="row"><b>${esc(n.name)}</b><span class="pill ${n.score>=8?'ok':n.score>=6.5?'warn':'bad'}">${n.score}/10</span><span class="ts">${esc(n.sector)} · ${fmt(n.ts)}</span>${(n.sources||[]).length?'<span class="pill">sources</span>':''}</div>
         <p><b>Problème :</b> ${esc(n.problem)}</p><p><b>Offre possible :</b> ${esc(n.offer_idea)}</p>
         <p class="ts"><b>Cible :</b> ${esc(n.audience)} · <b>Capacité à payer :</b> ${esc(n.willingness_to_pay)} · <b>Concurrence :</b> ${esc(n.competition)}</p><p class="ts">${esc(n.reasoning)}</p>
@@ -636,8 +660,18 @@ const VIEWS = {
           <p class="ts">Dans Stripe : Catalogue de produits → Liens de paiement → Créer. Colle le lien ici.</p>
           ${f('vitrine_url','Adresse de ta page de vente publique')}
           ${f('ads_budget','Budget pub mensuel autorisé (€)','300')}
+          ${f('daily_limit','Nombre maximum de tâches d’agents par jour','200')}
+          <p class="ts">Une tâche = une réponse d'un agent (un message, une prise de parole en réunion, un email rédigé). Un cycle complet en compte environ 15 à 30.</p>
           <label for="set-vision">Ta vision (guide toutes les décisions)</label><textarea id="set-vision" name="vision" rows="4">${esc(s.vision||'')}</textarea></div>
         <div><button class="btn">Enregistrer</button></div></form>
+      <div class="panel"><h2 style="margin-top:0">Combien ça coûte ?</h2>
+        <div class="tablewrap"><table><tr><th>Poste</th><th>Coût</th></tr>
+        <tr><td>Hébergement du QG et de la page de vente (claude.ai)</td><td>0 €</td></tr>
+        <tr><td>Travail des agents</td><td>Inclus dans ton abonnement Claude, sans facture en plus. Il consomme ton quota d'utilisation : si la limite est atteinte, les agents s'arrêtent jusqu'à sa remise à zéro.</td></tr>
+        <tr><td>Envoi des emails (ton Gmail)</td><td>0 €</td></tr>
+        <tr><td>Paiements Stripe</td><td>Aucun abonnement ; une commission prélevée sur chaque vente encaissée (voir la grille tarifaire Stripe).</td></tr>
+        <tr><td>Publicité</td><td>0 € tant que tu ne valides aucune campagne.</td></tr></table></div>
+        <p class="ts">Pour maîtriser ta consommation : le bouton « ⏸ Arrêter les agents » en haut à gauche, et la limite de tâches par jour ci-dessus.</p></div>
       <div class="panel"><h2 style="margin-top:0">Connexions</h2><div class="row"><span class="pill ${S.sample?'ok':'bad'}">Agents ${S.sample?'actifs':'indisponibles'}</span><span class="pill ${S.mcp?'ok':'bad'}">Gmail ${S.mcp?'prêt (autorisation demandée au 1er envoi)':'indisponible'}</span></div></div>`;
   },
 };
@@ -658,8 +692,10 @@ function bind(v){
   const on=(sel,fn)=>{ const el=v.querySelector(sel); if(el) el.onclick=fn; };
   on('#go-cycle', ()=>runCycle($('#focus').value.trim()));
   on('#go-sprint', ()=>runSprint());
+  on('#banner-resume', resumeTeam);
+  on('#write-all', async()=>{ S.running=true; render(); try{ let n=0; for(const o of S.data.offers.filter(o=>o.status!=='archivée')) n+=await writeEmails(o); toast(`${n} email(s) rédigé(s) : à valider dans Emails`); }catch(e){ toast(agentError(e)); } finally{ S.running=false; S.step=''; render(); } });
   v.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{ const t=$('#sp-msg-'+b.dataset.copy).textContent; navigator.clipboard.writeText(t).then(()=>toast('Message copié'),()=>{ const r=document.createRange(); r.selectNodeContents($('#sp-msg-'+b.dataset.copy)); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast('Texte sélectionné : fais Copier'); }); });
-  v.querySelectorAll('[data-stop]').forEach(b=>b.onclick=stopAgents);
+  v.querySelectorAll('[data-stop]').forEach(b=>b.onclick=pauseTeam);
   on('#toggle-auto', async()=>{ await saveSettings({autonomy: S.settings.autonomy==='off'?'on':'off'}); toast('Mode mis à jour'); });
   on('#decide-all', async()=>{ S.running=true; render(); try{ await decidePending(); toast('Questions tranchées'); }catch(e){ toast(agentError(e)); } finally{ S.running=false; S.step=''; render(); } });
   v.querySelectorAll('[data-agent]').forEach(b=>b.onclick=()=>{ S.chatAgent=b.dataset.agent; render(); });
@@ -686,6 +722,7 @@ function bind(v){
   v.querySelectorAll('[data-reply-go]').forEach(b=>b.onclick=async()=>{ const p=S.data.prospects.find(x=>x.id===b.dataset.replyGo), t=$('#reply-text-'+p.id).value.trim(); if(!t) return; busyBtn(b,'Inès analyse…'); try{ const r=await draftReply(p,t); toast('Réponse prête dans Emails'); $('#reply-text-'+p.id).blur(); }catch(e){ toast(agentError(e)); } render(); });
   v.querySelectorAll('[data-offer]').forEach(b=>b.onclick=async()=>{ await upd('offers', b.dataset.offer, {status:b.dataset.st}); });
   v.querySelectorAll('[data-camp]').forEach(b=>b.onclick=async()=>{ await upd('campaigns', b.dataset.camp, {status:b.dataset.st}); log('leo', `Campagne ${b.dataset.st} par le fondateur`); });
+  on('#n-new', ()=>{ S.running=true; render(); const known=S.data.niches.map(n=>n.name).join(' ; '); researchNiches(`explore des secteurs NOUVEAUX, autres que ceux déjà étudiés (${known}). Cherche des métiers qui souffrent d'un problème concret et coûteux (rendez-vous non honorés, devis non relancés, appels manqués, avis en ligne, paperasse, recrutement…) et qui paient déjà pour s'en sortir`).catch(e=>toast(agentError(e))).finally(()=>{ S.running=false; S.step=''; render(); }); });
   on('#n-go', ()=>{ const f=$('#n-focus').value.trim(); $('#n-focus').blur(); S.running=true; render(); researchNiches(f).catch(e=>toast(agentError(e))).finally(()=>{ S.running=false; S.step=''; render(); }); });
   const form=$('#set-form'); if(form) form.onsubmit=async e=>{ e.preventDefault(); await saveSettings(Object.fromEntries(new FormData(form))); document.activeElement?.blur(); toast('Réglages enregistrés'); render(); };
 }
