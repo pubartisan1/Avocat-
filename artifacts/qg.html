@@ -223,21 +223,6 @@ function stopError(){ return Object.assign(new Error('Agents arrêtés.'),{code:
 async function pauseTeam(){
   await saveSettings({paused:'on'});
   stopAgents();
-  if((S.settings.research_sessions||[]).some(x=>x.status!=='arrêtée')) { try{ await stopResearch(); }catch(e){ toast(e.message); } }
-}
-// Arrête les sessions de recherche Claude Code lancées pour le QG (elles consomment le quota même QG fermé)
-async function stopResearch(){
-  const ids = (S.settings.research_sessions||[]).filter(x=>x.status!=='arrêtée');
-  if(!ids.length){ toast('Aucune recherche en cours'); return; }
-  if(!S.mcp) throw new Error('Arrêt impossible sur cet affichage.');
-  let n=0, fail='';
-  for(const x of ids){
-    try{ await S.mcp.callTool('Claude Code Remote','interrupt_session',{session_id:x.id}); x.status='arrêtée'; n++; }
-    catch(e){ fail = e?.code==='server_not_connected'||e?.code==='not_in_manifest'||e?.code==='blocked_by_policy' ? "Cet affichage ne peut pas arrêter les recherches : demande-le directement à Claude Code (« arrête les recherches »)." : (e?.message||'erreur'); }
-  }
-  await saveSettings({research_sessions:S.settings.research_sessions});
-  log('victor', `⛔ ${n} recherche(s) de prospects arrêtée(s) par le fondateur`);
-  toast(fail || `${n} recherche(s) arrêtée(s)`);
 }
 async function resumeTeam(){ await saveSettings({paused:'off'}); log('victor','▶ Le fondateur a relancé l’équipe'); toast('Équipe relancée'); render(); }
 function stopAgents(){
@@ -676,9 +661,6 @@ function renderChrome(){
   $('#power').innerHTML = paused
     ? `<button class="btn ok" id="side-resume" style="width:100%">▶ Relancer l'équipe</button><p class="ts" style="margin:6px 2px 0">L'équipe est en pause : aucun agent ne travaille.</p>`
     : `<button class="btn bad" id="side-pause" style="width:100%">⏸ Arrêter les agents</button><p class="ts" style="margin:6px 2px 0">${usageText()}</p>`;
-  const running=(S.settings.research_sessions||[]).filter(x=>x.status!=='arrêtée').length;
-  if(running) $('#power').insertAdjacentHTML('beforeend', `<button class="btn bad" id="side-research" style="width:100%;margin-top:8px">⛔ Arrêter les ${running} recherches</button><p class="ts" style="margin:6px 2px 0">Recherches de prospects en cours : elles consomment ton quota même quand le QG est fermé.</p>`);
-  const bs=$('#side-research'); if(bs) bs.onclick=async()=>{ bs.disabled=true; bs.textContent='Arrêt…'; try{ await stopResearch(); }catch(e){ toast(e.message); } render(); };
   const bp=$('#side-pause'); if(bp) bp.onclick=pauseTeam;
   const br=$('#side-resume'); if(br) br.onclick=resumeTeam;
   $('#team').innerHTML = `<div class="lbl">L'équipe</div>` + Object.entries(AGENTS).map(([id,a])=>`<div class="member ${S.busy.has(id)?'busy':''}">${av(id)}<div><b>${a.name}</b><span>${a.role}</span></div></div>`).join('');
