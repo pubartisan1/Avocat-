@@ -1,0 +1,629 @@
+<title>QG VotreIAPro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Mise en page : poste de commandement — barre latérale de l'équipe, fil central, panneaux d'action */
+:root{
+  --bg:#f3f5f4; --panel:#ffffff; --ink:#132320; --muted:#5b6b67; --line:#dde4e1;
+  --accent:#0f6b5f; --accent-ink:#ffffff; --soft:#e5efec; --signal:#b7791f;
+  --ok:#1f7a3a; --ok-bg:#e3f3e7; --warn:#8a5a00; --warn-bg:#fbf0d9; --bad:#a3271f; --bad-bg:#fbe5e2;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Manrope", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1514; --panel:#14201e; --ink:#e4eeeb; --muted:#93a6a1; --line:#24332f;
+  --accent:#4fc2ad; --accent-ink:#06201b; --soft:#1a2c28; --signal:#e0a84a;
+  --ok:#7bd79a; --ok-bg:#163423; --warn:#f0c46b; --warn-bg:#3a2d10; --bad:#f19a90; --bad-bg:#3d1a17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1514; --panel:#14201e; --ink:#e4eeeb; --muted:#93a6a1; --line:#24332f;
+  --accent:#4fc2ad; --accent-ink:#06201b; --soft:#1a2c28; --signal:#e0a84a;
+  --ok:#7bd79a; --ok-bg:#163423; --warn:#f0c46b; --warn-bg:#3a2d10; --bad:#f19a90; --bad-bg:#3d1a17; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);margin:0}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:28px;font-weight:800;letter-spacing:-.01em}
+h2{font-size:18px;font-weight:600;margin:22px 0 10px}
+.app{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100%}
+aside{background:var(--panel);border-right:1px solid var(--line);padding-block:18px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:14px;display:flex;flex-direction:column;gap:4px}
+.brand{font-family:var(--display);font-weight:800;font-size:19px;padding:0 8px 12px}
+.brand small{display:block;font-family:var(--body);font-weight:500;font-size:12px;color:var(--muted)}
+nav button{all:unset;box-sizing:border-box;width:100%;display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:500}
+nav button:hover{background:var(--soft)}
+nav button:focus-visible{outline:2px solid var(--accent)}
+nav button.on{background:var(--accent);color:var(--accent-ink)}
+.count{background:var(--signal);color:#1b1300;border-radius:99px;font-size:11px;font-weight:700;padding:0 7px}
+.count:empty{display:none}
+.team{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;display:grid;gap:6px}
+.team .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 8px}
+.member{display:flex;gap:8px;align-items:center;padding:2px 8px;font-size:13px}
+.member b{font-weight:700}.member span{color:var(--muted);font-size:12px;display:block;line-height:1.2}
+.member.busy b::after{content:" · au travail";color:var(--signal);font-weight:600}
+main{padding-block:24px;padding-left:24px;padding-right:max(24px,env(safe-area-inset-right,0px));min-width:0}
+.view{max-width:1100px;margin:0 auto;display:grid;gap:14px}
+.sub{color:var(--muted);margin:4px 0 0;max-width:70ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi .v{font-family:var(--display);font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.kpi .l{color:var(--muted);font-size:13px}
+button.btn,.btn{font:600 14px var(--body);border:0;background:var(--accent);color:var(--accent-ink);padding:9px 14px;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ok{background:var(--ok);color:var(--panel)}
+.btn.bad{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.btn:disabled{opacity:.5;cursor:wait}
+.btn:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{resize:vertical}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--soft);color:var(--ink)}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.ts{color:var(--muted);font-size:12px}
+.av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;font-size:15px;background:var(--soft)}
+.feed{display:grid}
+.item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item .t{font-weight:600}.item .d{color:var(--muted);font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.banner{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px}
+.banner.info{background:var(--soft);color:var(--ink)}
+.chat{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;min-height:520px}
+.agents{display:grid;gap:2px;align-content:start}
+.agents button{all:unset;display:flex;gap:8px;align-items:center;padding:7px;border-radius:10px;cursor:pointer}
+.agents button.on{background:var(--soft)}.agents button:focus-visible{outline:2px solid var(--accent)}
+.agents small{display:block;color:var(--muted);font-size:12px;line-height:1.2}
+.thread{display:flex;flex-direction:column;min-height:520px;max-height:70vh;padding:0}
+.msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:82%;padding:10px 14px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:var(--accent);color:var(--accent-ink)}
+.msg.them{align-self:flex-start;background:var(--soft)}
+.composer{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.transcript .line{display:flex;gap:10px;margin-bottom:14px}
+.transcript .who{font-weight:700}.transcript .txt{white-space:pre-wrap;overflow-wrap:anywhere}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+pre{white-space:pre-wrap;font-size:13px;margin:0;overflow-wrap:anywhere}
+.spin{display:inline-block;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+details summary{cursor:pointer;font-weight:600}
+.toast{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1}
+.landing{border:1px solid var(--line);border-radius:12px;padding:20px;background:var(--bg)}
+.landing h3{font-size:24px;margin:6px 0}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  aside{border-right:0;border-bottom:1px solid var(--line);padding-right:max(14px,env(safe-area-inset-right,0px))}
+  nav{display:flex;flex-wrap:wrap;gap:4px}.team{display:none}
+  main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .grid2,.chat{grid-template-columns:1fr}
+}
+</style>
+
+<div class="app">
+  <aside>
+    <div class="brand">QG VotreIAPro<small>Ton équipe d'agents entrepreneurs</small></div>
+    <nav id="nav"></nav>
+    <div class="team" id="team"></div>
+  </aside>
+  <main><div class="view" id="view"><div class="panel"><h1>Ouverture du QG…</h1><p class="sub">Connexion à la mémoire de l'équipe.</p></div></div></main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+// ============================================================ équipe
+const AGENTS = {
+  victor:{name:'Victor',emoji:'🧭',role:'Directeur général',persona:"Tu es Victor, directeur général. Vision long terme, obsession du chiffre d'affaires et de la satisfaction client. Tu animes les réunions, tranches, fixes les priorités et rends compte au fondateur avec des résumés clairs, honnêtes et actionnables. Tu t'inspires des entrepreneurs qui ont bâti des fortunes en servant une seule profession à fond (logiciels verticaux, agences à prix fixe, abonnements récurrents)."},
+  nora:{name:'Nora',emoji:'🔎',role:'Recherche de niches',persona:"Tu es Nora, analyste de marché. Tu identifies les niches où des professionnels ont un problème douloureux, urgent, et pour lequel ils paient déjà. Tu analyses concurrence, prix pratiqués, taille de marché et ce qu'ont fait ceux qui ont réussi. Tu notes chaque niche avec rigueur et tu distingues clairement ce qui est sûr de ce qui est une estimation."},
+  leo:{name:'Léo',emoji:'📣',role:'Marketing & publicité',persona:"Tu es Léo, directeur marketing. Expert Google Ads, Meta Ads, LinkedIn, SEO local. Tu conçois des campagnes rentables : ciblage, angles, accroches, budgets, KPI (CPC, CPL, CAC), plans de test A/B."},
+  clara:{name:'Clara',emoji:'✉️',role:'Copywriter emailing',persona:"Tu es Clara, copywriter en prospection B2B. Emails courts, personnalisés, centrés sur le problème du destinataire, une seule demande claire. Tu maîtrises les objets qui donnent envie d'ouvrir et les relances polies et efficaces, avec le ton juste pour des professions exigeantes."},
+  hugo:{name:'Hugo',emoji:'🎯',role:'Prospection',persona:"Tu es Hugo, prospecteur. Tu sais exactement où trouver les professionnels ciblés (annuaires publics, sites de cabinets, pages contact) et tu extrais uniquement des coordonnées professionnelles réellement présentes dans les données qu'on te donne. Tu n'inventes jamais un contact."},
+  ines:{name:'Inès',emoji:'🤝',role:'Commerciale',persona:"Tu es Inès, commerciale. Tu réponds aux prospects, traites les objections (prix, temps, confiance), qualifies le besoin et amènes vers l'achat ou un rendez-vous. Chaleureuse, précise, tenace sans être insistante."},
+  sam:{name:'Sam',emoji:'🛠️',role:'Sites & produit',persona:"Tu es Sam, créateur de sites et responsable produit. Tu écris des pages de vente qui convertissent : promesse, problème, solution, bénéfices, déroulé, livrables, prix, garantie, FAQ, appel à l'action. Tu prépares aussi la livraison."},
+  juliette:{name:'Juliette',emoji:'⚖️',role:'Conformité',persona:"Tu es Juliette, responsable conformité. Tu vérifies le respect du droit français et européen (RGPD, prospection B2B, mentions légales, CGV, déontologie des professions ciblées comme la communication des avocats). Tu proposes des corrections concrètes."},
+};
+const ETHIQUE = `ÉTAT D'ESPRIT : équipe d'entrepreneurs d'élite, affamés de résultats, qui raisonnent en chiffres et ne lâchent jamais. Français impeccable, direct, concret.
+RÈGLES NON NÉGOCIABLES : jamais de faux témoignages, faux avis, faux chiffres ni fausse urgence ; prospection uniquement B2B vers des adresses professionnelles publiques, avec identité de l'expéditeur et possibilité de refus ; pas de promesse de résultat juridique ou médical ; si une info manque ou si une décision engage l'argent ou l'image du fondateur, poser la question au fondateur au lieu d'inventer.`;
+
+const TABS = [
+  ['tableau','Tableau de bord'],['discussion','Parler aux agents'],['questions','Questions des agents'],
+  ['reunions','Réunions'],['emails','Emails'],['prospects','Prospects'],['offres','Offres & sites'],
+  ['campagnes','Campagnes'],['niches','Niches'],['journal','Journal'],['reglages','Réglages'],
+];
+const COLS = ['activity','meetings','messages','questions','niches','offers','prospects','emails','campaigns'];
+const ROOT = 'qg/main';
+
+// ============================================================ état
+const S = { db:null, sample:null, mcp:null, loaded:false, failed:false, data:{}, settings:{}, view:'tableau', chatAgent:'victor', running:false, busy:new Set(), step:'', meetingId:null, typing:false };
+COLS.forEach(c => S.data[c] = []);
+
+const $ = (s, el=document) => el.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = ts => ts ? new Date(ts).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}) : '';
+const euros = n => `${Number(n||0).toLocaleString('fr-FR')} €`;
+const ag = id => AGENTS[id] || {name:id, emoji:'•', role:''};
+const av = id => `<div class="av" title="${esc(ag(id).name)}">${ag(id).emoji}</div>`;
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('on'),2800); }
+
+// ============================================================ mémoire (db)
+const col = c => S.db.collection(`${ROOT}/${c}`);
+async function add(c, data){ return col(c).add({...data, ts: Date.now()}); }
+async function upd(c, id, data){ return col(c).doc(id).update(data); }
+function log(agent, title, detail=''){ return add('activity',{agent,title,detail:String(detail||'').slice(0,4000)}).catch(()=>{}); }
+async function saveSettings(patch){ S.settings={...S.settings,...patch}; await S.db.doc('qg/settings').set(S.settings); }
+
+function subscribe(){
+  const timer = setTimeout(()=>{ if(!S.loaded){ S.loaded=true; render(); } }, 10000);
+  let pending = COLS.length;
+  COLS.forEach(c => {
+    col(c).orderBy('ts','desc').limit(400).onSnapshot(snap => {
+      S.data[c] = snap.docs.map(d => ({id:d.id, ...d.data()}));
+      if (pending>0 && --pending===0){ clearTimeout(timer); S.loaded=true; seedIfEmpty(); }
+      scheduleRender();
+    }, () => { S.failed=true; scheduleRender(); });
+  });
+  S.db.doc('qg/settings').onSnapshot(snap => { S.settings = snap.exists ? snap.data() : {}; scheduleRender(); }, ()=>{});
+}
+let rq=false;
+function scheduleRender(){ if(rq) return; rq=true; requestAnimationFrame(()=>{ rq=false; if(!isTyping()) render(); else renderChrome(); }); }
+function isTyping(){ const a=document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName); }
+
+// ============================================================ agents (Claude)
+function context(){
+  const s=S.settings, d=S.data;
+  const offers=d.offers.slice(0,4).map(o=>`${o.name} (${o.niche}, ${o.price_setup} € + ${o.price_monthly} €/mois, ${o.status})`).join(' ; ')||'aucune';
+  const niches=d.niches.slice(0,6).map(n=>`${n.name} (${n.score}/10)`).join(' ; ')||'aucune';
+  const notes=[
+    ...d.questions.filter(q=>q.answer).slice(0,8).map(q=>`Réponse du fondateur à « ${q.question} » : ${q.answer}`),
+    ...d.meetings.filter(m=>m.founder_comment).slice(0,5).map(m=>`Avis du fondateur sur la réunion « ${m.topic} » : ${m.founder_comment}`),
+    ...d.messages.filter(m=>m.sender==='fondateur').slice(0,6).map(m=>`Message du fondateur : ${m.text}`),
+  ].map(t=>'- '+t).join('\n')||'- aucun pour l’instant';
+  const st={prospects:d.prospects.length, contactes:d.prospects.filter(p=>p.status!=='nouveau').length, reponses:d.prospects.filter(p=>['a répondu','rdv','client'].includes(p.status)).length, emails_envoyes:d.emails.filter(e=>e.status==='envoyé').length, ventes:d.prospects.filter(p=>p.status==='client').length};
+  return `CONTEXTE (au ${new Date().toLocaleDateString('fr-FR')}) — Marque : ${s.brand_name||'VotreIAPro'}. Fondateur : ${s.founder_name||'non renseigné'}.
+Vision du fondateur : ${s.vision||"Construire une entreprise rentable qui vend des services numériques à forte valeur à des professionnels (avocats, artisans, médecins...)."}
+Budget pub mensuel autorisé : ${s.ads_budget||300} €. Offres : ${offers}. Niches étudiées : ${niches}. Chiffres : ${JSON.stringify(st)}.
+CONSIGNES DU FONDATEUR (PRIORITAIRES) :\n${notes}`;
+}
+function prompt(agent, task){ return `${ag(agent).persona}\n${ETHIQUE}\n\n${context()}\n\nTA MISSION :\n${task}`; }
+
+async function think(agent, task, {json=false, tier='default', onText}={}){
+  if(!S.sample) throw Object.assign(new Error("Les agents ne sont pas disponibles sur cet affichage."),{code:'not_granted'});
+  S.busy.add(agent); renderChrome();
+  try{
+    const p = prompt(agent, task);
+    if(json) return await S.sample.json(p + "\n\nRéponds UNIQUEMENT avec un JSON valide, sans texte autour.", {modelTier:tier});
+    const r = await S.sample(p, {modelTier:tier, onText, cache:false});
+    return r.text.trim();
+  } finally { S.busy.delete(agent); renderChrome(); }
+}
+function agentError(e){
+  const m = e?.code==='not_granted' ? "Autorise les agents (fenêtre d'autorisation de claude.ai) pour qu'ils puissent travailler."
+    : e?.code==='rate_limited' ? "Les agents ont atteint la limite d'utilisation pour le moment. Réessaie dans quelques minutes."
+    : (e?.message || 'Erreur inconnue');
+  return m;
+}
+async function ask(agent, question, context=''){
+  const q = String(question||'').trim(); if(!q) return;
+  if(S.data.questions.some(x=>x.question===q && !x.answer)) return;
+  await add('questions',{agent, question:q, context}); log(agent,'❓ Question pour le fondateur', q);
+}
+
+// ---------- étapes de travail
+async function researchNiches(focus=''){
+  setStep('Nora étudie les niches');
+  log('nora','Recherche de niches en cours…', focus);
+  const r = await think('nora', `Trouve les 3 à 5 meilleures niches où notre entreprise peut vendre RAPIDEMENT un service numérique (site, automatisation, assistant IA, contenus, génération de clients...) à des professionnels (avocats, artisans, médecins, ou autre métier plus prometteur). ${focus?`Orientation demandée : ${focus}.`:''}
+Appuie-toi sur ce que tu sais du marché français : taille de la cible, prix des concurrents, offres qui marchent, entrepreneurs qui ont réussi et comment. Signale ce qui est une estimation. Note chaque niche sur 10 (douleur × capacité à payer × facilité à joindre × rapidité de livraison × concurrence).
+JSON : {"niches":[{"name":"","sector":"","problem":"","offer_idea":"","audience":"","willingness_to_pay":"","competition":"","score":0,"reasoning":""}],"questions_fondateur":[""]}`, {json:true, tier:'complex'});
+  for(const n of r.niches||[]) await add('niches',{...n, score:Number(n.score)||0, sources:[]});
+  for(const q of r.questions_fondateur||[]) await ask('nora', q, 'Recherche de niches');
+  log('nora', `${(r.niches||[]).length} niches analysées`, (r.niches||[]).map(n=>`${n.name} — ${n.score}/10`).join('\n'));
+}
+
+async function holdMeeting(topic, {participants=['nora','leo','clara','hugo','ines','sam','juliette'], expectOffer=false, extra=''}={}){
+  const ref = await add('meetings',{topic, status:'en cours', transcript:[]});
+  S.meetingId = ref.id; log('victor', `Réunion ouverte : ${topic}`);
+  const transcript=[];
+  const save = () => upd('meetings', ref.id, {transcript});
+  const said = () => transcript.map(t=>`${ag(t.agent).name} (${ag(t.agent).role}) : ${t.text}`).join('\n\n');
+  setStep(`Réunion : ${topic}`);
+  transcript.push({agent:'victor', text: await think('victor', `${extra}\nTu ouvres une réunion d'équipe. Sujet : « ${topic} ». En 3 à 5 phrases : objectif, ce que tu attends de chacun, critère de décision.`)}); await save();
+  for(const id of participants){
+    setStep(`Réunion : ${ag(id).name} prend la parole`);
+    transcript.push({agent:id, text: await think(id, `${extra}\nRÉUNION — « ${topic} »\nCe qui a été dit :\n${said()}\n\nÀ toi. 4 à 8 phrases : propositions concrètes, chiffres, risques, désaccords argumentés. Ne répète pas les autres.`)}); await save();
+  }
+  setStep('Réunion : Victor tranche');
+  const productSchema = expectOffer ? `,"offer":{"name":"","niche":"","target":"","tagline":"","description":"","price_setup":0,"price_monthly":0,"deliverables":[""]}` : '';
+  const d = await think('victor', `${extra}\nRÉUNION — « ${topic} »\n${said()}\n\nConclus : tranche, décide, attribue les actions.${expectOffer?' Choisis UNE offre précise que l’équipe peut réellement livrer, avec un prix réaliste.':''}
+JSON : {"conclusion":"ta prise de parole finale","summary":"résumé pour le fondateur","decisions":["décision — responsable"]${productSchema},"questions_fondateur":[""]}`, {json:true, tier:'complex'});
+  transcript.push({agent:'victor', text:d.conclusion||d.summary});
+  await upd('meetings', ref.id, {transcript, summary:d.summary||'', decisions:d.decisions||[], status:'terminée'});
+  for(const q of d.questions_fondateur||[]) await ask('victor', q, `Réunion : ${topic}`);
+  log('victor', `Réunion terminée : ${topic}`, d.summary);
+  S.meetingId=null;
+  return d;
+}
+
+async function buildLanding(offerId){
+  const o = S.data.offers.find(x=>x.id===offerId) || (await col('offers').doc(offerId).get()).data();
+  setStep('Sam rédige la page de vente');
+  const L = await think('sam', `OFFRE : ${JSON.stringify(pickOffer(o))}
+Rédige la page de vente complète, persuasive et HONNÊTE (aucun faux témoignage, aucun chiffre inventé), au ton adapté à la cible.
+JSON : {"hero_title":"","hero_subtitle":"","cta":"","problems":[""],"benefits":[{"title":"","text":""}],"process":[{"step":"","text":""}],"faq":[{"q":"","a":""}],"guarantee":""}`, {json:true, tier:'complex'});
+  await upd('offers', offerId, {landing:L, status:'prête'});
+  log('sam', `Page de vente prête : ${o.name}`);
+}
+async function complianceReview(offerId){
+  const o = (await col('offers').doc(offerId).get()).data();
+  setStep('Juliette vérifie la conformité');
+  const r = await think('juliette', `Vérifie l'offre et sa page de vente : ${JSON.stringify({...pickOffer(o), landing:o.landing})}
+JSON : {"verdict":"OK | OK avec corrections | Bloquant","points":[""],"questions_fondateur":[""]}`, {json:true});
+  await upd('offers', offerId, {compliance:r});
+  for(const q of r.questions_fondateur||[]) await ask('juliette', q, `Conformité : ${o.name}`);
+  log('juliette', `Conformité « ${o.name} » : ${r.verdict}`, (r.points||[]).join('\n'));
+}
+async function planCampaigns(offerId){
+  const o = (await col('offers').doc(offerId).get()).data();
+  setStep('Léo prépare les campagnes');
+  const r = await think('leo', `OFFRE : ${JSON.stringify(pickOffer(o))}
+Conçois 2 à 3 campagnes (Google Ads, Meta, LinkedIn, SEO local, partenariats...) dans un budget total de ${S.settings.ads_budget||300} €/mois. Pour chacune : ciblage, mots-clés ou audiences, 3 accroches, budget, KPI cibles, plan de test.
+JSON : {"campaigns":[{"channel":"","name":"","budget":"","plan":""}],"questions_fondateur":[""]}`, {json:true, tier:'complex'});
+  for(const c of r.campaigns||[]) await add('campaigns',{offer_id:offerId, offer:o.name, channel:c.channel, name:c.name, budget:c.budget, plan: typeof c.plan==='string'?c.plan:JSON.stringify(c.plan,null,2), status:'proposée'});
+  for(const q of r.questions_fondateur||[]) await ask('leo', q, `Campagnes : ${o.name}`);
+  log('leo', `${(r.campaigns||[]).length} campagne(s) proposée(s) pour « ${o.name} »`);
+}
+async function prospectingPlan(offer){
+  setStep('Hugo prépare la prospection');
+  const r = await think('hugo', `OFFRE : ${offer.name} — cible : ${offer.target} (${offer.niche}).
+Le fondateur va récupérer des contacts et me les coller. Donne-lui un plan de prospection très concret : les 5 meilleures sources publiques en France où trouver ces professionnels avec leur email professionnel (annuaires officiels, sites de barreaux ou d'ordres, pages contact...), les recherches Google exactes à taper, et combien de contacts viser cette semaine. Court et actionnable.`);
+  await add('messages',{thread:'hugo', sender:'hugo', text:`🎯 Plan de prospection — ${offer.name}\n\n${r}`});
+  log('hugo', 'Plan de prospection prêt (onglet Parler aux agents → Hugo)');
+}
+async function writeEmails(offer){
+  const todo = S.data.prospects.filter(p=>p.offer_id===offer.id && !p.unsubscribed && !S.data.emails.some(e=>e.prospect_id===p.id)).slice(0,15);
+  let n=0;
+  for(const p of todo){
+    setStep(`Clara écrit à ${p.name||p.email}`);
+    try{
+      const r = await think('clara', `OFFRE : ${JSON.stringify(pickOffer(offer))}
+PROSPECT : ${JSON.stringify({name:p.name, company:p.company, role:p.role, city:p.city, website:p.website, personalization:p.personalization})}
+Expéditeur : ${S.settings.founder_name||'[prénom du fondateur]'} — ${S.settings.company_name||S.settings.brand_name||'VotreIAPro'}.
+Écris une séquence de 3 emails (premier contact personnalisé, relance J+3, dernier message J+7). Chacun : objet court, 60 à 120 mots, une seule demande claire, vouvoiement, formule adaptée à la profession. Ne mets ni signature légale ni mention de désinscription (ajoutées automatiquement).
+JSON : {"emails":[{"step":1,"subject":"","body":""},{"step":2,"subject":"","body":""},{"step":3,"subject":"","body":""}]}`, {json:true});
+      for(const e of r.emails||[]){ await add('emails',{prospect_id:p.id, to:p.email, name:p.name||'', company:p.company||'', offer_id:offer.id, step:e.step, subject:e.subject, body:e.body, status:'à valider', due: Date.now() + (e.step===2?3:e.step===3?7:0)*864e5}); n++; }
+    }catch(e){ log('clara', `Échec pour ${p.email}`, agentError(e)); }
+  }
+  if(n) log('clara', `${n} email(s) rédigé(s) — à valider dans l’onglet Emails`);
+  return n;
+}
+async function ceoReport(){
+  setStep('Victor écrit son point d’étape');
+  const recent = S.data.activity.slice(0,30).reverse().map(a=>`- ${ag(a.agent).name} : ${a.title}`).join('\n');
+  const r = await think('victor', `Activité récente :\n${recent}\n\nÉcris au fondateur un point d'étape clair (tutoiement, 120 à 250 mots) : ce qu'on a fait, résultats chiffrés, ce qu'on apprend, les 3 prochaines actions, ce dont l'équipe a besoin de sa part.`);
+  await add('messages',{thread:'victor', sender:'victor', report:true, text:`📊 Point d'étape\n\n${r}`});
+}
+
+async function runCycle(focus=''){
+  if(S.running) return;
+  S.running=true; renderChrome(); render();
+  log('victor','🚀 Nouveau cycle de travail lancé', focus);
+  try{
+    let offer = S.data.offers.find(o=>o.status!=='archivée');
+    if(!offer || focus){
+      await researchNiches(focus);
+      await new Promise(r=>setTimeout(r,800));
+      const top = S.data.niches.slice(0,5).map(n=>`- ${n.name} (${n.score}/10) — problème : ${n.problem} — idée : ${n.offer_idea}`).join('\n');
+      const d = await holdMeeting('Choix de la niche et de l’offre à lancer', {expectOffer:true, extra:`Niches étudiées par Nora :\n${top}`});
+      if(!d.offer?.name) throw new Error("La réunion n'a pas abouti à une offre.");
+      const ref = await add('offers',{...d.offer, price_setup:Number(d.offer.price_setup)||0, price_monthly:Number(d.offer.price_monthly)||0, status:'brouillon'});
+      log('victor', `Nouvelle offre décidée : ${d.offer.name}`, `${d.offer.price_setup} € + ${d.offer.price_monthly} €/mois — ${d.offer.target}`);
+      await buildLanding(ref.id); await complianceReview(ref.id); await planCampaigns(ref.id);
+      offer = {id:ref.id, ...(await col('offers').doc(ref.id).get()).data()};
+      await prospectingPlan(offer);
+    } else {
+      await holdMeeting(`Pilotage de « ${offer.name} » : chiffres, blocages, ajustements`, {participants:['leo','clara','hugo','ines']});
+    }
+    const n = await writeEmails(offer);
+    if(!n && !S.data.prospects.some(p=>p.offer_id===offer.id)) await ask('hugo', `Pour lancer la prospection de « ${offer.name} », colle-moi des contacts dans l'onglet Prospects (une page d'annuaire, une liste copiée d'un site, un tableau...). J'en extrais les coordonnées et Clara écrit les emails. Mon plan pour les trouver est dans « Parler aux agents → Hugo ».`, 'Prospection');
+    await ceoReport();
+    log('victor','✅ Cycle terminé');
+    toast('Cycle terminé');
+  }catch(e){
+    log('victor','⚠️ Le cycle s’est arrêté', agentError(e));
+    toast(agentError(e));
+  }finally{ S.running=false; S.step=''; renderChrome(); render(); }
+}
+function setStep(s){ S.step=s; renderChrome(); if(S.view==='tableau' && !isTyping()) render(); }
+function pickOffer(o){ return {name:o.name, niche:o.niche, target:o.target, tagline:o.tagline, description:o.description, price_setup:o.price_setup, price_monthly:o.price_monthly, deliverables:o.deliverables}; }
+
+// ---------- conversation, questions, réponses prospects, extraction de contacts
+async function chat(agent, text){
+  await add('messages',{thread:agent, sender:'fondateur', text});
+  const hist = S.data.messages.filter(m=>m.thread===agent).slice(0,14).reverse().map(m=>`${m.sender==='fondateur'?'FONDATEUR':ag(agent).name.toUpperCase()} : ${m.text}`).join('\n');
+  const recent = S.data.activity.slice(0,20).reverse().map(a=>`- ${ag(a.agent).name} : ${a.title}`).join('\n');
+  S.typing=agent; render();
+  try{
+    const r = await think(agent, `Tu parles directement avec le fondateur (ton patron). Tutoie-le, sois clair, honnête et concret ; si tu as besoin d'une décision, demande-la.\nActivité récente :\n${recent}\n\nConversation :\n${hist}\nFONDATEUR : ${text}\n\nRéponds au fondateur.`);
+    await add('messages',{thread:agent, sender:agent, text:r});
+  } finally { S.typing=false; }
+}
+async function answerQuestion(q, answer){
+  await upd('questions', q.id, {answer, answered_ts:Date.now()});
+  log(q.agent, `Le fondateur a répondu : « ${q.question.slice(0,80)} »`, answer);
+  const r = await think(q.agent, `Tu avais demandé au fondateur : « ${q.question} ». Il répond : « ${answer} ». Accuse réception en 1 à 3 phrases et dis ce que tu vas faire concrètement.`, {tier:'quick'});
+  await add('messages',{thread:q.agent, sender:q.agent, text:r});
+}
+async function extractProspects(raw, offerId){
+  const offer = S.data.offers.find(o=>o.id===offerId);
+  const r = await think('hugo', `Voici un texte collé par le fondateur (page d'annuaire, liste, tableau...). Extrais UNIQUEMENT les professionnels dont l'email apparaît réellement dans ce texte. N'invente rien, ne devine aucun email. Ajoute un détail de personnalisation tiré du texte s'il existe.
+Cible de l'offre : ${offer?offer.target:'professionnels'}.
+TEXTE :\n"""${raw.slice(0,60000)}"""
+JSON : {"prospects":[{"name":"","company":"","role":"","email":"","phone":"","city":"","website":"","personalization":""}]}`, {json:true});
+  let n=0;
+  for(const p of r.prospects||[]){
+    const email = String(p.email||'').trim().toLowerCase();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !raw.toLowerCase().includes(email)) continue; // seulement les emails présents dans le texte
+    if(S.data.prospects.some(x=>x.email===email)) continue;
+    await add('prospects',{...p, email, offer_id:offerId||null, status:'nouveau', source:'collé par le fondateur'}); n++;
+  }
+  log('hugo', `${n} prospect(s) ajouté(s)`);
+  return n;
+}
+async function draftReply(p, incoming){
+  const offer = S.data.offers.find(o=>o.id===p.offer_id);
+  await upd('prospects', p.id, {status:'a répondu', notes:`${p.notes||''}\n[${fmt(Date.now())}] Réponse : ${incoming}`.trim()});
+  for(const e of S.data.emails.filter(e=>e.prospect_id===p.id && ['à valider','approuvé'].includes(e.status))) await upd('emails', e.id, {status:'annulé'});
+  const r = await think('ines', `OFFRE : ${offer?JSON.stringify(pickOffer(offer)):'n/a'}
+PROSPECT : ${JSON.stringify({name:p.name, company:p.company, role:p.role})}
+RÉPONSE DU PROSPECT : « ${incoming} »
+Analyse (intérêt, objection) puis rédige la meilleure réponse pour avancer vers l'achat ou un rendez-vous.
+JSON : {"analysis":"","subject":"","body":"","next_status":"a répondu | rdv | pas intéressé"}`, {json:true, tier:'complex'});
+  if(r.next_status==='pas intéressé') await upd('prospects', p.id, {status:'pas intéressé'});
+  if(r.next_status==='rdv') await upd('prospects', p.id, {status:'rdv'});
+  if(r.next_status!=='pas intéressé' && r.body) await add('emails',{prospect_id:p.id, to:p.email, name:p.name||'', company:p.company||'', offer_id:p.offer_id||null, step:10, subject:r.subject, body:r.body, status:'à valider', due:Date.now()});
+  log('ines', `Réponse de ${p.name||p.email} analysée`, r.analysis);
+  return r;
+}
+
+// ---------- envoi Gmail
+function footer(){
+  const s=S.settings;
+  const id=[s.company_name||s.brand_name||'VotreIAPro', s.company_legal, s.company_address].filter(Boolean).join(' — ');
+  return `\n\n--\n${id}\nVous recevez ce message car votre adresse professionnelle est publiée publiquement et que notre offre concerne votre activité. Pour ne plus recevoir de messages, répondez simplement « STOP ».`;
+}
+async function sendEmail(e){
+  if(!S.mcp) throw new Error("L'envoi Gmail n'est pas disponible sur cet affichage.");
+  const s=S.settings;
+  if(!s.company_name || !s.company_address) throw new Error('Renseigne d’abord ta raison sociale et ton adresse dans Réglages (obligatoire dans un email de prospection).');
+  const p = S.data.prospects.find(x=>x.id===e.prospect_id);
+  if(p && (p.unsubscribed || ['pas intéressé','client'].includes(p.status))) { await upd('emails', e.id, {status:'annulé'}); throw new Error('Ce prospect ne doit plus être contacté.'); }
+  await S.mcp.callTool('Gmail','send_message',{to:[e.to], subject:e.subject, body:e.body + footer(), includeSignature:true});
+  await upd('emails', e.id, {status:'envoyé', sent_ts:Date.now()});
+  if(p && p.status==='nouveau') await upd('prospects', p.id, {status:'contacté'});
+}
+function gmailError(err){
+  const c = err?.code;
+  if(c==='server_not_connected'||c==='server_not_found') return "Gmail n'est pas connecté : ajoute le connecteur Gmail dans claude.ai (Réglages → Connecteurs), puis réessaie.";
+  if(c==='needs_reauth') return 'Ta connexion Gmail a expiré : reconnecte Gmail dans les connecteurs de claude.ai.';
+  if(c==='not_granted'||c==='consent_required'||c==='approval_required') return "Autorise le QG à utiliser Gmail quand claude.ai te le demande, puis réessaie.";
+  if(c==='server_unavailable'||c==='upstream_error') return "Gmail n'a pas répondu. Vérifie dans tes « Envoyés » avant de renvoyer cet email.";
+  return err?.message || 'Envoi impossible.';
+}
+
+// ============================================================ données de départ
+let seeded=false;
+async function seedIfEmpty(){
+  if(seeded || S.data.messages.length || S.data.activity.length) return; seeded=true;
+  // Les données d'amorçage sont écrites par Claude Code après publication ; ceci ne sert que si la mémoire est vide.
+}
+
+// ============================================================ affichage
+function renderChrome(){
+  const counts = { questions: S.data.questions.filter(q=>!q.answer).length||'', emails: S.data.emails.filter(e=>e.status==='à valider').length||'' };
+  $('#nav').innerHTML = TABS.map(([id,label])=>`<button data-v="${id}" class="${S.view===id?'on':''}"><span>${label}</span><span class="count">${counts[id]||''}</span></button>`).join('');
+  $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+  $('#team').innerHTML = `<div class="lbl">L'équipe</div>` + Object.entries(AGENTS).map(([id,a])=>`<div class="member ${S.busy.has(id)?'busy':''}">${av(id)}<div><b>${a.name}</b><span>${a.role}</span></div></div>`).join('');
+}
+function go(v){ S.view=v; if(location.hash!=='#'+v) location.hash=v; render(); window.scrollTo(0,0); }
+window.addEventListener('hashchange',()=>{ const v=location.hash.slice(1); if(TABS.some(t=>t[0]===v) && v!==S.view){ S.view=v; render(); } });
+
+function render(){
+  renderChrome();
+  const v=$('#view');
+  if(!S.db){ v.innerHTML = `<div class="panel"><h1>QG VotreIAPro</h1><p class="sub">Ouvre ce QG depuis claude.ai en étant connecté : c'est là que vivent ton équipe et sa mémoire.</p></div>`; return; }
+  if(!S.loaded){ v.innerHTML = `<div class="panel"><h1><span class="spin">⟳</span> Ouverture du QG…</h1><p class="sub">Chargement de la mémoire de l'équipe.</p></div>`; return; }
+  (VIEWS[S.view]||VIEWS.tableau)(v);
+  bind(v);
+}
+const feed = list => list.map(a=>`<div class="item">${av(a.agent)}<div style="min-width:0"><div class="t">${esc(ag(a.agent).name)} · ${esc(a.title)}</div>${a.detail?`<div class="d">${esc(String(a.detail).slice(0,500))}</div>`:''}<div class="ts">${fmt(a.ts)}</div></div></div>`).join('') || '<p class="ts">Rien pour le moment.</p>';
+const empty = (t) => `<div class="panel"><p class="ts" style="margin:0">${t}</p></div>`;
+
+const VIEWS = {
+  tableau(v){
+    const d=S.data, sent=d.emails.filter(e=>e.status==='envoyé').length;
+    const report = d.messages.find(m=>m.thread==='victor' && m.report) || d.messages.find(m=>m.thread==='victor' && m.sender==='victor');
+    const banners = [];
+    if(!S.sample) banners.push("Les agents ne peuvent pas travailler sur cet affichage. Ouvre le QG sur claude.ai, connecté à ton compte.");
+    if(!S.settings.company_name) banners.push(`Avant d'envoyer des emails : renseigne ta raison sociale et ton adresse dans <button class="btn ghost" data-go="reglages">Réglages</button>`);
+    v.innerHTML = `
+      <div><h1>Bonjour${S.settings.founder_name?' '+esc(S.settings.founder_name.split(' ')[0]):''} 👋</h1><p class="sub">Voici où en est ton entreprise. L'équipe travaille tant que cette page est ouverte ; tu gardes la main sur chaque décision qui engage ton argent ou ton image.</p></div>
+      ${banners.map(b=>`<div class="banner">${b}</div>`).join('')}
+      <div class="kpis">
+        <div class="kpi"><div class="v">${d.prospects.filter(p=>p.status==='client').length}</div><div class="l">Clients</div></div>
+        <div class="kpi"><div class="v">${d.offers.filter(o=>o.status!=='archivée').length}</div><div class="l">Offres</div></div>
+        <div class="kpi"><div class="v">${d.prospects.length}</div><div class="l">Prospects</div></div>
+        <div class="kpi"><div class="v">${sent}</div><div class="l">Emails envoyés</div></div>
+        <div class="kpi"><div class="v">${d.prospects.filter(p=>['a répondu','rdv','client'].includes(p.status)).length}</div><div class="l">Réponses / RDV</div></div>
+        <div class="kpi"><div class="v">${d.questions.filter(q=>!q.answer).length}</div><div class="l">Questions pour toi</div></div>
+      </div>
+      <div class="panel">
+        <div class="row" style="justify-content:space-between"><h2 style="margin:0">Mission</h2>${S.running?`<span class="pill warn"><span class="spin">⟳</span> ${esc(S.step||'En cours')}</span>`:'<span class="pill ok">Équipe disponible</span>'}</div>
+        <div class="row" style="margin-top:10px"><input id="focus" placeholder="Orientation facultative : « plombiers en Île-de-France », « kinés », « nouvelle niche santé »…" style="flex:1;min-width:220px"><button class="btn" id="go-cycle" ${S.running||!S.sample?'disabled':''}>🚀 Lancer un cycle complet</button></div>
+        <p class="ts">Un cycle : étude des niches (si besoin) → réunion de décision → page de vente → conformité → campagnes → plan de prospection → emails → point d'étape. Compte 5 à 15 minutes ; garde la page ouverte.</p>
+      </div>
+      <div class="grid2">
+        <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Dernier point de Victor</h2><button class="btn ghost" data-go="discussion">Répondre</button></div>
+          <p style="white-space:pre-wrap">${esc(report?.text||'Pas encore de point d’étape : lance un premier cycle.')}</p><span class="ts">${fmt(report?.ts)}</span></div>
+        <div class="panel"><h2 style="margin-top:0">En direct de l'équipe</h2><div class="feed">${feed(d.activity.slice(0,12))}</div></div>
+      </div>`;
+  },
+  discussion(v){
+    const a=ag(S.chatAgent), msgs=S.data.messages.filter(m=>m.thread===S.chatAgent).slice().reverse();
+    v.innerHTML = `<div><h1>Parler aux agents</h1><p class="sub">Pose tes questions, donne tes consignes. Chaque agent connaît l'état de l'entreprise et tient compte de tes messages dans tout son travail.</p></div>
+      <div class="chat">
+        <div class="panel agents">${Object.entries(AGENTS).map(([id,x])=>`<button data-agent="${id}" class="${id===S.chatAgent?'on':''}">${av(id)}<span><b>${x.name}</b><small>${x.role}</small></span></button>`).join('')}</div>
+        <div class="panel thread">
+          <div class="row" style="padding:10px 14px;border-bottom:1px solid var(--line)">${av(S.chatAgent)}<b>${a.name}</b><span class="ts">${a.role}</span></div>
+          <div class="msgs" id="msgs">${msgs.map(m=>`<div class="msg ${m.sender==='fondateur'?'me':'them'}">${esc(m.text)}<div class="ts" style="color:inherit;opacity:.7">${fmt(m.ts)}</div></div>`).join('') || `<p class="ts">Écris ton premier message à ${a.name}.</p>`}${S.typing===S.chatAgent?`<div class="msg them"><span class="spin">⟳</span> ${a.name} réfléchit…</div>`:''}</div>
+          <div class="composer"><textarea id="chat-text" rows="2" placeholder="Écris à ${a.name}… (Entrée pour envoyer)"></textarea><button class="btn" id="chat-send" ${S.typing||!S.sample?'disabled':''}>Envoyer</button></div>
+        </div>
+      </div>`;
+    const box=$('#msgs'); box.scrollTop=box.scrollHeight;
+  },
+  questions(v){
+    const qs=S.data.questions.slice().sort((a,b)=>(!!a.answer)-(!!b.answer)||b.ts-a.ts);
+    v.innerHTML = `<div><h1>Questions des agents</h1><p class="sub">Quand une décision dépend de toi, ils te la posent ici. Tes réponses passent avant tout le reste dans leur travail.</p></div>
+      ${qs.map(q=>`<div class="panel"><div class="row">${av(q.agent)}<b>${esc(ag(q.agent).name)}</b><span class="ts">${fmt(q.ts)} · ${esc(q.context||'')}</span>${q.answer?'<span class="pill ok">répondue</span>':'<span class="pill warn">en attente</span>'}</div>
+        <p style="white-space:pre-wrap">${esc(q.question)}</p>
+        ${q.answer?`<p><b>Ta réponse :</b> ${esc(q.answer)}</p>`:`<textarea rows="2" id="ans-${q.id}" placeholder="Ta réponse…"></textarea><div class="row" style="margin-top:8px"><button class="btn" data-answer="${q.id}" ${S.sample?'':'disabled'}>Répondre</button></div>`}</div>`).join('') || empty('Aucune question pour le moment.')}`;
+  },
+  reunions(v){
+    if(S.openMeeting){ return meetingView(v, S.data.meetings.find(m=>m.id===S.openMeeting)); }
+    v.innerHTML = `<div><h1>Réunions</h1><p class="sub">Assiste à toutes les réunions de l'équipe, donne ton avis, ou convoque-en une sur le sujet de ton choix.</p></div>
+      <div class="panel"><h2 style="margin-top:0">Convoquer une réunion</h2>
+        <div class="row"><input id="topic" placeholder="Ex : « Comment doubler le taux de réponse aux emails ? »" style="flex:1;min-width:220px"><button class="btn" id="convene" ${S.running||!S.sample?'disabled':''}>Convoquer</button></div>
+        <div class="row" style="margin-top:8px">${Object.entries(AGENTS).filter(([id])=>id!=='victor').map(([id,a])=>`<label style="margin:0;display:flex;gap:4px;align-items:center;color:var(--ink)"><input type="checkbox" class="part" value="${id}" checked style="width:auto"> ${a.emoji} ${a.name}</label>`).join('')}</div></div>
+      ${S.data.meetings.map(m=>`<div class="panel" role="button" tabindex="0" data-meeting="${m.id}" style="cursor:pointer"><div class="row"><b>${esc(m.topic)}</b><span class="pill ${m.status==='terminée'?'ok':'warn'}">${esc(m.status)}</span>${m.founder_comment?'<span class="pill">ton avis</span>':''}<span class="ts">${fmt(m.ts)}</span></div><p class="ts" style="margin-bottom:0">${esc(m.summary||'')}</p></div>`).join('') || empty('Aucune réunion pour le moment.')}`;
+  },
+  emails(v){
+    const drafts=S.data.emails.filter(e=>e.status==='à valider').sort((a,b)=>a.step-b.step);
+    const approved=S.data.emails.filter(e=>e.status==='approuvé');
+    const ready=approved.filter(e=>(e.due||0)<=Date.now());
+    const others=S.data.emails.filter(e=>!['à valider','approuvé'].includes(e.status));
+    v.innerHTML = `<div><h1>Emails</h1><p class="sub">Relis, modifie, approuve. Les emails approuvés partent depuis <b>ton Gmail</b>, uniquement quand tu cliques sur « Envoyer ». Chaque email porte ton identité et la possibilité de refuser.</p></div>
+      <div class="panel row"><span class="pill">${drafts.length} à valider</span><span class="pill">${approved.length} approuvé(s), dont ${ready.length} à envoyer maintenant</span>
+        <button class="btn ok" id="approve-all" ${drafts.length?'':'disabled'}>Tout approuver</button>
+        <button class="btn" id="send-ready" ${ready.length&&S.mcp?'':'disabled'}>📤 Envoyer les ${ready.length} prêts via Gmail</button></div>
+      ${drafts.map(e=>`<div class="panel"><div class="row"><b>${esc(e.name)}</b><span class="ts">${esc(e.company)} · ${esc(e.to)} · ${e.step===10?'réponse':`étape ${e.step}`}${e.step>1&&e.step<10?` · prévu le ${new Date(e.due).toLocaleDateString('fr-FR')}`:''}</span></div>
+        <label for="s-${e.id}">Objet</label><input id="s-${e.id}" value="${esc(e.subject)}"><label for="b-${e.id}">Message</label><textarea id="b-${e.id}" rows="7">${esc(e.body)}</textarea>
+        <div class="row" style="margin-top:8px"><button class="btn ok" data-email="${e.id}" data-act="approve">Approuver</button><button class="btn ghost" data-email="${e.id}" data-act="save">Enregistrer</button><button class="btn bad" data-email="${e.id}" data-act="reject">Rejeter</button></div></div>`).join('') || empty('Aucun email à valider.')}
+      ${approved.length?`<h2>Approuvés</h2><div class="panel tablewrap"><table><tr><th>Destinataire</th><th>Objet</th><th>Envoi</th><th></th></tr>${approved.map(e=>`<tr><td>${esc(e.name||e.to)}<div class="ts">${esc(e.to)}</div></td><td>${esc(e.subject)}</td><td class="ts">${(e.due||0)<=Date.now()?'maintenant':new Date(e.due).toLocaleDateString('fr-FR')}</td><td><button class="btn ghost" data-send="${e.id}" ${S.mcp?'':'disabled'}>Envoyer</button></td></tr>`).join('')}</table></div>`:''}
+      ${others.length?`<h2>Historique</h2><div class="panel tablewrap"><table><tr><th>Destinataire</th><th>Objet</th><th>Statut</th><th>Date</th></tr>${others.map(e=>`<tr><td>${esc(e.name||e.to)}</td><td>${esc(e.subject)}</td><td><span class="pill ${e.status==='envoyé'?'ok':e.status==='échec'?'bad':''}">${esc(e.status)}</span>${e.error?`<div class="ts">${esc(e.error)}</div>`:''}</td><td class="ts">${fmt(e.sent_ts||e.ts)}</td></tr>`).join('')}</table></div>`:''}`;
+  },
+  prospects(v){
+    const offers=S.data.offers.filter(o=>o.status!=='archivée');
+    const statuses=['nouveau','contacté','a répondu','rdv','client','pas intéressé','désinscrit'];
+    v.innerHTML = `<div><h1>Prospects</h1><p class="sub">Colle n'importe quel texte contenant des contacts professionnels (page d'annuaire, liste, tableau) : Hugo en extrait uniquement les emails réellement présents. Quand un prospect te répond, colle sa réponse : Inès prépare la meilleure suite.</p></div>
+      <div class="panel"><h2 style="margin-top:0">Ajouter des prospects</h2>
+        <label for="p-offer">Pour l'offre</label><select id="p-offer">${offers.map(o=>`<option value="${o.id}">${esc(o.name)}</option>`).join('')||'<option value="">Aucune offre pour l’instant</option>'}</select>
+        <label for="p-raw">Texte contenant les contacts</label><textarea id="p-raw" rows="5" placeholder="Colle ici une page d'annuaire, une liste de cabinets avec leurs emails…"></textarea>
+        <div class="row" style="margin-top:8px"><button class="btn" id="p-extract" ${S.sample?'':'disabled'}>🎯 Extraire les contacts</button><button class="btn ghost" data-go="discussion" data-agent-go="hugo">Où trouver des contacts ? (Hugo)</button></div></div>
+      ${S.data.prospects.length?`<div class="panel tablewrap"><table><tr><th>Contact</th><th>Ville</th><th>Personnalisation</th><th>Statut</th><th></th></tr>
+        ${S.data.prospects.map(p=>`<tr><td><b>${esc(p.name)}</b><div>${esc(p.company||'')}</div><div class="ts">${esc(p.email)}</div></td><td>${esc(p.city||'')}</td><td class="ts">${esc(p.personalization||'')}</td>
+        <td><select data-pstatus="${p.id}" aria-label="Statut">${statuses.map(s=>`<option ${s===p.status?'selected':''}>${s}</option>`).join('')}</select></td>
+        <td><button class="btn ghost" data-reply="${p.id}">Il a répondu</button></td></tr>
+        <tr id="reply-${p.id}" hidden><td colspan="5"><textarea rows="3" id="reply-text-${p.id}" placeholder="Colle la réponse du prospect…"></textarea><div class="row" style="margin-top:6px"><button class="btn" data-reply-go="${p.id}" ${S.sample?'':'disabled'}>Inès, prépare la réponse</button></div></td></tr>`).join('')}</table></div>`:empty('Aucun prospect pour le moment.')}`;
+  },
+  offres(v){
+    v.innerHTML = `<div><h1>Offres & sites</h1><p class="sub">Chaque offre décidée en réunion, avec la page de vente rédigée par Sam et l'avis de Juliette.</p></div>
+      ${S.data.offers.map(o=>{const L=o.landing||{};return `<div class="panel"><div class="row"><h2 style="margin:0">${esc(o.name)}</h2><span class="pill ${o.status==='archivée'?'':'ok'}">${esc(o.status)}</span><span class="ts">${esc(o.niche)}</span></div>
+        <p>${esc(o.tagline)}</p><p class="ts">${esc(o.description)}</p><p><b>${euros(o.price_setup)}</b> de mise en place + <b>${euros(o.price_monthly)}</b>/mois · Cible : ${esc(o.target)}</p>
+        ${o.compliance?`<p class="ts"><b>Conformité (Juliette) :</b> ${esc(o.compliance.verdict)} — ${esc((o.compliance.points||[]).join(' · '))}</p>`:''}
+        ${o.landing?`<details><summary>Voir la page de vente</summary><div class="landing" style="margin-top:10px"><span class="pill">${esc(o.niche)}</span><h3>${esc(L.hero_title)}</h3><p>${esc(L.hero_subtitle)}</p>
+          ${(L.problems||[]).length?`<h4>Vous reconnaissez-vous ?</h4><ul>${L.problems.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+          ${(L.benefits||[]).map(b=>`<p><b>${esc(b.title)}</b> — ${esc(b.text)}</p>`).join('')}
+          ${(L.process||[]).length?`<h4>Comment ça se passe</h4><ol>${L.process.map(x=>`<li><b>${esc(x.step)}</b> — ${esc(x.text)}</li>`).join('')}</ol>`:''}
+          <h4>Inclus</h4><ul>${(o.deliverables||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+          ${L.guarantee?`<p><b>Garantie :</b> ${esc(L.guarantee)}</p>`:''}
+          ${(L.faq||[]).map(f=>`<p><b>${esc(f.q)}</b><br>${esc(f.a)}</p>`).join('')}
+          <p class="btn" style="cursor:default">${esc(L.cta||'Commander')}</p></div></details>`:''}
+        <div class="row" style="margin-top:10px">${S.settings.payment_link?`<a class="btn ghost" href="${esc(S.settings.payment_link)}" target="_blank" rel="noopener">Lien de paiement ↗</a>`:''}${S.settings.vitrine_url?`<a class="btn ghost" href="${esc(S.settings.vitrine_url)}" target="_blank" rel="noopener">Page de vente publique ↗</a>`:''}
+          ${o.status==='archivée'?`<button class="btn ok" data-offer="${o.id}" data-st="prête">Réactiver</button>`:`<button class="btn ghost" data-offer="${o.id}" data-st="archivée">Archiver</button>`}</div></div>`;}).join('') || empty('Aucune offre : lance un cycle depuis le tableau de bord.')}`;
+  },
+  campagnes(v){
+    v.innerHTML = `<div><h1>Campagnes</h1><p class="sub">Les plans de Léo. Rien n'est dépensé sans toi : valide un plan, puis lance-le dans ton compte publicitaire.</p></div>
+      ${S.data.campaigns.map(c=>`<div class="panel"><div class="row"><b>${esc(c.channel)} — ${esc(c.name)}</b><span class="pill">${esc(c.budget)}</span><span class="pill ${c.status==='validée'?'ok':c.status==='refusée'?'bad':''}">${esc(c.status)}</span><span class="ts">${esc(c.offer||'')}</span></div>
+        <pre style="margin-top:8px">${esc(c.plan)}</pre><div class="row" style="margin-top:8px"><button class="btn ok" data-camp="${c.id}" data-st="validée">Valider</button><button class="btn ghost" data-camp="${c.id}" data-st="refusée">Refuser</button></div></div>`).join('') || empty('Aucune campagne pour le moment.')}`;
+  },
+  niches(v){
+    v.innerHTML = `<div><h1>Niches</h1><p class="sub">Les analyses de Nora. Celles marquées « sources » ont été vérifiées sur Internet.</p></div>
+      <div class="panel row"><input id="n-focus" placeholder="Étudier une niche précise : « kinésithérapeutes », « couvreurs »…" style="flex:1;min-width:220px"><button class="btn" id="n-go" ${S.running||!S.sample?'disabled':''}>🔎 Lancer l'étude</button></div>
+      ${S.data.niches.slice().sort((a,b)=>b.score-a.score).map(n=>`<div class="panel"><div class="row"><b>${esc(n.name)}</b><span class="pill ${n.score>=8?'ok':n.score>=6.5?'warn':'bad'}">${n.score}/10</span><span class="ts">${esc(n.sector)} · ${fmt(n.ts)}</span>${(n.sources||[]).length?'<span class="pill">sources</span>':''}</div>
+        <p><b>Problème :</b> ${esc(n.problem)}</p><p><b>Offre possible :</b> ${esc(n.offer_idea)}</p>
+        <p class="ts"><b>Cible :</b> ${esc(n.audience)} · <b>Capacité à payer :</b> ${esc(n.willingness_to_pay)} · <b>Concurrence :</b> ${esc(n.competition)}</p><p class="ts">${esc(n.reasoning)}</p>
+        ${(n.sources||[]).map(s=>`<a class="ts" href="${esc(s)}" target="_blank" rel="noopener">${esc(String(s).replace(/^https?:\/\//,'').slice(0,60))}</a>`).join(' · ')}</div>`).join('') || empty('Aucune niche étudiée.')}`;
+  },
+  journal(v){ v.innerHTML = `<div><h1>Journal</h1><p class="sub">Tout ce que fait l'équipe.</p></div><div class="panel feed">${feed(S.data.activity)}</div>`; },
+  reglages(v){
+    const s=S.settings, f=(k,l,ph='')=>`<label for="set-${k}">${l}</label><input id="set-${k}" name="${k}" value="${esc(s[k]||'')}" placeholder="${esc(ph)}">`;
+    v.innerHTML = `<div><h1>Réglages</h1><p class="sub">Aucune clé à saisir : les agents tournent sur ton compte claude.ai, et les emails partent de ton Gmail.</p></div>
+      <form id="set-form" class="grid2">
+        <div class="panel"><h2 style="margin-top:0">Ton entreprise</h2><p class="ts">Obligatoire avant d'envoyer des emails de prospection (identité de l'expéditeur).</p>
+          ${f('founder_name','Ton prénom et nom (signature)')}${f('brand_name','Nom de marque','VotreIAPro')}${f('company_name','Raison sociale')}${f('company_legal','Forme juridique et SIRET')}${f('company_address','Adresse')}</div>
+        <div class="panel"><h2 style="margin-top:0">Vente & pilotage</h2>
+          ${f('payment_link','Lien de paiement Stripe','https://buy.stripe.com/…')}
+          <p class="ts">Dans Stripe : Catalogue de produits → Liens de paiement → Créer. Colle le lien ici.</p>
+          ${f('vitrine_url','Adresse de ta page de vente publique')}
+          ${f('ads_budget','Budget pub mensuel autorisé (€)','300')}
+          <label for="set-vision">Ta vision (guide toutes les décisions)</label><textarea id="set-vision" name="vision" rows="4">${esc(s.vision||'')}</textarea></div>
+        <div><button class="btn">Enregistrer</button></div></form>
+      <div class="panel"><h2 style="margin-top:0">Connexions</h2><div class="row"><span class="pill ${S.sample?'ok':'bad'}">Agents ${S.sample?'actifs':'indisponibles'}</span><span class="pill ${S.mcp?'ok':'bad'}">Gmail ${S.mcp?'prêt (autorisation demandée au 1er envoi)':'indisponible'}</span></div></div>`;
+  },
+};
+function meetingView(v, m){
+  if(!m){ S.openMeeting=null; return VIEWS.reunions(v); }
+  v.innerHTML = `<div><button class="btn ghost" id="back-meetings">← Réunions</button><h1 style="margin-top:12px">${esc(m.topic)}</h1><p class="sub">${fmt(m.ts)} · <span class="pill ${m.status==='terminée'?'ok':'warn'}">${esc(m.status)}</span></p></div>
+    <div class="panel transcript">${(m.transcript||[]).map(t=>`<div class="line">${av(t.agent)}<div style="min-width:0"><div class="who">${esc(ag(t.agent).name)} <span class="ts">${esc(ag(t.agent).role)}</span></div><div class="txt">${esc(t.text)}</div></div></div>`).join('') || '<p class="ts"><span class="spin">⟳</span> La réunion commence…</p>'}
+    ${m.status!=='terminée'?'<p class="ts"><span class="spin">⟳</span> La réunion continue…</p>':''}</div>
+    ${m.summary?`<div class="panel"><h2 style="margin-top:0">Résumé</h2><p>${esc(m.summary)}</p><h2>Décisions</h2><ul>${(m.decisions||[]).map(d=>`<li>${esc(d)}</li>`).join('')}</ul></div>`:''}
+    <div class="panel"><h2 style="margin-top:0">Ton avis</h2><p class="ts">Toute l'équipe en tiendra compte dans les prochains cycles et réunions.</p>
+      <textarea id="m-comment" rows="3">${esc(m.founder_comment||'')}</textarea><div class="row" style="margin-top:8px"><button class="btn" id="m-save">Donner mon avis</button></div></div>`;
+}
+
+// ============================================================ actions
+function busyBtn(b, label){ b.disabled=true; b.dataset.label=b.textContent; b.textContent=label; }
+function bind(v){
+  v.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ if(b.dataset.agentGo) S.chatAgent=b.dataset.agentGo; go(b.dataset.go); });
+  const on=(sel,fn)=>{ const el=v.querySelector(sel); if(el) el.onclick=fn; };
+  on('#go-cycle', ()=>runCycle($('#focus').value.trim()));
+  v.querySelectorAll('[data-agent]').forEach(b=>b.onclick=()=>{ S.chatAgent=b.dataset.agent; render(); });
+  const sendChat = async ()=>{ const t=$('#chat-text').value.trim(); if(!t||S.typing) return; $('#chat-text').value=''; try{ await chat(S.chatAgent,t); }catch(e){ toast(agentError(e)); } render(); };
+  on('#chat-send', sendChat);
+  const ta=$('#chat-text'); if(ta) ta.onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); ta.blur(); sendChat(); } };
+  v.querySelectorAll('[data-answer]').forEach(b=>b.onclick=async()=>{ const q=S.data.questions.find(x=>x.id===b.dataset.answer), a=$('#ans-'+q.id).value.trim(); if(!a) return; busyBtn(b,'Envoi…'); try{ await answerQuestion(q,a); toast('Réponse transmise'); }catch(e){ toast(agentError(e)); } $('#ans-'+q.id)?.blur(); render(); });
+  on('#convene', async()=>{ const t=$('#topic').value.trim(); if(!t) return; const parts=[...v.querySelectorAll('.part:checked')].map(c=>c.value); $('#topic').blur(); S.running=true; toast('Réunion convoquée');
+    holdMeeting(t,{participants:parts}).catch(e=>toast(agentError(e))).finally(()=>{ S.running=false; S.step=''; render(); });
+    setTimeout(()=>{ if(S.meetingId){ S.openMeeting=S.meetingId; render(); } },1500); });
+  v.querySelectorAll('[data-meeting]').forEach(el=>{ const open=()=>{ S.openMeeting=el.dataset.meeting; render(); }; el.onclick=open; el.onkeydown=e=>{ if(e.key==='Enter') open(); }; });
+  on('#back-meetings', ()=>{ S.openMeeting=null; render(); });
+  on('#m-save', async()=>{ await upd('meetings', S.openMeeting, {founder_comment:$('#m-comment').value}); log('victor','Le fondateur a donné son avis sur une réunion', $('#m-comment').value); $('#m-comment').blur(); toast('Avis transmis à l’équipe'); });
+  on('#approve-all', async()=>{ for(const e of S.data.emails.filter(e=>e.status==='à valider')) await upd('emails', e.id, {status:'approuvé'}); log('clara','Le fondateur a approuvé les emails'); toast('Emails approuvés'); });
+  v.querySelectorAll('[data-email]').forEach(b=>b.onclick=async()=>{ const id=b.dataset.email, act=b.dataset.act; const patch={subject:$('#s-'+id).value, body:$('#b-'+id).value}; if(act==='approve') patch.status='approuvé'; if(act==='reject') patch.status='rejeté'; await upd('emails', id, patch); document.activeElement?.blur(); toast(act==='approve'?'Approuvé':act==='reject'?'Rejeté':'Enregistré'); });
+  const sendOne = async (e, b) => { try{ await sendEmail(e); return true; }catch(err){ const m=gmailError(err); await upd('emails', e.id, {error:m}).catch(()=>{}); toast(m); return false; } };
+  v.querySelectorAll('[data-send]').forEach(b=>b.onclick=async()=>{ busyBtn(b,'Envoi…'); const e=S.data.emails.find(x=>x.id===b.dataset.send); if(await sendOne(e)) toast('Email envoyé'); render(); });
+  on('#send-ready', async(ev)=>{ const b=ev.currentTarget; busyBtn(b,'Envoi en cours…'); const list=S.data.emails.filter(e=>e.status==='approuvé' && (e.due||0)<=Date.now()); let n=0;
+    for(const e of list){ if(!(await sendOne(e))) break; n++; await new Promise(r=>setTimeout(r,3000)); }
+    if(n) log('clara', `${n} email(s) envoyé(s) depuis Gmail`); toast(`${n} email(s) envoyé(s)`); render(); });
+  on('#p-extract', async(ev)=>{ const raw=$('#p-raw').value.trim(); if(!raw) return; const b=ev.currentTarget; busyBtn(b,'Hugo extrait…'); try{ const n=await extractProspects(raw, $('#p-offer').value); toast(`${n} prospect(s) ajouté(s)`); $('#p-raw').value=''; const o=S.data.offers.find(x=>x.id===$('#p-offer').value); if(n&&o){ toast('Clara écrit les emails…'); await writeEmails(o); toast('Emails prêts dans l’onglet Emails'); } }catch(e){ toast(agentError(e)); } document.activeElement?.blur(); render(); });
+  v.querySelectorAll('[data-pstatus]').forEach(s=>s.onchange=async()=>{ await upd('prospects', s.dataset.pstatus, {status:s.value, ...(s.value==='désinscrit'?{unsubscribed:true}:{})}); s.blur(); toast('Statut mis à jour'); });
+  v.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>{ const r=$('#reply-'+b.dataset.reply); r.hidden=!r.hidden; });
+  v.querySelectorAll('[data-reply-go]').forEach(b=>b.onclick=async()=>{ const p=S.data.prospects.find(x=>x.id===b.dataset.replyGo), t=$('#reply-text-'+p.id).value.trim(); if(!t) return; busyBtn(b,'Inès analyse…'); try{ const r=await draftReply(p,t); toast('Réponse prête dans Emails'); $('#reply-text-'+p.id).blur(); }catch(e){ toast(agentError(e)); } render(); });
+  v.querySelectorAll('[data-offer]').forEach(b=>b.onclick=async()=>{ await upd('offers', b.dataset.offer, {status:b.dataset.st}); });
+  v.querySelectorAll('[data-camp]').forEach(b=>b.onclick=async()=>{ await upd('campaigns', b.dataset.camp, {status:b.dataset.st}); log('leo', `Campagne ${b.dataset.st} par le fondateur`); });
+  on('#n-go', ()=>{ const f=$('#n-focus').value.trim(); $('#n-focus').blur(); S.running=true; render(); researchNiches(f).catch(e=>toast(agentError(e))).finally(()=>{ S.running=false; S.step=''; render(); }); });
+  const form=$('#set-form'); if(form) form.onsubmit=async e=>{ e.preventDefault(); await saveSettings(Object.fromEntries(new FormData(form))); document.activeElement?.blur(); toast('Réglages enregistrés'); render(); };
+}
+
+// ============================================================ démarrage
+(async function start(){
+  const v=location.hash.slice(1); if(TABS.some(t=>t[0]===v)) S.view=v;
+  render();
+  const use = n => (window.claude?.use ? window.claude.use(n) : Promise.resolve(null)).catch(()=>null);
+  const [db, sample, mcp] = await Promise.all([use('db'), use('sample'), use('mcp')]);
+  S.db=db; S.sample=sample; S.mcp=mcp;
+  if(db) subscribe(); else render();
+})();
+</script>
