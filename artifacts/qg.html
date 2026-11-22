@@ -95,7 +95,15 @@ details summary{cursor:pointer;font-weight:600}
 .speaker .face{width:120px;height:120px;margin:0 auto;border-radius:50%;overflow:hidden}
 .speaker .face svg{width:100%;height:100%}
 .speaker .who{text-align:center}.speaker .who b{display:block;font-family:var(--display);font-size:18px}
-.speaker .line{font-size:13px;color:var(--muted);max-height:4.5em;overflow:hidden;text-align:center}
+.speaker .line{font-size:14px;color:var(--ink);max-height:6em;overflow:hidden;text-align:center;line-height:1.45}
+.coach{display:grid;grid-template-columns:132px minmax(0,1fr);gap:18px;align-items:start;border:2px solid var(--accent)}
+.coach .face{width:132px;height:132px;border-radius:50%;overflow:hidden}
+.coach .face svg{width:100%;height:100%}
+.coach.talking .face .mouth{animation:talk .19s ease-in-out infinite alternate}
+.bubble{background:var(--soft);border-radius:14px;padding:12px 14px;position:relative}
+.bubble h3{font-size:15px;margin:10px 0 4px}.bubble h3:first-child{margin-top:0}
+.bubble ul{margin:0;padding-left:20px}
+@media (max-width:820px){.coach{grid-template-columns:1fr}.coach .face{width:110px;height:110px;margin:0 auto}}
 .face .mouth{transform-box:fill-box;transform-origin:center;transition:transform .12s}
 .speaker.talking .face .mouth{animation:talk .19s ease-in-out infinite alternate}
 .face .eyes{transform-box:fill-box;transform-origin:center;animation:blink 4.2s infinite}
@@ -107,7 +115,7 @@ details summary{cursor:pointer;font-weight:600}
 .checklist label{display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-size:14px;margin:8px 0}
 .checklist input{width:auto;margin-top:3px}
 .checklist .done{text-decoration:line-through;color:var(--muted)}
-@media (max-width:820px){.speaker{left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));width:auto;grid-template-columns:90px 1fr;align-items:center}.speaker .face{width:90px;height:90px;grid-row:span 3}.speaker .who,.speaker .line{text-align:left}}
+@media (max-width:820px){.speaker .row,.speaker p{grid-column:1/-1}.speaker{left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));width:auto;grid-template-columns:90px 1fr;align-items:center}.speaker .face{width:90px;height:90px;grid-row:span 3}.speaker .who,.speaker .line{text-align:left}}
 .toast{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:1}
 .landing{border:1px solid var(--line);border-radius:12px;padding:20px;background:var(--bg)}
@@ -137,6 +145,7 @@ details summary{cursor:pointer;font-weight:600}
 <script>
 // ============================================================ équipe
 const AGENTS = {
+  alma:{name:'Alma',emoji:'✨',role:'Ton bras droit (IA personnelle)',persona:"Tu es l'IA personnelle et le bras droit du fondateur. Tu coordonnes toute l'équipe (Victor, Nora, Léo, Clara, Hugo, Inès, Sam, Juliette, Margaux, Chloé) et tu es la seule à qui il parle au quotidien. Tu lui dis exactement et franchement ce qui va, ce qui ne va pas et ce qu'il doit faire maintenant, sans langue de bois et sans flatterie. Tu prends la parole de toi-même quand c'est important. Tu tutoies, tu parles simplement, avec des phrases courtes faites pour être dites à voix haute."},
   victor:{name:'Victor',emoji:'🧭',role:'Directeur général',persona:"Tu es Victor, directeur général. Vision long terme, obsession du chiffre d'affaires et de la satisfaction client. Tu animes les réunions, tranches, fixes les priorités et rends compte au fondateur avec des résumés clairs, honnêtes et actionnables. Tu t'inspires des entrepreneurs qui ont bâti des fortunes en servant une seule profession à fond (logiciels verticaux, agences à prix fixe, abonnements récurrents)."},
   nora:{name:'Nora',emoji:'🔎',role:'Recherche de niches',persona:"Tu es Nora, analyste de marché. Tu identifies les niches où des professionnels ont un problème douloureux, urgent, et pour lequel ils paient déjà. Tu analyses concurrence, prix pratiqués, taille de marché et ce qu'ont fait ceux qui ont réussi. Tu notes chaque niche avec rigueur et tu distingues clairement ce qui est sûr de ce qui est une estimation."},
   leo:{name:'Léo',emoji:'📣',role:'Marketing & publicité',persona:"Tu es Léo, directeur marketing. Expert Google Ads, Meta Ads, LinkedIn, SEO local. Tu conçois des campagnes rentables : ciblage, angles, accroches, budgets, KPI (CPC, CPL, CAC), plans de test A/B."},
@@ -160,7 +169,7 @@ const COLS = ['activity','meetings','messages','questions','niches','offers','pr
 const ROOT = 'qg/main';
 
 // ============================================================ état
-const S = { db:null, sample:null, mcp:null, loaded:false, failed:false, data:{}, settings:{}, view:'tableau', chatAgent:'victor', running:false, busy:new Set(), step:'', meetingId:null, typing:false, abort:new AbortController(), stopRequested:false, usage:{date:'',count:0} };
+const S = { db:null, sample:null, mcp:null, loaded:false, failed:false, data:{}, settings:{}, view:'tableau', chatAgent:'alma', running:false, busy:new Set(), step:'', meetingId:null, typing:false, abort:new AbortController(), stopRequested:false, usage:{date:'',count:0} };
 COLS.forEach(c => S.data[c] = []);
 
 const $ = (s, el=document) => el.querySelector(s);
@@ -170,6 +179,7 @@ const euros = n => `${Number(n||0).toLocaleString('fr-FR')} €`;
 const ag = id => AGENTS[id] || {name:id, emoji:'•', role:''};
 // Visages des agents (illustrations originales, une par agent)
 const LOOKS = {
+  alma:{skin:'#eec3a2',hair:'#4c1d95',style:'long',shirt:'#0f6b5f',bg:'#d9f2ec',headset:true},
   victor:{skin:'#e7b493',hair:'#2f241d',style:'short',shirt:'#1f3a5f',bg:'#dbe7f3',beard:true},
   nora:{skin:'#c68b67',hair:'#1c1715',style:'long',shirt:'#0e7490',bg:'#d7f0f5'},
   leo:{skin:'#f0c6a4',hair:'#b05a1e',style:'curly',shirt:'#be185d',bg:'#fbe0ec'},
@@ -187,6 +197,7 @@ function faceSVG(id){
   const top = L.style==='curly' ? `<g fill="${L.hair}">${[34,44,54,64,74,84].map((x,i)=>`<circle cx="${x}" cy="${36+(i%2)*3}" r="9"/>`).join('')}<circle cx="30" cy="48" r="7"/><circle cx="90" cy="48" r="7"/></g>`
     : L.style==='bun' ? `<circle cx="60" cy="20" r="10" fill="${L.hair}"/><path d="M32 52 Q34 28 60 27 Q86 28 88 52 Q76 40 60 40 Q44 40 32 52 Z" fill="${L.hair}"/>`
     : `<path d="M31 54 Q30 26 60 25 Q90 26 89 54 Q82 38 60 37 Q40 37 31 54 Z" fill="${L.hair}"/>`;
+  const headset = L.headset ? `<g fill="none" stroke="#0f172a" stroke-width="3"><path d="M30 60 Q30 24 60 24 Q90 24 90 60"/></g><rect x="25" y="54" width="9" height="16" rx="4" fill="#0f172a"/><rect x="86" y="54" width="9" height="16" rx="4" fill="#0f172a"/><path d="M90 68 Q88 84 70 82" fill="none" stroke="#0f172a" stroke-width="2.4"/><circle cx="69" cy="82" r="3" fill="#14b8a6"/>` : '';
   const glasses = L.glasses ? `<g fill="none" stroke="#1f2937" stroke-width="2"><circle cx="48" cy="60" r="7"/><circle cx="72" cy="60" r="7"/><path d="M55 60 H65"/></g>` : '';
   const beard = L.beard ? `<path d="M40 74 Q60 96 80 74 Q76 88 60 90 Q44 88 40 74 Z" fill="${L.hair}" opacity=".85"/>` : '';
   return `<svg viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" fill="${L.bg}"/>${back}
@@ -196,25 +207,29 @@ function faceSVG(id){
     <g stroke="${L.hair}" stroke-width="2.4" stroke-linecap="round"><path d="M42 51 Q48 48 54 51"/><path d="M66 51 Q72 48 78 51"/></g>${glasses}
     <circle cx="42" cy="72" r="4" fill="#f87171" opacity=".25"/><circle cx="78" cy="72" r="4" fill="#f87171" opacity=".25"/>
     <path d="M58 64 Q60 70 62 66" fill="none" stroke="#9a6b52" stroke-width="1.6" stroke-linecap="round"/>${beard}
-    <ellipse class="mouth" cx="60" cy="79" rx="7" ry="2.6" fill="#7f1d1d"/></svg>`;
+    <ellipse class="mouth" cx="60" cy="79" rx="7" ry="2.6" fill="#7f1d1d"/>${headset}</svg>`;
 }
 const av = id => `<div class="av" title="${esc(ag(id).name)}">${AGENTS[id]?faceSVG(id):ag(id).emoji}</div>`;
 
 // ---------- lecture à voix haute (voix Claude, sinon voix du navigateur)
-const VOICES = {victor:'rounded',nora:'airy',leo:'glassy',clara:'buttery',hugo:'rounded',ines:'airy',sam:'glassy',juliette:'buttery',margaux:'airy',chloe:'buttery'};
-const PITCH = {victor:.8,nora:1.15,leo:.95,clara:1.2,hugo:.85,ines:1.1,sam:.9,juliette:1.05,margaux:1.15,chloe:1.25};
+const VOICES = {alma:'buttery',victor:'rounded',nora:'airy',leo:'glassy',clara:'buttery',hugo:'rounded',ines:'airy',sam:'glassy',juliette:'buttery',margaux:'airy',chloe:'buttery'};
+const PITCH = {alma:1.1,victor:.8,nora:1.15,leo:.95,clara:1.2,hugo:.85,ines:1.1,sam:.9,juliette:1.05,margaux:1.15,chloe:1.25};
+const QG_URL = 'https://claude.ai/artifact/L1XdMboEvwvv3pNCg2LBgb';
 const SPK = {tts:null, playing:false, agent:null, text:'', token:0};
 function speechText(t){ return String(t||'').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,'').replace(/https?:\/\/\S+/g,'le lien').replace(/[#*_>`|]/g,'').replace(/\n{2,}/g,'\n').trim(); }
 function chunkText(t, max=1400){ const out=[]; for(const para of t.split(/\n+/)){ let cur=''; for(const sent of para.split(/(?<=[.!?…])\s+/)){ if((cur+' '+sent).length>max && cur){ out.push(cur.trim()); cur=''; } cur+=' '+sent; } if(cur.trim()) out.push(cur.trim().slice(0,1990)); } return out.filter(Boolean); }
 function renderSpeaker(){
-  const el=$('#speaker'); if(!SPK.playing){ el.hidden=true; return; }
+  const el=$('#speaker'); if(!SPK.playing){ el.hidden=true; $('#coach')?.classList.remove('talking'); return; }
   const a=ag(SPK.agent); el.hidden=false; el.classList.toggle('talking', SPK.talking!==false);
-  el.innerHTML = `<div class="face">${faceSVG(SPK.agent)}</div><div class="who"><b>${esc(a.name)}</b><span class="ts">${esc(a.role)}</span></div><div class="line">${esc(SPK.text.slice(0,180))}</div>
+  $('#coach')?.classList.toggle('talking', SPK.agent==='alma' && SPK.talking!==false);
+  el.innerHTML = `<div class="face">${faceSVG(SPK.agent)}</div><div class="who"><b>${esc(a.name)}</b><span class="ts">${esc(a.role)}</span></div><div class="line">${esc(SPK.text.slice(-220))}</div>
+    ${SPK.silent?`<p class="ts" style="margin:0;text-align:center">Son indisponible dans l'appli Claude. Pour l'entendre, ouvre le QG dans Chrome : <button class="say" id="spk-copy">Copier le lien</button></p>`:''}
     <div class="row" style="justify-content:center"><button class="btn ghost" id="spk-pause">${SPK.talking===false?'▶ Reprendre':'⏸ Pause'}</button><button class="btn bad" id="spk-stop">⏹ Arrêter</button></div>`;
   $('#spk-stop').onclick=stopSpeech;
-  $('#spk-pause').onclick=async()=>{ if(SPK.tts){ if(SPK.talking===false){ await SPK.tts.resume().catch(()=>{}); } else { await SPK.tts.pause().catch(()=>{}); } } else if('speechSynthesis' in window){ if(SPK.talking===false) speechSynthesis.resume(); else speechSynthesis.pause(); SPK.talking = SPK.talking===false; renderSpeaker(); } };
+  const cp=$('#spk-copy'); if(cp) cp.onclick=()=>navigator.clipboard.writeText(QG_URL).then(()=>toast('Lien copié : colle-le dans Chrome'),()=>toast(QG_URL));
+  $('#spk-pause').onclick=async()=>{ if(SPK.silent){ SPK.talking = SPK.talking===false; renderSpeaker(); return; } if(SPK.tts){ if(SPK.talking===false){ await SPK.tts.resume().catch(()=>{}); } else { await SPK.tts.pause().catch(()=>{}); } } else if(window.speechSynthesis){ if(SPK.talking===false) speechSynthesis.resume(); else speechSynthesis.pause(); SPK.talking = SPK.talking===false; renderSpeaker(); } };
 }
-async function stopSpeech(){ SPK.token++; SPK.playing=false; renderSpeaker(); if(SPK.tts) await SPK.tts.stop().catch(()=>{}); if('speechSynthesis' in window) speechSynthesis.cancel(); }
+async function stopSpeech(){ SPK.token++; SPK.playing=false; SPK.silent=false; renderSpeaker(); if(SPK.tts) await SPK.tts.stop().catch(()=>{}); if(window.speechSynthesis) speechSynthesis.cancel(); }
 async function say(lines){
   await stopSpeech(); const token=++SPK.token;
   const parts = lines.flatMap(l=>chunkText(speechText(l.text)).map((c,i)=>({agent:l.agent, text:c, id:`${l.agent}|${i}`}))).slice(0,100);
@@ -226,7 +241,21 @@ async function say(lines){
     if(token===SPK.token){ SPK.playing=false; renderSpeaker(); }
     return;
   }
-  if(!('speechSynthesis' in window)){ SPK.playing=false; renderSpeaker(); toast('La lecture vocale n’est pas disponible sur cet appareil.'); return; }
+  if(!(window.speechSynthesis)){
+    SPK.silent=true;
+    for(const p of parts){
+      const words=p.text.split(/\s+/); SPK.agent=p.agent; SPK.text=''; SPK.talking=true;
+      for(let i=0;i<words.length;i++){
+        if(token!==SPK.token) return;
+        while(SPK.talking===false && token===SPK.token) await new Promise(r=>setTimeout(r,200));
+        SPK.text=words.slice(Math.max(0,i-26),i+1).join(' '); renderSpeaker();
+        await new Promise(r=>setTimeout(r,260));
+      }
+      await new Promise(r=>setTimeout(r,500));
+    }
+    if(token===SPK.token){ SPK.talking=false; renderSpeaker(); setTimeout(()=>{ if(token===SPK.token){ SPK.playing=false; renderSpeaker(); } }, 4000); }
+    return;
+  }
   const fr = speechSynthesis.getVoices().filter(v=>/^fr/i.test(v.lang));
   for(const p of parts){
     if(token!==SPK.token) return;
@@ -239,6 +268,7 @@ function autoSay(){ try{ return localStorage.getItem('qg-auto-say')==='1'; }catc
 function sayBtn(key, label='🔊 Écouter'){ return `<button class="say" data-say="${esc(key)}">${label}</button>`; }
 function sayLines(key){
   const [kind,id]=key.split(':');
+  if(kind==='coach'){ return [{agent:'alma', text:coachSpeech()}]; }
   if(kind==='msg'){ const m=S.data.messages.find(x=>x.id===id); return m?[{agent:m.sender==='fondateur'?'victor':m.sender, text:m.text}]:[]; }
   if(kind==='meeting'){ const m=S.data.meetings.find(x=>x.id===id); return m?[...(m.transcript||[]).map(t=>({agent:t.agent, text:t.text})), ...(m.summary?[{agent:'victor', text:'En résumé : '+m.summary}]:[])]:[]; }
   if(kind==='sprint'){ const sp=S.data.sprints[0]; return sp?[{agent:'ines', text:`Sprint vente : ${sp.titre}. Offre de lancement : ${sp.offre_lancement}. Le plan : ${(sp.plan||[]).map(x=>`${x.heure}, ${x.action}`).join('. ')}`}]:[]; }
@@ -260,12 +290,12 @@ function subscribe(){
   COLS.forEach(c => {
     col(c).orderBy('ts','desc').limit(400).onSnapshot(snap => {
       S.data[c] = snap.docs.map(d => ({id:d.id, ...d.data()}));
-      if (pending>0 && --pending===0){ clearTimeout(timer); S.loaded=true; seedIfEmpty(); }
+      if (pending>0 && --pending===0){ clearTimeout(timer); S.loaded=true; seedIfEmpty(); setTimeout(coachAutoSpeak, 1500); }
       scheduleRender();
     }, () => { S.failed=true; scheduleRender(); });
   });
   S.db.doc('qg/usage').onSnapshot(snap => { S.usage = snap.exists ? snap.data() : {date:'',count:0}; scheduleRender(); }, ()=>{});
-  S.db.doc('qg/settings').onSnapshot(snap => { S.settings = snap.exists ? snap.data() : {}; scheduleRender(); }, ()=>{});
+  S.db.doc('qg/settings').onSnapshot(snap => { S.settings = snap.exists ? snap.data() : {}; AGENTS.alma.name = S.settings.ai_name || 'Alma'; scheduleRender(); }, ()=>{});
 }
 let rq=false;
 function scheduleRender(){ if(rq) return; rq=true; requestAnimationFrame(()=>{ rq=false; if(!isTyping()) render(); else renderChrome(); }); }
@@ -798,6 +828,70 @@ function checklistPanel(){
   return `<div class="panel checklist"><details ${done<3?'open':''}><summary>✅ Lancement de l'entreprise : ce qu'il ne faut pas oublier (${done}/${CHECKLIST.length})</summary>
     ${CHECKLIST.map(([k,l])=>`<label><input type="checkbox" data-check="${k}" ${c[k]?'checked':''}><span class="${c[k]?'done':''}">${esc(l)}</span></label>`).join('')}</details></div>`;
 }
+function coachFacts(){
+  const d=S.data, s=S.settings, ok=[], ko=[], todo=[];
+  const sent=d.emails.filter(e=>e.status==='envoyé'), sentToday=sent.filter(e=>Date.now()-(e.sent_ts||0)<864e5).length;
+  const toValidate=d.emails.filter(e=>e.status==='à valider').length, replied=d.prospects.filter(p=>['a répondu','rdv'].includes(p.status));
+  const clients=d.prospects.filter(p=>p.status==='client').length, overdue=d.invoices.filter(i=>i.type==='facture'&&i.status!=='payée'&&i.due<Date.now());
+  const toCall=d.prospects.filter(p=>p.status==='contacté'&&p.phone&&!p.called&&p.contacted_ts&&Date.now()-p.contacted_ts>2*864e5).length;
+  if(d.prospects.length) ok.push(`${d.prospects.length} prospects vérifiés prêts à être contactés.`);
+  if(clients) ok.push(`${clients} client${clients>1?'s':''} signé${clients>1?'s':''}.`);
+  if(sent.length) ok.push(`${sent.length} emails déjà envoyés.`);
+  if(replied.length) ok.push(`${replied.length} prospect${replied.length>1?'s ont':' a'} répondu ou pris rendez-vous.`);
+  if(!s.company_name||!s.company_address) { ko.push('Ton entreprise n’est pas renseignée : aucun email ni facture ne peut partir.'); todo.push('Remplis raison sociale, SIRET et adresse dans Réglages.'); }
+  if(s.paused==='on') { ko.push('L’équipe est en pause.'); todo.push('Relance l’équipe quand tu veux qu’elle travaille.'); }
+  if(!s.payment_link && !s.iban) { ko.push('Aucun moyen d’encaisser : ni lien Stripe, ni IBAN.'); todo.push('Ajoute ton IBAN ou ton lien de paiement dans Réglages.'); }
+  if(toValidate) todo.push(`Valide les ${toValidate} emails qui attendent dans l’onglet Emails.`);
+  if(!d.prospects.some(p=>p.status!=='nouveau') && d.prospects.length) ko.push('Aucun prospect contacté pour l’instant : pas de contact, pas de vente.');
+  if(replied.length) todo.push(`Réponds en priorité à ${replied.slice(0,3).map(p=>p.name||p.company).join(', ')}.`);
+  if(toCall) todo.push(toCall>1?`Appelle les ${toCall} prospects contactés il y a plus de 2 jours.`:'Appelle le prospect contacté il y a plus de 2 jours.');
+  if(overdue.length) { ko.push(`${overdue.length} facture${overdue.length>1?'s':''} en retard de paiement.`); todo.push('Fais relancer les factures en retard par Margaux.'); }
+  if(sent.length && !sentToday && s.company_name) todo.push('Envoie ta série d’emails du jour (25 environ).');
+  return {ok, ko, todo};
+}
+function coachPanel(){
+  const a=ag('alma'), b=S.data.messages.find(m=>m.thread==='alma' && m.brief), f=coachFacts();
+  const brief = b?.brief, today = b && new Date(b.ts).toDateString()===new Date().toDateString();
+  const list = (arr) => `<ul>${arr.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
+  const ok = (brief&&today?brief.ok:f.ok), ko=(brief&&today?brief.ko:f.ko), todo=(brief&&today?brief.todo:f.todo);
+  return `<div class="panel coach ${SPK.playing&&SPK.agent==='alma'?'talking':''}" id="coach"><div class="face">${faceSVG('alma')}</div><div style="min-width:0">
+    <div class="row" style="justify-content:space-between"><div><h2 style="margin:0">${esc(a.name)}</h2><span class="ts">${esc(a.role)}${brief&&today?` · point du ${new Date(b.ts).toLocaleDateString('fr-FR')}`:''}</span></div>
+      <div class="row">${sayBtn('coach:now','🔊 Écouter son point')}<button class="btn ghost" id="coach-talk">💬 Lui parler</button>${S.sample?`<button class="btn ghost" id="coach-brief" ${S.running?'disabled':''}>↻ Refaire le point</button>`:''}</div></div>
+    <div class="bubble" style="margin-top:10px">${brief&&today&&brief.mot?`<p style="margin:0 0 6px"><b>${esc(brief.mot)}</b></p>`:''}
+      <h3>✅ Ce qui va</h3>${ok.length?list(ok):'<p class="ts" style="margin:0">Pas encore grand-chose : on démarre.</p>'}
+      <h3>⚠️ Ce qui ne va pas</h3>${ko.length?list(ko):'<p class="ts" style="margin:0">Rien de bloquant.</p>'}
+      <h3>👉 À faire maintenant</h3>${todo.length?list(todo.slice(0,5)):'<p class="ts" style="margin:0">Continue sur ta lancée.</p>'}</div></div></div>`;
+}
+function coachSpeech(){
+  const b=S.data.messages.find(m=>m.thread==='alma' && m.brief), today=b && new Date(b.ts).toDateString()===new Date().toDateString();
+  const x = today ? b.brief : coachFacts();
+  const nom = S.settings.founder_name ? S.settings.founder_name.split(' ')[0] : '';
+  return `Salut${nom?' '+nom:''}. ${today&&b.brief.mot?b.brief.mot+' ':''}${x.ok.length?'Ce qui va : '+x.ok.join(' '):''} ${x.ko.length?'Ce qui ne va pas : '+x.ko.join(' '):'Rien de bloquant.'} ${x.todo.length?'Ce que tu dois faire maintenant : '+x.todo.slice(0,5).join(' '):''}`;
+}
+async function makeBrief(){
+  const f=coachFacts(), d=S.data;
+  const stats={prospects:d.prospects.length, contactes:d.prospects.filter(p=>p.status!=='nouveau').length, reponses:d.prospects.filter(p=>['a répondu','rdv'].includes(p.status)).length, clients:d.prospects.filter(p=>p.status==='client').length, emails_envoyes:d.emails.filter(e=>e.status==='envoyé').length, emails_a_valider:d.emails.filter(e=>e.status==='à valider').length, factures_en_retard:d.invoices.filter(i=>i.type==='facture'&&i.status!=='payée'&&i.due<Date.now()).length};
+  const recent=d.activity.slice(0,15).map(a=>`- ${ag(a.agent).name} : ${a.title}`).join('\n');
+  const r = await think('alma', `Fais le point du jour au fondateur. Chiffres : ${JSON.stringify(stats)}. Constats automatiques : ${JSON.stringify(f)}. Activité récente :\n${recent}
+Sois franche et concrète. 2 à 4 éléments par rubrique, une phrase courte chacun, faits pour être dits à voix haute.
+JSON : {"mot":"une phrase d'accroche honnête","ok":[""],"ko":[""],"todo":[""]}`, {json:true, tier:'quick'});
+  await add('messages',{thread:'alma', sender:'alma', report:true, brief:r, text:`Point du jour\n\n${r.mot}\n\nCe qui va :\n- ${(r.ok||[]).join('\n- ')}\n\nCe qui ne va pas :\n- ${(r.ko||[]).join('\n- ')}\n\nÀ faire :\n- ${(r.todo||[]).join('\n- ')}`});
+  await saveSettings({brief_date:new Date().toDateString()});
+}
+// Alma prend la parole d'elle-même : à l'ouverture (point du jour) et quand une alerte nouvelle apparaît
+let lastAlertKey = null;
+async function coachAutoSpeak(){
+  if(!S.loaded) return;
+  const today=new Date().toDateString();
+  let key=''; try{ key=localStorage.getItem('qg-alma-said')||''; }catch{}
+  if(S.sample && S.settings.paused!=='on' && S.settings.brief_date!==today && !S.running){
+    S.running=true; try{ await makeBrief(); }catch(e){} finally{ S.running=false; }
+  }
+  const f=coachFacts(), sig=today+'|'+f.ko.join('|')+'|'+f.todo.slice(0,2).join('|');
+  if(sig===key || sig===lastAlertKey) return;
+  lastAlertKey=sig; try{ localStorage.setItem('qg-alma-said', sig); }catch{}
+  say([{agent:'alma', text:coachSpeech()}]);
+}
 function sprintPanel(){
   const sp = S.data.sprints[0]; if(!sp) return '';
   const copyBtn = (i) => `<button class="btn ghost" data-copy="${i}">Copier</button>`;
@@ -822,6 +916,7 @@ const VIEWS = {
     if(!S.settings.company_name) banners.push(`Avant d'envoyer des emails : renseigne ta raison sociale et ton adresse dans <button class="btn ghost" data-go="reglages">Réglages</button>`);
     v.innerHTML = `
       <div><h1>Bonjour${S.settings.founder_name?' '+esc(S.settings.founder_name.split(' ')[0]):''} 👋</h1><p class="sub">Voici où en est ton entreprise. L'équipe travaille tant que cette page est ouverte ; tu gardes la main sur chaque décision qui engage ton argent ou ton image.</p></div>
+      ${coachPanel()}
       ${banners.map(b=>`<div class="banner">${b}</div>`).join('')}
       <div class="kpis">
         <div class="kpi"><div class="v">${d.prospects.filter(p=>p.status==='client').length}</div><div class="l">Clients</div></div>
@@ -983,7 +1078,7 @@ const VIEWS = {
     v.innerHTML = `<div><h1>Réglages</h1><p class="sub">Aucune clé à saisir : les agents tournent sur ton compte claude.ai, et les emails partent de ton Gmail.</p></div>
       <form id="set-form" class="grid2">
         <div class="panel"><h2 style="margin-top:0">Ton entreprise</h2><p class="ts">Obligatoire avant d'envoyer des emails de prospection (identité de l'expéditeur).</p>
-          ${f('founder_name','Ton prénom et nom (signature)')}${f('brand_name','Nom de marque','VotreIAPro')}${f('company_name','Raison sociale')}${f('company_legal','Forme juridique et SIRET')}${f('company_address','Adresse')}</div>
+          ${f('ai_name','Le prénom de ton IA personnelle','Alma')}${f('founder_name','Ton prénom et nom (signature)')}${f('brand_name','Nom de marque','VotreIAPro')}${f('company_name','Raison sociale')}${f('company_legal','Forme juridique et SIRET')}${f('company_address','Adresse')}</div>
         <div class="panel"><h2 style="margin-top:0">Vente & pilotage</h2>
           ${f('payment_link','Lien de paiement Stripe','https://buy.stripe.com/…')}
           <p class="ts">Dans Stripe : Catalogue de produits → Liens de paiement → Créer. Colle le lien ici.</p>
@@ -1030,6 +1125,8 @@ function bind(v){
   on('#go-cycle', ()=>runCycle($('#focus').value.trim()));
   on('#go-sprint', ()=>runSprint());
   on('#banner-resume', resumeTeam);
+  on('#coach-talk', ()=>{ S.chatAgent='alma'; go('discussion'); });
+  on('#coach-brief', async(ev)=>{ busyBtn(ev.currentTarget,'Alma prépare…'); try{ await makeBrief(); lastAlertKey=null; try{ localStorage.removeItem('qg-alma-said'); }catch{} say([{agent:'alma', text:coachSpeech()}]); }catch(e){ toast(agentError(e)); } render(); });
   v.querySelectorAll('[data-say]').forEach(b=>b.onclick=(ev)=>{ ev.stopPropagation(); say(sayLines(b.dataset.say)); });
   const as=$('#auto-say'); if(as) as.onchange=()=>{ try{ localStorage.setItem('qg-auto-say', as.checked?'1':'0'); }catch{} };
   v.querySelectorAll('[data-check]').forEach(c=>c.onchange=async()=>{ await saveSettings({checklist:{...(S.settings.checklist||{}), [c.dataset.check]:c.checked}}); });
