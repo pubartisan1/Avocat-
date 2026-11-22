@@ -19,10 +19,10 @@ function getTransport() {
   return transport;
 }
 
-export function prospectToken(prospect) {
+export async function prospectToken(prospect) {
   if (prospect.token) return prospect.token;
   const token = crypto.randomBytes(16).toString('hex');
-  run('UPDATE prospects SET token = ? WHERE id = ?', token, prospect.id);
+  await run('UPDATE prospects SET token = ? WHERE id = ?', token, prospect.id);
   return token;
 }
 
@@ -32,8 +32,8 @@ function footer(s, token) {
   return `\n\n--\n${identity}\nVous recevez ce message car votre adresse professionnelle est publiée publiquement et que notre offre concerne votre activité.\nNe plus recevoir de messages : ${base}/desabonnement?t=${token}`;
 }
 
-export function sentToday() {
-  return get("SELECT COUNT(*) AS n FROM emails WHERE status = 'envoyé' AND date(sent_ts) = date('now')").n;
+export async function sentToday() {
+  return (await get("SELECT COUNT(*) AS n FROM emails WHERE status = 'envoyé' AND date(sent_ts) = date('now')"))?.n ?? 0;
 }
 
 /** Envoie les emails approuvés dont la date d'envoi est passée, dans la limite quotidienne. */
@@ -44,36 +44,37 @@ export async function processQueue() {
   const missing = ['company_name', 'company_address', 'contact_email'].filter((k) => !s[k]);
   if (missing.length) return { sent: 0, reason: `Informations légales manquantes : ${missing.join(', ')}.` };
 
-  const remaining = Number(s.daily_email_limit || 30) - sentToday();
+  const remaining = Number(s.daily_email_limit || 30) - (await sentToday());
   if (remaining <= 0) return { sent: 0, reason: 'Limite quotidienne atteinte.' };
 
-  const queue = all(`SELECT e.*, p.email AS to_email, p.unsubscribed, p.demo, p.status AS p_status
+  const queue = await all(`SELECT e.*, p.email AS to_email, p.unsubscribed, p.demo, p.status AS p_status
     FROM emails e JOIN prospects p ON p.id = e.prospect_id
     WHERE e.status = 'approuvé' AND (e.send_after IS NULL OR e.send_after <= datetime('now'))
     ORDER BY e.step, e.id LIMIT ?`, remaining);
 
   let sent = 0;
   for (const e of queue) {
-    const prospect = get('SELECT * FROM prospects WHERE id = ?', e.prospect_id);
+    const prospect = await get('SELECT * FROM prospects WHERE id = ?', e.prospect_id);
     if (e.unsubscribed || e.demo || ['a répondu', 'client', 'pas intéressé'].includes(e.p_status)) {
-      update('emails', e.id, { status: 'annulé', error: e.demo ? 'Prospect de démonstration' : 'Prospect désinscrit ou déjà en discussion' });
+      await update('emails', e.id, { status: 'annulé', error: e.demo ? 'Prospect de démonstration' : 'Prospect désinscrit ou déjà en discussion' });
       continue;
     }
     try {
+      const token = await prospectToken(prospect);
       await getTransport().sendMail({
         from: secret('MAIL_FROM'),
         to: e.to_email,
         replyTo: s.contact_email || undefined,
         subject: e.subject,
-        text: e.body + footer(s, prospectToken(prospect)),
-        headers: { 'List-Unsubscribe': `<${baseUrl()}/desabonnement?t=${prospectToken(prospect)}>` },
+        text: e.body + footer(s, token),
+        headers: { 'List-Unsubscribe': `<${baseUrl()}/desabonnement?t=${token}>` },
       });
-      update('emails', e.id, { status: 'envoyé', sent_ts: new Date().toISOString().replace('T', ' ').slice(0, 19), error: null });
-      if (prospect.status === 'nouveau') update('prospects', prospect.id, { status: 'contacté' });
+      await update('emails', e.id, { status: 'envoyé', sent_ts: new Date().toISOString().replace('T', ' ').slice(0, 19), error: null });
+      if (prospect.status === 'nouveau') await update('prospects', prospect.id, { status: 'contacté' });
       sent++;
       await new Promise((r) => setTimeout(r, 4000)); // espacement pour la délivrabilité
     } catch (err) {
-      update('emails', e.id, { status: 'échec', error: String(err.message || err) });
+      await update('emails', e.id, { status: 'échec', error: String(err.message || err) });
     }
   }
   if (sent) log('clara', 'email', `${sent} email(s) envoyé(s)`);

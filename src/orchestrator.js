@@ -6,23 +6,23 @@ import { all, get, insert, update, run, getSettings, log, parseJSON, baseUrl } f
 import crypto from 'node:crypto';
 
 // ------------------------------------------------------------------ contexte partagé
-export function companyContext() {
+export async function companyContext() {
   const s = getSettings();
-  const products = all("SELECT id, name, niche, price_setup, price_monthly, status FROM products ORDER BY id DESC LIMIT 5");
-  const niches = all('SELECT name, score FROM niches ORDER BY id DESC LIMIT 6');
+  const products = await all("SELECT id, name, niche, price_setup, price_monthly, status FROM products ORDER BY id DESC LIMIT 5");
+  const niches = await all('SELECT name, score FROM niches ORDER BY id DESC LIMIT 6');
   const stats = {
-    prospects: get('SELECT COUNT(*) n FROM prospects WHERE demo = 0').n,
-    contactes: get("SELECT COUNT(*) n FROM prospects WHERE status != 'nouveau' AND demo = 0").n,
-    reponses: get("SELECT COUNT(*) n FROM prospects WHERE status IN ('a répondu','rdv','client')").n,
-    emails_envoyes: get("SELECT COUNT(*) n FROM emails WHERE status = 'envoyé'").n,
-    emails_a_valider: get("SELECT COUNT(*) n FROM emails WHERE status = 'brouillon'").n,
-    ventes: get("SELECT COUNT(*) n, COALESCE(SUM(amount),0) total FROM orders WHERE status = 'payé'"),
-    leads_site: get('SELECT COUNT(*) n FROM leads').n,
+    prospects: (await get('SELECT COUNT(*) n FROM prospects WHERE demo = 0')).n,
+    contactes: (await get("SELECT COUNT(*) n FROM prospects WHERE status != 'nouveau' AND demo = 0")).n,
+    reponses: (await get("SELECT COUNT(*) n FROM prospects WHERE status IN ('a répondu','rdv','client')")).n,
+    emails_envoyes: (await get("SELECT COUNT(*) n FROM emails WHERE status = 'envoyé'")).n,
+    emails_a_valider: (await get("SELECT COUNT(*) n FROM emails WHERE status = 'brouillon'")).n,
+    ventes: await get("SELECT COUNT(*) n, COALESCE(SUM(amount),0) total FROM orders WHERE status = 'payé'"),
+    leads_site: (await get('SELECT COUNT(*) n FROM leads')).n,
   };
   const founderNotes = [
-    ...all("SELECT 'Réponse du fondateur à « ' || question || ' » : ' || answer AS t FROM questions WHERE status = 'répondue' ORDER BY id DESC LIMIT 8"),
-    ...all("SELECT 'Avis du fondateur sur la réunion « ' || topic || ' » : ' || founder_comment AS t FROM meetings WHERE founder_comment IS NOT NULL AND founder_comment != '' ORDER BY id DESC LIMIT 5"),
-    ...all("SELECT 'Message du fondateur : ' || text AS t FROM messages WHERE sender = 'fondateur' ORDER BY id DESC LIMIT 6"),
+    ...(await all("SELECT 'Réponse du fondateur à « ' || question || ' » : ' || answer AS t FROM questions WHERE status = 'répondue' ORDER BY id DESC LIMIT 8")),
+    ...(await all("SELECT 'Avis du fondateur sur la réunion « ' || topic || ' » : ' || founder_comment AS t FROM meetings WHERE founder_comment IS NOT NULL AND founder_comment != '' ORDER BY id DESC LIMIT 5")),
+    ...(await all("SELECT 'Message du fondateur : ' || text AS t FROM messages WHERE sender = 'fondateur' ORDER BY id DESC LIMIT 6")),
   ].map((r) => `- ${r.t}`).join('\n');
 
   return `CONTEXTE DE L'ENTREPRISE (au ${new Date().toLocaleDateString('fr-FR')})
@@ -36,12 +36,12 @@ Consignes et avis du fondateur (PRIORITAIRES) :
 ${founderNotes || '- aucun pour l’instant'}`;
 }
 
-function addQuestions(agentId, questions, context = '') {
+async function addQuestions(agentId, questions, context = '') {
   for (const q of questions || []) {
     const text = typeof q === 'string' ? q : q?.question;
     if (!text) continue;
-    if (get("SELECT id FROM questions WHERE question = ? AND status = 'en attente'", text)) continue;
-    insert('questions', { agent: agentId, question: text, context });
+    if (await get("SELECT id FROM questions WHERE question = ? AND status = 'en attente'", text)) continue;
+    await insert('questions', { agent: agentId, question: text, context });
     log(agentId, 'question', `❓ Question pour le fondateur`, text);
   }
 }
@@ -55,7 +55,7 @@ export async function researchNiches(focus = '') {
     system: systemFor('nora'),
     webSearch: true, maxSearches: 8, effort: 'high',
     mock: MOCKS.niches,
-    prompt: `${companyContext()}
+    prompt: `${await companyContext()}
 
 MISSION : trouve les 3 à 5 meilleures niches où notre entreprise peut vendre RAPIDEMENT un service numérique (site, automatisation, assistant IA, contenus, génération de clients...) à des professionnels (avocats, artisans, médecins, ou autre métier si plus prometteur). ${focus ? `Orientation demandée : ${focus}.` : ''}
 Fais de vraies recherches sur Internet : taille de la cible en France, prix pratiqués par les concurrents, offres qui marchent, entrepreneurs qui ont réussi dans cette niche et comment, signaux de demande.
@@ -65,9 +65,9 @@ JSON attendu : {"niches":[{"name":"","sector":"","problem":"","offer_idea":"","a
   });
   const ids = [];
   for (const n of data.niches || []) {
-    ids.push(insert('niches', { ...pick(n, ['name', 'sector', 'problem', 'offer_idea', 'audience', 'willingness_to_pay', 'competition', 'reasoning']), score: Number(n.score) || 0, sources: n.sources?.length ? n.sources : sources.slice(0, 6).map((s) => s.url) }));
+    ids.push(await insert('niches', { ...pick(n, ['name', 'sector', 'problem', 'offer_idea', 'audience', 'willingness_to_pay', 'competition', 'reasoning']), score: Number(n.score) || 0, sources: n.sources?.length ? n.sources : sources.slice(0, 6).map((s) => s.url) }));
   }
-  addQuestions('nora', data.questions_fondateur, 'Recherche de niches');
+  await addQuestions('nora', data.questions_fondateur, 'Recherche de niches');
   log('nora', 'recherche', `${ids.length} niches analysées`, (data.niches || []).map((n) => `${n.name} — ${n.score}/10`).join('\n'));
   return ids;
 }
@@ -77,18 +77,18 @@ JSON attendu : {"niches":[{"name":"","sector":"","problem":"","offer_idea":"","a
  * puis Victor conclut avec des décisions.
  */
 export async function holdMeeting(topic, { participants = ['nora', 'leo', 'clara', 'hugo', 'ines', 'sam', 'juliette'], expectProduct = false, extra = '' } = {}) {
-  const meetingId = insert('meetings', { topic });
+  const meetingId = await insert('meetings', { topic });
   log('victor', 'réunion', `Réunion ouverte : ${topic}`);
   const transcript = [];
   const save = () => update('meetings', meetingId, { transcript });
-  const ctx = `${companyContext()}\n${extra}`;
+  const ctx = `${await companyContext()}\n${extra}`;
 
   const open = await ask({
     system: systemFor('victor'), effort: 'medium', maxTokens: 4000,
     mock: `[DÉMO] Bonjour à tous. Ordre du jour : ${topic}. Je veux des propositions concrètes et chiffrées.`,
     prompt: `${ctx}\n\nTu ouvres une réunion d'équipe. Sujet : « ${topic} ». En 3 à 5 phrases, cadre l'objectif, ce que tu attends de chacun et le critère de décision.`,
   });
-  transcript.push({ agent: 'victor', text: open.text }); save();
+  transcript.push({ agent: 'victor', text: open.text }); await save();
 
   for (const id of participants) {
     const said = transcript.map((t) => `${AGENTS[t.agent].name} (${AGENTS[t.agent].role}) : ${t.text}`).join('\n\n');
@@ -97,7 +97,7 @@ export async function holdMeeting(topic, { participants = ['nora', 'leo', 'clara
       mock: MOCKS.meetingLine(AGENTS[id].name),
       prompt: `${ctx}\n\nRÉUNION — sujet : « ${topic} »\nCe qui a été dit :\n${said}\n\nÀ toi (${AGENTS[id].name}, ${AGENTS[id].role}). Apporte ton expertise en 4 à 8 phrases : propositions concrètes, chiffres, risques, désaccords argumentés si nécessaire. Ne répète pas les autres.`,
     });
-    transcript.push({ agent: id, text: r.text }); save();
+    transcript.push({ agent: id, text: r.text }); await save();
   }
 
   const said = transcript.map((t) => `${AGENTS[t.agent].name} : ${t.text}`).join('\n\n');
@@ -111,16 +111,16 @@ export async function holdMeeting(topic, { participants = ['nora', 'leo', 'clara
 JSON attendu : {"conclusion":"ta prise de parole finale (3-6 phrases)","summary":"résumé de la réunion pour le fondateur","decisions":["décision — responsable"]${productSchema},"questions_fondateur":["question si une décision dépend du fondateur"]}`,
   });
   transcript.push({ agent: 'victor', text: data.conclusion || data.summary });
-  update('meetings', meetingId, { transcript, summary: data.summary, decisions: data.decisions || [], status: 'terminée' });
-  addQuestions('victor', data.questions_fondateur, `Réunion : ${topic}`);
+  await update('meetings', meetingId, { transcript, summary: data.summary, decisions: data.decisions || [], status: 'terminée' });
+  await addQuestions('victor', data.questions_fondateur, `Réunion : ${topic}`);
   log('victor', 'réunion', `Réunion terminée : ${topic}`, data.summary);
   return { meetingId, data };
 }
 
-export function createProduct(p, meetingId) {
+export async function createProduct(p, meetingId) {
   let slug = slugify(p.name || 'offre');
-  if (get('SELECT id FROM products WHERE slug = ?', slug)) slug = `${slug}-${crypto.randomBytes(2).toString('hex')}`;
-  const id = insert('products', {
+  if (await get('SELECT id FROM products WHERE slug = ?', slug)) slug = `${slug}-${crypto.randomBytes(2).toString('hex')}`;
+  const id = await insert('products', {
     slug, name: p.name, niche: p.niche, target: p.target, tagline: p.tagline, description: p.description,
     price_setup: Number(p.price_setup) || 0, price_monthly: Number(p.price_monthly) || 0,
     deliverables: p.deliverables || [], meeting_id: meetingId,
@@ -130,58 +130,58 @@ export function createProduct(p, meetingId) {
 }
 
 export async function buildLanding(productId) {
-  const p = get('SELECT * FROM products WHERE id = ?', productId);
+  const p = await get('SELECT * FROM products WHERE id = ?', productId);
   log('sam', 'site', `Création de la page de vente « ${p.name} »…`);
   const { data } = await askJSON({
     system: systemFor('sam'), effort: 'high',
     mock: MOCKS.landing,
-    prompt: `${companyContext()}\n\nOFFRE : ${JSON.stringify(pick(p, ['name', 'niche', 'target', 'tagline', 'description', 'price_setup', 'price_monthly', 'deliverables']))}
+    prompt: `${await companyContext()}\n\nOFFRE : ${JSON.stringify(pick(p, ['name', 'niche', 'target', 'tagline', 'description', 'price_setup', 'price_monthly', 'deliverables']))}
 Rédige la page de vente complète, persuasive et HONNÊTE (aucun faux témoignage, aucun chiffre inventé). Ton adapté à la cible.
 JSON attendu : {"hero_title":"","hero_subtitle":"","cta":"","problems":["",""],"benefits":[{"title":"","text":""}],"process":[{"step":"","text":""}],"faq":[{"q":"","a":""}],"guarantee":""}`,
   });
-  update('products', productId, { landing: data, status: 'en ligne' });
+  await update('products', productId, { landing: data, status: 'en ligne' });
   log('sam', 'site', `Page de vente en ligne : /offre/${p.slug}`);
   return data;
 }
 
 export async function complianceReview(productId) {
-  const p = get('SELECT * FROM products WHERE id = ?', productId);
+  const p = await get('SELECT * FROM products WHERE id = ?', productId);
   const { data } = await askJSON({
     system: systemFor('juliette'), effort: 'medium',
     mock: MOCKS.compliance,
-    prompt: `${companyContext()}\n\nVérifie la conformité de l'offre et de sa page de vente : ${JSON.stringify(pick(p, ['name', 'niche', 'target', 'description', 'landing']))}
+    prompt: `${await companyContext()}\n\nVérifie la conformité de l'offre et de sa page de vente : ${JSON.stringify(pick(p, ['name', 'niche', 'target', 'description', 'landing']))}
 JSON attendu : {"verdict":"OK | OK avec corrections | Bloquant","points":["constat"],"corrections":[{"champ":"","nouveau_texte":""}],"questions_fondateur":[""]}`,
   });
-  addQuestions('juliette', data.questions_fondateur, `Conformité : ${p.name}`);
+  await addQuestions('juliette', data.questions_fondateur, `Conformité : ${p.name}`);
   log('juliette', 'conformité', `Revue de conformité « ${p.name} » : ${data.verdict}`, (data.points || []).join('\n'));
   return data;
 }
 
 export async function planCampaigns(productId) {
-  const p = get('SELECT * FROM products WHERE id = ?', productId);
+  const p = await get('SELECT * FROM products WHERE id = ?', productId);
   const s = getSettings();
   const { data } = await askJSON({
     system: systemFor('leo'), effort: 'high', webSearch: true, maxSearches: 4,
     mock: MOCKS.campaign,
-    prompt: `${companyContext()}\n\nOFFRE : ${JSON.stringify(pick(p, ['name', 'niche', 'target', 'tagline', 'price_setup', 'price_monthly']))}
+    prompt: `${await companyContext()}\n\nOFFRE : ${JSON.stringify(pick(p, ['name', 'niche', 'target', 'tagline', 'price_setup', 'price_monthly']))}
 Page de vente : ${baseUrl()}/offre/${p.slug}
 Conçois 2 à 3 campagnes (Google Ads, Meta, LinkedIn, SEO local, partenariats...) dans un budget total de ${s.ads_budget_month} €/mois. Pour chacune : ciblage, mots-clés ou audiences, 3 accroches publicitaires, budget, KPI cibles, plan de test.
 JSON attendu : {"campaigns":[{"channel":"","name":"","budget":"","plan":{}}],"questions_fondateur":[""]}`,
   });
-  for (const c of data.campaigns || []) insert('campaigns', { product_id: productId, channel: c.channel, name: c.name, budget: c.budget, plan: c.plan });
-  addQuestions('leo', data.questions_fondateur, `Campagnes : ${p.name}`);
+  for (const c of data.campaigns || []) await insert('campaigns', { product_id: productId, channel: c.channel, name: c.name, budget: c.budget, plan: c.plan });
+  await addQuestions('leo', data.questions_fondateur, `Campagnes : ${p.name}`);
   log('leo', 'marketing', `${(data.campaigns || []).length} campagne(s) proposée(s) pour « ${p.name} »`);
 }
 
 export async function findProspects(productId, count) {
-  const p = get('SELECT * FROM products WHERE id = ?', productId);
+  const p = await get('SELECT * FROM products WHERE id = ?', productId);
   const n = Number(count || getSettings().prospects_per_cycle || 15);
-  const known = all('SELECT email FROM prospects WHERE product_id = ? ORDER BY id DESC LIMIT 200', productId).map((r) => r.email);
+  const known = (await all('SELECT email FROM prospects WHERE product_id = ? ORDER BY id DESC LIMIT 200', productId)).map((r) => r.email);
   log('hugo', 'prospection', `Recherche de ${n} prospects pour « ${p.name} »…`);
   const { data } = await askJSON({
     system: systemFor('hugo'), webSearch: true, maxSearches: 12, effort: 'high',
     mock: MOCKS.prospects,
-    prompt: `${companyContext()}\n\nOFFRE : ${p.name} — cible : ${p.target} (${p.niche}).
+    prompt: `${await companyContext()}\n\nOFFRE : ${p.name} — cible : ${p.target} (${p.niche}).
 Trouve jusqu'à ${n} prospects RÉELS en France correspondant à la cible, avec une adresse email PROFESSIONNELLE publiée publiquement (site du cabinet/de l'entreprise, annuaire professionnel public). Indique l'URL où l'email est publié. N'invente rien : si tu ne trouves pas l'email, n'inclus pas le prospect.
 Déjà connus (à exclure) : ${known.join(', ') || 'aucun'}.
 JSON attendu : {"prospects":[{"name":"","company":"","role":"","email":"","phone":"","city":"","website":"","source_url":"","personalization":"détail réel et vérifiable pour personnaliser"}],"questions_fondateur":[""]}`,
@@ -190,19 +190,19 @@ JSON attendu : {"prospects":[{"name":"","company":"","role":"","email":"","phone
   const demo = !hasLLM();
   for (const pr of data.prospects || []) {
     if (!pr.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(pr.email)) continue;
-    if (get('SELECT id FROM prospects WHERE lower(email) = lower(?)', pr.email)) continue;
-    insert('prospects', { ...pick(pr, ['name', 'company', 'role', 'email', 'phone', 'city', 'website', 'source_url', 'personalization']), product_id: productId, demo: demo ? 1 : 0 });
+    if (await get('SELECT id FROM prospects WHERE lower(email) = lower(?)', pr.email)) continue;
+    await insert('prospects', { ...pick(pr, ['name', 'company', 'role', 'email', 'phone', 'city', 'website', 'source_url', 'personalization']), product_id: productId, demo: demo ? 1 : 0 });
     added++;
   }
-  addQuestions('hugo', data.questions_fondateur, `Prospection : ${p.name}`);
+  await addQuestions('hugo', data.questions_fondateur, `Prospection : ${p.name}`);
   log('hugo', 'prospection', `${added} nouveau(x) prospect(s) ajouté(s) pour « ${p.name} »`);
   return added;
 }
 
 export async function writeEmails(productId) {
-  const p = get('SELECT * FROM products WHERE id = ?', productId);
+  const p = await get('SELECT * FROM products WHERE id = ?', productId);
   const s = getSettings();
-  const prospects = all(`SELECT * FROM prospects WHERE product_id = ? AND unsubscribed = 0
+  const prospects = await all(`SELECT * FROM prospects WHERE product_id = ? AND unsubscribed = 0
     AND id NOT IN (SELECT prospect_id FROM emails WHERE prospect_id IS NOT NULL) ORDER BY id LIMIT 25`, productId);
   if (!prospects.length) return 0;
   log('clara', 'email', `Rédaction de séquences pour ${prospects.length} prospect(s)…`);
@@ -213,7 +213,7 @@ export async function writeEmails(productId) {
       const { data } = await askJSON({
         system: systemFor('clara'), effort: 'medium', maxTokens: 8000,
         mock: MOCKS.emails,
-        prompt: `${companyContext()}\n\nOFFRE : ${JSON.stringify(pick(p, ['name', 'tagline', 'description', 'price_setup', 'price_monthly', 'deliverables']))}
+        prompt: `${await companyContext()}\n\nOFFRE : ${JSON.stringify(pick(p, ['name', 'tagline', 'description', 'price_setup', 'price_monthly', 'deliverables']))}
 Page de l'offre : ${baseUrl()}/offre/${p.slug}
 PROSPECT : ${JSON.stringify(pick(pr, ['name', 'company', 'role', 'city', 'website', 'personalization']))}
 Expéditeur : ${s.founder_name || '[prénom du fondateur]'} — ${s.company_name || s.brand_name}.
@@ -222,7 +222,7 @@ JSON attendu : {"emails":[{"step":1,"subject":"","body":""},{"step":2,"subject":
       });
       for (const e of data.emails || []) {
         const delayDays = e.step === 2 ? 3 : e.step === 3 ? 7 : 0;
-        insert('emails', {
+        await insert('emails', {
           prospect_id: pr.id, product_id: productId, step: e.step, subject: e.subject, body: e.body, status,
           send_after: delayDays ? new Date(Date.now() + delayDays * 864e5).toISOString().replace('T', ' ').slice(0, 19) : null,
         });
@@ -240,10 +240,10 @@ export async function ceoReport(details = '') {
   const r = await ask({
     system: systemFor('victor'), effort: 'medium', maxTokens: 6000,
     mock: MOCKS.report,
-    prompt: `${companyContext()}\n\nActivité récente :\n${all('SELECT agent, title FROM activity ORDER BY id DESC LIMIT 30').reverse().map((a) => `- ${AGENTS[a.agent]?.name || a.agent} : ${a.title}`).join('\n')}\n${details}
+    prompt: `${await companyContext()}\n\nActivité récente :\n${(await all('SELECT agent, title FROM activity ORDER BY id DESC LIMIT 30')).reverse().map((a) => `- ${AGENTS[a.agent]?.name || a.agent} : ${a.title}`).join('\n')}\n${details}
 Écris au fondateur un point d'étape clair (tutoiement, 120-250 mots) : ce qu'on a fait, résultats chiffrés, ce qu'on apprend, les 3 prochaines actions, et ce dont l'équipe a besoin de sa part.`,
   });
-  insert('messages', { thread: 'victor', sender: 'victor', text: `📊 Point d'étape\n\n${r.text}` });
+  await insert('messages', { thread: 'victor', sender: 'victor', text: `📊 Point d'étape\n\n${r.text}` });
   log('victor', 'rapport', 'Point d’étape envoyé au fondateur');
   return r.text;
 }
@@ -252,14 +252,14 @@ export async function ceoReport(details = '') {
 let running = null;
 export const isRunning = () => Boolean(running);
 
-export function startCycle(options = {}) {
+export async function startCycle(options = {}) {
   if (running) return { already: true, jobId: running };
-  const jobId = insert('jobs', { kind: 'cycle', step: 'démarrage' });
+  const jobId = await insert('jobs', { kind: 'cycle', step: 'démarrage' });
   running = jobId;
   runCycle(jobId, options)
     .then(() => update('jobs', jobId, { status: 'terminé', finished_ts: now() }))
-    .catch((err) => {
-      update('jobs', jobId, { status: 'erreur', error: String(err.message || err), finished_ts: now() });
+    .catch(async (err) => {
+      await update('jobs', jobId, { status: 'erreur', error: String(err.message || err), finished_ts: now() });
       log('victor', 'erreur', 'Le cycle a rencontré une erreur', String(err.message || err));
     })
     .finally(() => { running = null; });
@@ -271,36 +271,36 @@ async function runCycle(jobId, { focus = '' } = {}) {
   log('victor', 'cycle', '🚀 Nouveau cycle de travail lancé');
 
   // 1. Si aucune offre en ligne, on cherche une niche et on décide d'une offre en réunion
-  let product = get("SELECT * FROM products WHERE status = 'en ligne' ORDER BY id DESC LIMIT 1");
+  let product = await get("SELECT * FROM products WHERE status = 'en ligne' ORDER BY id DESC LIMIT 1");
   if (!product || focus) {
-    step('Recherche de niches (Nora)');
+    await step('Recherche de niches (Nora)');
     await researchNiches(focus);
-    const top = all('SELECT name, score, problem, offer_idea, willingness_to_pay, competition FROM niches ORDER BY id DESC LIMIT 5');
-    step('Réunion de lancement');
+    const top = await all('SELECT name, score, problem, offer_idea, willingness_to_pay, competition FROM niches ORDER BY id DESC LIMIT 5');
+    await step('Réunion de lancement');
     const { meetingId, data } = await holdMeeting('Choix de la niche et de l’offre à lancer', {
       expectProduct: true,
       extra: `Niches étudiées par Nora :\n${top.map((n) => `- ${n.name} (${n.score}/10) — problème : ${n.problem} — idée : ${n.offer_idea}`).join('\n')}`,
     });
     if (!data.product?.name) throw new Error('La réunion n’a pas produit d’offre.');
-    const productId = createProduct(data.product, meetingId);
-    step('Création de la page de vente (Sam)');
+    const productId = await createProduct(data.product, meetingId);
+    await step('Création de la page de vente (Sam)');
     await buildLanding(productId);
-    step('Revue de conformité (Juliette)');
+    await step('Revue de conformité (Juliette)');
     await complianceReview(productId);
-    step('Plan marketing (Léo)');
+    await step('Plan marketing (Léo)');
     await planCampaigns(productId);
-    product = get('SELECT * FROM products WHERE id = ?', productId);
+    product = await get('SELECT * FROM products WHERE id = ?', productId);
   } else {
     // Réunion de pilotage : on regarde les chiffres et on ajuste
-    step('Réunion de pilotage');
+    await step('Réunion de pilotage');
     await holdMeeting(`Pilotage de l'offre « ${product.name} » : chiffres, blocages, ajustements`, { participants: ['leo', 'clara', 'hugo', 'ines'] });
   }
 
-  step('Prospection (Hugo)');
+  await step('Prospection (Hugo)');
   await findProspects(product.id);
-  step('Rédaction des emails (Clara)');
+  await step('Rédaction des emails (Clara)');
   await writeEmails(product.id);
-  step('Rapport au fondateur (Victor)');
+  await step('Rapport au fondateur (Victor)');
   await ceoReport();
   log('victor', 'cycle', '✅ Cycle terminé');
 }
@@ -308,43 +308,43 @@ async function runCycle(jobId, { focus = '' } = {}) {
 // ------------------------------------------------------------------ conversations
 export async function chatWithAgent(agentId, text) {
   const agent = AGENTS[agentId] || AGENTS.victor;
-  insert('messages', { thread: agent.id, sender: 'fondateur', text });
-  const history = all('SELECT sender, text FROM messages WHERE thread = ? ORDER BY id DESC LIMIT 16', agent.id).reverse();
-  const recent = all('SELECT agent, title, detail FROM activity ORDER BY id DESC LIMIT 25').reverse()
+  await insert('messages', { thread: agent.id, sender: 'fondateur', text });
+  const history = (await all('SELECT sender, text FROM messages WHERE thread = ? ORDER BY id DESC LIMIT 16', agent.id)).reverse();
+  const recent = (await all('SELECT agent, title, detail FROM activity ORDER BY id DESC LIMIT 25')).reverse()
     .map((a) => `- ${AGENTS[a.agent]?.name || a.agent} : ${a.title}${a.detail ? ` (${String(a.detail).slice(0, 200)})` : ''}`).join('\n');
   const r = await ask({
     system: systemFor(agent.id, 'Tu parles directement avec le fondateur de l’entreprise (ton patron). Tutoie-le, sois clair, honnête et concret. Si tu as besoin d’une décision ou d’une information de sa part, demande-la explicitement.'),
     effort: 'medium', maxTokens: 8000,
     mock: MOCKS.chat(agent.name),
-    prompt: `${companyContext()}\n\nActivité récente de l'équipe :\n${recent}\n\nConversation :\n${history.map((m) => `${m.sender === 'fondateur' ? 'FONDATEUR' : agent.name.toUpperCase()} : ${m.text}`).join('\n')}\n\nRéponds au dernier message du fondateur.`,
+    prompt: `${await companyContext()}\n\nActivité récente de l'équipe :\n${recent}\n\nConversation :\n${history.map((m) => `${m.sender === 'fondateur' ? 'FONDATEUR' : agent.name.toUpperCase()} : ${m.text}`).join('\n')}\n\nRéponds au dernier message du fondateur.`,
   });
-  insert('messages', { thread: agent.id, sender: agent.id, text: r.text });
+  await insert('messages', { thread: agent.id, sender: agent.id, text: r.text });
   return r.text;
 }
 
 export async function answerQuestion(questionId, answer) {
-  const q = get('SELECT * FROM questions WHERE id = ?', questionId);
-  update('questions', questionId, { answer, status: 'répondue', answered_ts: now() });
+  const q = await get('SELECT * FROM questions WHERE id = ?', questionId);
+  await update('questions', questionId, { answer, status: 'répondue', answered_ts: now() });
   log(q.agent, 'question', `Le fondateur a répondu : « ${q.question.slice(0, 80)} »`, answer);
   const r = await ask({
     system: systemFor(q.agent), effort: 'low', maxTokens: 2000,
     mock: `[DÉMO] Merci, c'est noté, j'en tiens compte pour la suite.`,
-    prompt: `${companyContext()}\n\nTu avais demandé au fondateur : « ${q.question} ». Il répond : « ${answer} ». Accuse réception en 1 à 3 phrases et dis ce que tu vas faire concrètement avec cette réponse.`,
+    prompt: `${await companyContext()}\n\nTu avais demandé au fondateur : « ${q.question} ». Il répond : « ${answer} ». Accuse réception en 1 à 3 phrases et dis ce que tu vas faire concrètement avec cette réponse.`,
   });
-  insert('messages', { thread: q.agent, sender: q.agent, text: r.text });
+  await insert('messages', { thread: q.agent, sender: q.agent, text: r.text });
   return r.text;
 }
 
 export async function draftReply(prospectId, incoming) {
-  const pr = get('SELECT * FROM prospects WHERE id = ?', prospectId);
-  const p = pr.product_id ? get('SELECT * FROM products WHERE id = ?', pr.product_id) : null;
-  const thread = all("SELECT step, subject, body FROM emails WHERE prospect_id = ? AND status = 'envoyé' ORDER BY step", prospectId);
-  update('prospects', prospectId, { status: 'a répondu', notes: `${pr.notes || ''}\n[${now()}] Réponse reçue : ${incoming}`.trim() });
-  run("UPDATE emails SET status = 'annulé', error = 'Le prospect a répondu' WHERE prospect_id = ? AND status IN ('brouillon','approuvé')", prospectId);
+  const pr = await get('SELECT * FROM prospects WHERE id = ?', prospectId);
+  const p = pr.product_id ? await get('SELECT * FROM products WHERE id = ?', pr.product_id) : null;
+  const thread = await all("SELECT step, subject, body FROM emails WHERE prospect_id = ? AND status = 'envoyé' ORDER BY step", prospectId);
+  await update('prospects', prospectId, { status: 'a répondu', notes: `${pr.notes || ''}\n[${now()}] Réponse reçue : ${incoming}`.trim() });
+  await run("UPDATE emails SET status = 'annulé', error = 'Le prospect a répondu' WHERE prospect_id = ? AND status IN ('brouillon','approuvé')", prospectId);
   const { data } = await askJSON({
     system: systemFor('ines'), effort: 'high', maxTokens: 6000,
     mock: { analysis: '[DÉMO] Intérêt modéré, objection prix.', subject: 'Re: votre message', body: '[DÉMO] Bonjour Maître, merci pour votre retour...', next_status: 'a répondu' },
-    prompt: `${companyContext()}\n\nOFFRE : ${p ? JSON.stringify(pick(p, ['name', 'description', 'price_setup', 'price_monthly'])) : 'n/a'}\nLien de paiement : ${baseUrl()}/offre/${p?.slug || ''}
+    prompt: `${await companyContext()}\n\nOFFRE : ${p ? JSON.stringify(pick(p, ['name', 'description', 'price_setup', 'price_monthly'])) : 'n/a'}\nLien de paiement : ${baseUrl()}/offre/${p?.slug || ''}
 PROSPECT : ${JSON.stringify(pick(pr, ['name', 'company', 'role', 'city', 'personalization']))}
 Emails déjà envoyés : ${JSON.stringify(thread)}
 RÉPONSE DU PROSPECT : « ${incoming} »
@@ -352,10 +352,10 @@ Analyse (intérêt, objection) puis rédige la meilleure réponse pour avancer v
 JSON attendu : {"analysis":"","subject":"","body":"","next_status":"a répondu | rdv | pas intéressé"}`,
   });
   const status = getSettings().email_mode === 'auto' && data.next_status !== 'pas intéressé' ? 'approuvé' : 'brouillon';
-  if (data.next_status === 'pas intéressé') update('prospects', prospectId, { status: 'pas intéressé' });
-  else if (data.next_status === 'rdv') update('prospects', prospectId, { status: 'rdv' });
+  if (data.next_status === 'pas intéressé') await update('prospects', prospectId, { status: 'pas intéressé' });
+  else if (data.next_status === 'rdv') await update('prospects', prospectId, { status: 'rdv' });
   if (data.next_status !== 'pas intéressé' && data.body) {
-    insert('emails', { prospect_id: prospectId, product_id: pr.product_id, step: 10, subject: data.subject, body: data.body, status });
+    await insert('emails', { prospect_id: prospectId, product_id: pr.product_id, step: 10, subject: data.subject, body: data.body, status });
   }
   log('ines', 'commercial', `Réponse de ${pr.name || pr.email} analysée`, data.analysis);
   return data;
@@ -369,9 +369,9 @@ function pick(o, keys) {
 }
 const now = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
 
-export function seedIfEmpty() {
-  if (get('SELECT COUNT(*) n FROM messages').n) return;
-  insert('messages', {
+export async function seedIfEmpty() {
+  if ((await get('SELECT COUNT(*) n FROM messages')).n) return;
+  await insert('messages', {
     thread: 'victor', sender: 'victor',
     text: `Salut ! Ici Victor, ton directeur général. L'équipe est en place : Nora (recherche de niches), Léo (marketing & pub), Clara (emails), Hugo (prospection), Inès (commerciale), Sam (sites & produit) et Juliette (conformité).
 
@@ -387,6 +387,6 @@ Pour passer en réel, j'ai besoin de toi dans l'onglet « Questions » : informa
     ['leo', 'Quel budget publicitaire mensuel m’autorises-tu pour tester Google Ads / LinkedIn (je propose de commencer à 300 €/mois) ?'],
     ['victor', "Veux-tu valider chaque email avant envoi (recommandé au début) ou laisser l'équipe envoyer automatiquement ?"],
   ];
-  for (const [agent, question] of qs) insert('questions', { agent, question, context: 'Démarrage' });
+  for (const [agent, question] of qs) await insert('questions', { agent, question, context: 'Démarrage' });
   log('victor', 'cycle', 'Équipe constituée. En attente du feu vert du fondateur.');
 }

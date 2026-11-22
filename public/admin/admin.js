@@ -251,13 +251,13 @@ const VIEWS = {
         ${key('STRIPE_WEBHOOK_SECRET', 'Secret du webhook Stripe', 'whsec_…')}
         <p class="ts">Dans Stripe → Développeurs → Webhooks → « Ajouter un endpoint » : URL <code>${esc(O.webhookUrl)}</code>, événement <code>checkout.session.completed</code>, puis copie le « secret de signature ».</p>
         <h2>3. L'envoi d'emails (SMTP)</h2>
-        <p class="ts">Ces informations sont données par ton fournisseur d'emails (Brevo, Mailjet, OVH, Google Workspace…), rubrique « SMTP ».</p>
+        <p class="ts">Avec une adresse email <b>IONOS</b> : serveur <code>smtp.ionos.fr</code>, port <code>587</code>, identifiant = ton adresse email complète, mot de passe = celui de cette adresse. (Autres fournisseurs : rubrique « SMTP » de leur aide.)</p>
         <div class="grid2"><div>${key('SMTP_HOST', 'Serveur SMTP', 'ex : smtp-relay.brevo.com', 'text')}</div><div><label>Port</label><input name="SMTP_PORT" value="${esc(O.smtpPort)}"></div>
         <div>${key('SMTP_USER', 'Identifiant SMTP', 'souvent ton adresse email', 'text')}</div><div>${key('SMTP_PASS', 'Mot de passe SMTP', 'mot de passe ou clé SMTP')}</div></div>
         ${key('MAIL_FROM', 'Expéditeur', 'ex : Prénom – VotreIAPro <contact@ton-domaine.fr>', 'text')}
         <div style="margin-top:12px"><button>Enregistrer les clés</button></div></form>
       <form id="sf" class="grid2">
-        <div class="panel"><b>Entreprise (obligatoire avant tout envoi)</b>${f('brand_name', 'Nom de marque')}${f('company_name', 'Raison sociale')}${f('company_legal', 'Forme juridique et SIRET')}${f('company_address', 'Adresse')}${f('contact_email', 'Email de contact (reçoit les réponses)', 'email')}${f('founder_name', 'Ton prénom et nom (signature des emails)')}</div>
+        <div class="panel"><b>Entreprise (obligatoire avant tout envoi)</b>${f('public_url', 'Adresse de ton site (ex : https://www.ton-domaine.fr) — laisse vide si tu n’as pas relié ton domaine')}${f('brand_name', 'Nom de marque')}${f('company_name', 'Raison sociale')}${f('company_legal', 'Forme juridique et SIRET')}${f('company_address', 'Adresse')}${f('contact_email', 'Email de contact (reçoit les réponses)', 'email')}${f('founder_name', 'Ton prénom et nom (signature des emails)')}</div>
         <div class="panel"><b>Pilotage</b>
           ${sel('autopilot', 'Autopilote (cycles automatiques)', [['false', 'Désactivé — je lance les cycles'], ['true', 'Activé — un cycle toutes les CYCLE_HOURS heures']])}
           ${sel('email_mode', 'Validation des emails', [['validation', 'Je valide chaque email (recommandé)'], ['auto', 'Envoi automatique des emails rédigés']])}

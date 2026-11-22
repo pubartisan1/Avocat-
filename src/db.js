@@ -1,15 +1,20 @@
-// Base de données locale (SQLite intégré à Node.js >= 22.13, aucune dépendance native)
-import { DatabaseSync } from 'node:sqlite';
+// Base de données.
+// - En ligne (hébergement gratuit) : base Turso, qui ne s'efface jamais (TURSO_DATABASE_URL + TURSO_AUTH_TOKEN).
+// - Sinon : fichier local data/qg.db.
+import { createClient } from '@libsql/client';
 import fs from 'node:fs';
 import path from 'node:path';
 
 const DB_PATH = process.env.DB_PATH || path.resolve('data/qg.db');
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+const remote = Boolean(process.env.TURSO_DATABASE_URL);
+if (!remote) fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
-export const db = new DatabaseSync(DB_PATH);
-db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
+export const db = createClient(remote
+  ? { url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN }
+  : { url: `file:${DB_PATH}` });
+export const dbKind = remote ? 'Turso (permanente)' : 'fichier local';
 
-db.exec(`
+const SCHEMA = `
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS activity (
   id INTEGER PRIMARY KEY, ts TEXT DEFAULT (datetime('now')), agent TEXT, type TEXT, title TEXT, detail TEXT);
@@ -50,23 +55,30 @@ CREATE TABLE IF NOT EXISTS leads (
 CREATE TABLE IF NOT EXISTS jobs (
   id INTEGER PRIMARY KEY, ts TEXT DEFAULT (datetime('now')), kind TEXT, status TEXT DEFAULT 'en cours',
   step TEXT, error TEXT, finished_ts TEXT);
-`);
+`;
 
-export const all = (sql, ...p) => db.prepare(sql).all(...p);
-export const get = (sql, ...p) => db.prepare(sql).get(...p);
-export const run = (sql, ...p) => db.prepare(sql).run(...p);
+const clean = (args) => args.map((a) => (a === undefined ? null : a));
+export async function all(sql, ...args) {
+  const r = await db.execute({ sql, args: clean(args) });
+  return r.rows.map((row) => Object.fromEntries(r.columns.map((c) => [c, row[c]])));
+}
+export const get = async (sql, ...args) => (await all(sql, ...args))[0];
+export async function run(sql, ...args) {
+  const r = await db.execute({ sql, args: clean(args) });
+  return { changes: r.rowsAffected, lastInsertRowid: r.lastInsertRowid };
+}
 
-export function insert(table, obj) {
+export async function insert(table, obj) {
   const keys = Object.keys(obj);
   const vals = keys.map((k) => normalize(obj[k]));
-  const r = run(`INSERT INTO ${table} (${keys.join(',')}) VALUES (${keys.map(() => '?').join(',')})`, ...vals);
+  const r = await run(`INSERT INTO ${table} (${keys.join(',')}) VALUES (${keys.map(() => '?').join(',')})`, ...vals);
   return Number(r.lastInsertRowid);
 }
 
-export function update(table, id, obj) {
+export async function update(table, id, obj) {
   const keys = Object.keys(obj);
   if (!keys.length) return;
-  run(`UPDATE ${table} SET ${keys.map((k) => `${k} = ?`).join(', ')} WHERE id = ?`, ...keys.map((k) => normalize(obj[k])), id);
+  await run(`UPDATE ${table} SET ${keys.map((k) => `${k} = ?`).join(', ')} WHERE id = ?`, ...keys.map((k) => normalize(obj[k])), id);
 }
 
 function normalize(v) {
@@ -98,27 +110,38 @@ const DEFAULT_SETTINGS = {
   ads_budget_month: '300',
 };
 
-for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) {
-  run('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', k, v);
+// Les paramètres sont gardés en mémoire (lecture instantanée) et enregistrés en base à chaque changement.
+let SETTINGS = {};
+
+/** À appeler une fois au démarrage. */
+export async function initDb() {
+  await db.executeMultiple(SCHEMA);
+  for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) {
+    await run('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', k, v);
+  }
+  SETTINGS = Object.fromEntries((await all('SELECT key, value FROM settings')).map((r) => [r.key, r.value]));
 }
 
 export function getSettings() {
-  return Object.fromEntries(all('SELECT key, value FROM settings').map((r) => [r.key, r.value]));
+  return { ...SETTINGS };
 }
-export function setSetting(key, value) {
-  run('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', key, String(value));
+export async function setSetting(key, value) {
+  SETTINGS[key] = String(value);
+  await run('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', key, String(value));
 }
 
+/** Journal d'activité (n'interrompt jamais le travail en cas d'erreur d'écriture). */
 export function log(agent, type, title, detail = '') {
-  insert('activity', { agent, type, title, detail: typeof detail === 'string' ? detail : JSON.stringify(detail) });
+  return insert('activity', { agent, type, title, detail: typeof detail === 'string' ? detail : JSON.stringify(detail) })
+    .catch((e) => console.error('journal :', e.message));
 }
 
 // ---- Clés de connexion : saisies dans le back-office (Paramètres) ou, à défaut, variables d'environnement ----
 export const SECRET_KEYS = ['ANTHROPIC_API_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM'];
 export function secret(name) {
-  const v = get('SELECT value FROM settings WHERE key = ?', `secret_${name}`)?.value;
+  const v = SETTINGS[`secret_${name}`];
   return (v && v.trim()) || process.env[name] || '';
 }
 export function baseUrl() {
-  return (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
+  return (SETTINGS.public_url || process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
 }

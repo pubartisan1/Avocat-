@@ -36,11 +36,11 @@ Une application complète où une équipe de **8 agents IA** cherche les niches 
 
 Avec l'**autopilote**, un cycle se lance tout seul toutes les `CYCLE_HOURS` heures.
 
-## Démarrer en 3 étapes (sans rien de technique)
+## Démarrer (gratuit, sans rien de technique)
 
-1. **Mettre le site en ligne** : sur [render.com](https://render.com), crée un compte, clique **New → Blueprint** et choisis ce dépôt. Render ne te demande qu'une chose : `ADMIN_PASSWORD`, le mot de passe de ton back-office (choisis-le).
-2. **Ouvrir ton QG** : va sur `https://<ton-site>.onrender.com/admin`. Identifiant : ce que tu veux. Mot de passe : celui que tu viens de choisir.
-3. **Coller tes clés** : **Paramètres → Connexions**. Chaque champ explique où trouver la clé : Anthropic pour les agents, Stripe pour le paiement, SMTP pour les emails. Clique **« Enregistrer les clés »**, puis **« Lancer un cycle complet »** depuis le tableau de bord.
+👉 Suis le guide pas à pas : **[GUIDE-MISE-EN-LIGNE.md](GUIDE-MISE-EN-LIGNE.md)**. Compte environ 20 minutes.
+
+En résumé : l'application tourne sur **Render** (gratuit), la mémoire est dans **Turso** (gratuit), ton domaine et tes emails restent chez **IONOS**. Toutes les clés (Anthropic, Stripe, emails) se collent ensuite dans ton QG, dans **Paramètres**.
 
 Sans clé Anthropic, l'application tourne en **mode démo** : les réponses sont des exemples marqués `[DÉMO]`, et rien n'est envoyé.
 
@@ -57,7 +57,7 @@ Il faut Node.js 22.13 ou plus récent. Lance `npm install`, puis `ADMIN_PASSWORD
 
 ## Mise en ligne
 
-Le fichier `render.yaml` permet de déployer sur [Render](https://render.com) en un clic (New → Blueprint). Il crée un disque persistant pour la base de données. N'importe quel hébergeur Node.js avec un disque persistant convient aussi (Railway, Fly.io, un VPS…).
+Le fichier `render.yaml` déploie l'application sur l'offre gratuite de Render, avec la base Turso pour que rien ne s'efface (voir le guide). N'importe quel hébergeur Node.js convient aussi (VPS, Railway…).
 
 ## Les garde-fous (volontaires)
 
@@ -73,6 +73,7 @@ Le fichier `render.yaml` permet de déployer sur [Render](https://render.com) en
 src/server.js        serveur web : site public, paiement, API du back-office, autopilote
 src/orchestrator.js  travail des agents : cycles, réunions, chat, questions, réponses aux prospects
 src/agents.js        personnalités et règles des agents
+src/db.js            base de données (Turso en ligne, fichier local sinon)
 src/llm.js           accès à Claude (recherche web, reprise automatique, modèle de secours)
 src/mailer.js        envoi des emails (limites, désinscription, mentions)
 src/payments.js      Stripe Checkout et webhook

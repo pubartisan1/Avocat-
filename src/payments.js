@@ -35,7 +35,7 @@ export async function createCheckout(product) {
   return session.url;
 }
 
-export function handleWebhook(rawBody, signature) {
+export async function handleWebhook(rawBody, signature) {
   let event;
   const whsec = secret('STRIPE_WEBHOOK_SECRET');
   if (whsec) {
@@ -45,14 +45,14 @@ export function handleWebhook(rawBody, signature) {
   }
   if (event.type === 'checkout.session.completed') {
     const s = event.data.object;
-    if (!get('SELECT id FROM orders WHERE stripe_session = ?', s.id)) {
+    if (!await get('SELECT id FROM orders WHERE stripe_session = ?', s.id)) {
       const productId = Number(s.metadata?.product_id) || null;
-      const id = insert('orders', {
+      const id = await insert('orders', {
         product_id: productId, stripe_session: s.id,
         customer_email: s.customer_details?.email, customer_name: s.customer_details?.name,
         amount: (s.amount_total || 0) / 100, currency: s.currency, status: 'payé',
       });
-      if (s.customer_details?.email) run("UPDATE prospects SET status = 'client' WHERE lower(email) = lower(?)", s.customer_details.email);
+      if (s.customer_details?.email) await run("UPDATE prospects SET status = 'client' WHERE lower(email) = lower(?)", s.customer_details.email);
       log('ines', 'vente', `💶 Nouvelle vente : ${(s.amount_total || 0) / 100} ${String(s.currency).toUpperCase()}`, `Client : ${s.customer_details?.name || ''} <${s.customer_details?.email || ''}>`);
       return { orderId: id, productId };
     }
