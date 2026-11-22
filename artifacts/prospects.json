@@ -9,7 +9,8 @@
       "city": "Strasbourg",
       "website": "https://www.acboursier.com/",
       "source_url": "https://www.acboursier.com/",
-      "personalization": "Avocate-médiatrice en droit de la famille, inscrite au barreau de Strasbourg depuis 2003 ; reçoit sur rendez-vous (visio possible), prise de contact par téléphone/email."
+      "personalization": "Avocate-médiatrice en droit de la famille, inscrite au barreau de Strasbourg depuis 2003 ; reçoit sur rendez-vous (visio possible), prise de contact par téléphone/email.",
+      "whatsapp": ""
     },
     {
       "name": "Marie Rigole",
@@ -20,7 +21,8 @@
       "city": "Toulouse",
       "website": "http://www.rigole-avocat-toulouse.com/",
       "source_url": "http://www.rigole-avocat-toulouse.com/",
-      "personalization": "Divorce, droit des grands-parents, PACS ; page « Contact et rendez-vous » sans module de réservation en ligne, site au design daté (servi en http)."
+      "personalization": "Divorce, droit des grands-parents, PACS ; page « Contact et rendez-vous » sans module de réservation en ligne, site au design daté (servi en http).",
+      "whatsapp": ""
     },
     {
       "name": "Sabine Molinière",
@@ -31,7 +33,8 @@
       "city": "Toulouse",
       "website": "https://www.moliniere-toulouse-avocat.fr/",
       "source_url": "https://www.moliniere-toulouse-avocat.fr/",
-      "personalization": "Avocate depuis 1994 et médiatrice depuis 2001 ; large palette (affaires, successions, famille, immobilier) avec invitation « Prenez rendez-vous » mais pas de réservation en ligne."
+      "personalization": "Avocate depuis 1994 et médiatrice depuis 2001 ; large palette (affaires, successions, famille, immobilier) avec invitation « Prenez rendez-vous » mais pas de réservation en ligne.",
+      "whatsapp": ""
     },
     {
       "name": "Camille Lenoble",
@@ -42,7 +45,8 @@
       "city": "Bordeaux",
       "website": "https://www.camille-lenoble-avocat.fr/",
       "source_url": "https://www.camille-lenoble-avocat.fr/",
-      "personalization": "Droit du travail, santé au travail et prud'hommes ; le site indique que le rendez-vous se prend par téléphone, courriel ou formulaire (pas d'agenda en ligne)."
+      "personalization": "Droit du travail, santé au travail et prud'hommes ; le site indique que le rendez-vous se prend par téléphone, courriel ou formulaire (pas d'agenda en ligne).",
+      "whatsapp": "https://wa.me/33768747827"
     },
     {
       "name": "Adeline Cornic",
@@ -53,7 +57,8 @@
       "city": "Bordeaux",
       "website": "https://www.cornic-avocat.fr/",
       "source_url": "https://www.cornic-avocat.fr/",
-      "personalization": "Cabinet en droit du travail et accidents du travail/maladies professionnelles à Bordeaux ; bouton « Prendrez rendez-vous » (coquille visible sur l'accueil)."
+      "personalization": "Cabinet en droit du travail et accidents du travail/maladies professionnelles à Bordeaux ; bouton « Prendrez rendez-vous » (coquille visible sur l'accueil).",
+      "whatsapp": ""
     },
     {
       "name": "Julie Monneyron",
@@ -64,7 +69,8 @@
       "city": "Nantes",
       "website": "https://www.julie-monneyron-avocat-nantes.fr/",
       "source_url": "https://www.julie-monneyron-avocat-nantes.fr/",
-      "personalization": "Avocate exclusivement en droit de la famille à Nantes ; consultations au cabinet, par téléphone ou en visio."
+      "personalization": "Avocate exclusivement en droit de la famille à Nantes ; consultations au cabinet, par téléphone ou en visio.",
+      "whatsapp": "https://wa.me/33662328612"
     },
     {
       "name": "Hélène Nicolas",
@@ -75,7 +81,8 @@
       "city": "Nantes",
       "website": "https://nicolasavocat.fr/",
       "source_url": "https://nicolasavocat.fr/",
-      "personalization": "Droit de la famille français et international, divorces franco-allemands ; prise de rendez-vous via « Me contacter » (pas de réservation en ligne)."
+      "personalization": "Droit de la famille français et international, divorces franco-allemands ; prise de rendez-vous via « Me contacter » (pas de réservation en ligne).",
+      "whatsapp": ""
     },
     {
       "name": "Johan Guiol",
@@ -86,18 +93,20 @@
       "city": "Lyon",
       "website": "https://www.guiol-avocat.com/",
       "source_url": "https://www.guiol-avocat.com/",
-      "personalization": "Successions bloquées, immobilier, assurance, litiges auto ; diplômé notaire ; site Wix proposant déjà un RDV en ligne — angle : relance automatique des devis/honoraires."
+      "personalization": "Successions bloquées, immobilier, assurance, litiges auto ; diplômé notaire ; site Wix proposant déjà un RDV en ligne — angle : relance automatique des devis/honoraires.",
+      "whatsapp": ""
     },
     {
       "name": "Aymeric Tedaldi",
       "company": "Cabinet Aymeric Tedaldi",
       "role": "Avocat",
       "email": "aymeric.tedaldi@avocat.fr",
-      "phone": "",
+      "phone": "09 84 71 57 68",
       "city": "Lille",
       "website": "https://tedaldi-avocat.fr/",
       "source_url": "https://tedaldi-avocat.fr/",
-      "personalization": "Droit immobilier, bancaire et du patrimoine à Lille ; site récent (© 2026) avec bouton « Prendre rendez-vous »."
+      "personalization": "Droit immobilier, bancaire et du patrimoine à Lille ; site récent (© 2026) avec bouton « Prendre rendez-vous ».",
+      "whatsapp": ""
     },
     {
       "name": "Nicolas Lebon",
@@ -108,7 +117,8 @@
       "city": "Lille",
       "website": "https://www.lebon-avocat-lille.fr/",
       "source_url": "https://www.lebon-avocat-lille.fr/",
-      "personalization": "Copropriété, syndic et recouvrement de charges ; « Prenez rendez-vous au cabinet » 21 rue de l'Hôpital Militaire, Lille."
+      "personalization": "Copropriété, syndic et recouvrement de charges ; « Prenez rendez-vous au cabinet » 21 rue de l'Hôpital Militaire, Lille.",
+      "whatsapp": "https://wa.me/33613984135"
     },
     {
       "name": "Gaëtan Poitevin",
@@ -119,7 +129,8 @@
       "city": "Marseille",
       "website": "https://www.poitevinavocat.fr/",
       "source_url": "https://www.poitevinavocat.fr/",
-      "personalization": "Pénaliste (urgence pénale, mineurs) au barreau de Marseille depuis 11 ans, 66 rue Grignan ; premier rendez-vous gratuit si ouverture de dossier."
+      "personalization": "Pénaliste (urgence pénale, mineurs) au barreau de Marseille depuis 11 ans, 66 rue Grignan ; premier rendez-vous gratuit si ouverture de dossier.",
+      "whatsapp": "https://wa.me/33648009122"
     },
     {
       "name": "Camille Perez",
@@ -130,7 +141,8 @@
       "city": "Marseille",
       "website": "https://www.perez-avocats.fr/",
       "source_url": "https://www.perez-avocats.fr/",
-      "personalization": "Droit de la famille, violences conjugales et défense des victimes ; cabinets à Marseille (31 rue Grignan) et Saint-Zacharie."
+      "personalization": "Droit de la famille, violences conjugales et défense des victimes ; cabinets à Marseille (31 rue Grignan) et Saint-Zacharie.",
+      "whatsapp": ""
     },
     {
       "name": "Océane Tourny",
@@ -141,7 +153,8 @@
       "city": "Rennes",
       "website": "https://www.avocat-tourny.com/",
       "source_url": "https://www.avocat-tourny.com/",
-      "personalization": "Droit de la famille à Rennes ; page honoraires détaillée avec forfaits et convention dès le premier rendez-vous."
+      "personalization": "Droit de la famille à Rennes ; page honoraires détaillée avec forfaits et convention dès le premier rendez-vous.",
+      "whatsapp": "https://wa.me/33637961563"
     },
     {
       "name": "Marion Coeuret",
@@ -152,7 +165,8 @@
       "city": "Rennes",
       "website": "https://www.coeuret-avocat.com/",
       "source_url": "https://www.coeuret-avocat.com/",
-      "personalization": "Droit de la famille depuis 10 ans, chargée d'enseignement ; demande de RDV par téléphone ou formulaire uniquement."
+      "personalization": "Droit de la famille depuis 10 ans, chargée d'enseignement ; demande de RDV par téléphone ou formulaire uniquement.",
+      "whatsapp": "https://wa.me/33749447643"
     },
     {
       "name": "Madeline Coscat",
@@ -163,7 +177,8 @@
       "city": "Nice",
       "website": "https://coscat-avocat.fr/",
       "source_url": "https://coscat-avocat.fr/",
-      "personalization": "Divorce, pension alimentaire, garde d'enfant et droit du travail à Nice ; contact affiché par téléphone/email en en-tête, avis clients mis en avant."
+      "personalization": "Divorce, pension alimentaire, garde d'enfant et droit du travail à Nice ; contact affiché par téléphone/email en en-tête, avis clients mis en avant.",
+      "whatsapp": "https://wa.me/33656687629"
     }
   ],
   "artisans": [
@@ -176,7 +191,8 @@
       "city": "Nantes (alentours)",
       "website": "https://www.mr-plomberie.com/",
       "source_url": "https://www.mr-plomberie.com/",
-      "personalization": "Plomberie/chauffage sur Nantes et alentours, adhérent Artipôle ; demande de devis par formulaire."
+      "personalization": "Plomberie/chauffage sur Nantes et alentours, adhérent Artipôle ; demande de devis par formulaire.",
+      "whatsapp": ""
     },
     {
       "name": "",
@@ -187,7 +203,8 @@
       "city": "Rennes / Bruz",
       "website": "https://www.adspsurel-plombier-rennes.fr/",
       "source_url": "https://www.adspsurel-plombier-rennes.fr/",
-      "personalization": "Entreprise familiale certifiée RGE QualiBAT, QualiPAC et Professionnel du Gaz ; deux numéros (Rennes et Bruz), devis gratuit par formulaire."
+      "personalization": "Entreprise familiale certifiée RGE QualiBAT, QualiPAC et Professionnel du Gaz ; deux numéros (Rennes et Bruz), devis gratuit par formulaire.",
+      "whatsapp": ""
     },
     {
       "name": "",
@@ -198,7 +215,8 @@
       "city": "Rennes (alentours)",
       "website": "https://aquathermie35.fr/",
       "source_url": "https://aquathermie35.fr/",
-      "personalization": "RGE QualiPAC 2025 et Professionnel du Gaz ; un avis client cite un devis reçu dès le lendemain — angle relance de devis."
+      "personalization": "RGE QualiPAC 2025 et Professionnel du Gaz ; un avis client cite un devis reçu dès le lendemain — angle relance de devis.",
+      "whatsapp": "https://wa.me/33613077925"
     },
     {
       "name": "",
@@ -209,7 +227,8 @@
       "city": "Bordeaux",
       "website": "https://www.rpelec33.fr/",
       "source_url": "https://www.rpelec33.fr/",
-      "personalization": "Électricité générale et climatisation, 91 avenue Thiers à Bordeaux ; demande de devis via formulaire."
+      "personalization": "Électricité générale et climatisation, 91 avenue Thiers à Bordeaux ; demande de devis via formulaire.",
+      "whatsapp": ""
     },
     {
       "name": "",
@@ -220,7 +239,8 @@
       "city": "Lille",
       "website": "https://www.honore-sarl.com/",
       "source_url": "https://www.honore-sarl.com/",
-      "personalization": "Couvreur à Lille « à votre service depuis 60 ans » (couverture, zinguerie, étanchéité, charpente) ; email en gmail."
+      "personalization": "Couvreur à Lille « à votre service depuis 60 ans » (couverture, zinguerie, étanchéité, charpente) ; email en gmail.",
+      "whatsapp": ""
     },
     {
       "name": "Reynald Leroy",
@@ -231,7 +251,8 @@
       "city": "Loos / Lille",
       "website": "https://www.leroy-couverture.fr/",
       "source_url": "https://www.leroy-couverture.fr/",
-      "personalization": "Couverture, isolation, zinguerie depuis 1996 (29 ans d'expérience), RGE ; devis gratuit sur demande."
+      "personalization": "Couverture, isolation, zinguerie depuis 1996 (29 ans d'expérience), RGE ; devis gratuit sur demande.",
+      "whatsapp": ""
     },
     {
       "name": "",
@@ -242,7 +263,8 @@
       "city": "Lille",
       "website": "https://www.mtcouverture.com/",
       "source_url": "https://www.mtcouverture.com/",
-      "personalization": "Couverture, zinguerie et ravalement de façade à Lille ; email hotmail et formulaire « Contact & devis »."
+      "personalization": "Couverture, zinguerie et ravalement de façade à Lille ; email hotmail et formulaire « Contact & devis ».",
+      "whatsapp": ""
     },
     {
       "name": "",
@@ -253,7 +275,8 @@
       "city": "Montpellier",
       "website": "https://www.preboisetfils.fr/",
       "source_url": "https://www.preboisetfils.fr/",
-      "personalization": "Entreprise familiale de peinture à Montpellier depuis 1978, aussi pose de parquet."
+      "personalization": "Entreprise familiale de peinture à Montpellier depuis 1978, aussi pose de parquet.",
+      "whatsapp": "https://wa.me/33662707258"
     },
     {
       "name": "Jérôme Klein",
@@ -264,7 +287,8 @@
       "city": "Montpellier",
       "website": "https://www.renovetloc.com/",
       "source_url": "https://www.renovetloc.com/",
-      "personalization": "Peinture et rénovation depuis plus de 18 ans, promet un devis gratuit sous 24–48 h — angle relance automatique."
+      "personalization": "Peinture et rénovation depuis plus de 18 ans, promet un devis gratuit sous 24–48 h — angle relance automatique.",
+      "whatsapp": "https://wa.me/33634502982"
     },
     {
       "name": "Jonathan Torcheux",
@@ -275,7 +299,8 @@
       "city": "Montpellier",
       "website": "https://harmonypeinture.fr/",
       "source_url": "https://harmonypeinture.fr/",
-      "personalization": "Artisan peintre depuis plus de 25 ans, plus de 1000 chantiers en 12 ans ; page de lettres de recommandation, devis gratuits."
+      "personalization": "Artisan peintre depuis plus de 25 ans, plus de 1000 chantiers en 12 ans ; page de lettres de recommandation, devis gratuits.",
+      "whatsapp": "https://wa.me/33628561926"
     },
     {
       "name": "",
@@ -286,7 +311,8 @@
       "city": "Strasbourg (alentours)",
       "website": "https://menuiserieartco.fr/",
       "source_url": "https://menuiserieartco.fr/",
-      "personalization": "Placards, dressings, escaliers et agencements sur mesure près de Strasbourg ; email orange.fr."
+      "personalization": "Placards, dressings, escaliers et agencements sur mesure près de Strasbourg ; email orange.fr.",
+      "whatsapp": ""
     },
     {
       "name": "Mathieu L'Helguen",
@@ -297,7 +323,8 @@
       "city": "Saint-Herblain / Nantes",
       "website": "https://www.maltetbois.fr/",
       "source_url": "https://www.maltetbois.fr/",
-      "personalization": "Menuiserie, agencement et mobilier sur mesure (particuliers et pros), co-dirigée par Mathieu L'Helguen, fils de menuisier."
+      "personalization": "Menuiserie, agencement et mobilier sur mesure (particuliers et pros), co-dirigée par Mathieu L'Helguen, fils de menuisier.",
+      "whatsapp": "https://wa.me/33787381849"
     },
     {
       "name": "Fabrice Lefebvre",
@@ -308,7 +335,8 @@
       "city": "Nantes",
       "website": "https://lafabrique44.com/",
       "source_url": "https://lafabrique44.com/",
-      "personalization": "Menuisier fabricant spécialiste des bibliothèques, implanté à Nantes depuis 2010 ; site minimaliste (Accueil/Réalisations/Contact), email yahoo."
+      "personalization": "Menuisier fabricant spécialiste des bibliothèques, implanté à Nantes depuis 2010 ; site minimaliste (Accueil/Réalisations/Contact), email yahoo.",
+      "whatsapp": "https://wa.me/33650455238"
     },
     {
       "name": "Florent Destribois",
@@ -319,7 +347,8 @@
       "city": "Près de Strasbourg",
       "website": "https://menuiserie-destribois-strasbourg.com/",
       "source_url": "https://menuiserie-destribois-strasbourg.com/",
-      "personalization": "Équipe de 6, mobilier sur mesure pour particuliers, pros et crèches, boutique en ligne ; adresse email dédiée aux devis."
+      "personalization": "Équipe de 6, mobilier sur mesure pour particuliers, pros et crèches, boutique en ligne ; adresse email dédiée aux devis.",
+      "whatsapp": "https://wa.me/33682940749"
     },
     {
       "name": "",
@@ -330,7 +359,8 @@
       "city": "Nantes",
       "website": "https://www.bailly-menuiserie.fr/",
       "source_url": "https://www.bailly-menuiserie.fr/",
-      "personalization": "Fabrication locale sur mesure à Nantes, accompagnement de A à Z ; site très court (Accueil/Services/Zone/Contact)."
+      "personalization": "Fabrication locale sur mesure à Nantes, accompagnement de A à Z ; site très court (Accueil/Services/Zone/Contact).",
+      "whatsapp": ""
     }
   ]
 }

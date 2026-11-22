@@ -467,7 +467,29 @@ async function sendEmail(e){
   if(p && (p.unsubscribed || ['pas intéressé','client'].includes(p.status))) { await upd('emails', e.id, {status:'annulé'}); throw new Error('Ce prospect ne doit plus être contacté.'); }
   await S.mcp.callTool('Gmail','send_message',{to:[e.to], subject:e.subject, body:e.body + footer(), includeSignature:true});
   await upd('emails', e.id, {status:'envoyé', sent_ts:Date.now()});
-  if(p && p.status==='nouveau') await upd('prospects', p.id, {status:'contacté'});
+  if(p && p.status==='nouveau') await upd('prospects', p.id, {status:'contacté', contacted_ts:Date.now(), channel:'email'});
+}
+
+// ---------- téléphone et WhatsApp
+// WhatsApp ne fonctionne qu'avec un mobile (06/07). Le message s'ouvre pré-rempli dans WhatsApp : c'est toi qui appuies sur Envoyer.
+const digits = t => String(t||'').replace(/\D/g,'');
+const intl = t => { const d=digits(t); return d.startsWith('33') ? d : d.startsWith('0') ? '33'+d.slice(1) : d; };
+const isMobile = t => /^0[67]\d{8}$/.test(digits(t)) || /^33[67]\d{8}$/.test(digits(t));
+const isLawyer = p => /avocat/i.test(p.role||'');
+function waMessage(p){
+  const s=S.settings, me=[s.founder_name||'', s.brand_name||s.company_name||'VotreIAPro'].filter(Boolean).join(', ');
+  const last=(p.name||'').trim().split(/\s+/).slice(-1)[0];
+  const hello = isLawyer(p) ? `Bonjour Maître ${last||''}`.trim() : (p.name?`Bonjour ${p.name}`:`Bonjour l'équipe ${p.company||''}`.trim());
+  const site = p.website ? ` après avoir vu votre site (${String(p.website).replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'')})` : '';
+  const pitch = isLawyer(p)
+    ? `J'aide les avocats${p.city?` de ${p.city}`:''} qui exercent seuls ou en petit cabinet à recevoir leurs demandes de rendez-vous en ligne et à relancer automatiquement les propositions d'honoraires restées sans réponse.`
+    : `J'aide les artisans${p.city?` de ${p.city}`:''} à répondre à chaque demande même quand ils sont sur chantier, et à relancer automatiquement les devis envoyés.`;
+  return `${hello}, je me permets de vous écrire${site}. Je suis ${me}. ${pitch}\nSeriez-vous d'accord pour un échange de 10 minutes cette semaine ?${s.vitrine_url?`\nPrésentation : ${s.vitrine_url}`:''}\nSi ce n'est pas le sujet, répondez simplement STOP et je ne vous recontacterai pas.`;
+}
+const waLink = p => `https://wa.me/${intl(p.phone)}?text=${encodeURIComponent(waMessage(p))}`;
+async function markContacted(p, channel){
+  await upd('prospects', p.id, {status: p.status==='nouveau'?'contacté':p.status, contacted_ts:Date.now(), channel, notes:`${p.notes||''}\n[${fmt(Date.now())}] Contacté par ${channel}`.trim()});
+  log('hugo', `${p.name||p.company} contacté par ${channel}`);
 }
 function gmailError(err){
   const c = err?.code;
@@ -542,6 +564,7 @@ const VIEWS = {
         <div class="kpi"><div class="v">${d.prospects.filter(p=>p.status==='client').length}</div><div class="l">Clients</div></div>
         <div class="kpi"><div class="v">${d.offers.filter(o=>o.status!=='archivée').length}</div><div class="l">Offres</div></div>
         <div class="kpi"><div class="v">${d.prospects.length}</div><div class="l">Prospects</div></div>
+        <div class="kpi"><div class="v">${d.prospects.filter(p=>p.status!=='nouveau').length}</div><div class="l">Prospects contactés</div></div>
         <div class="kpi"><div class="v">${sent}</div><div class="l">Emails envoyés</div></div>
         <div class="kpi"><div class="v">${d.prospects.filter(p=>['a répondu','rdv','client'].includes(p.status)).length}</div><div class="l">Réponses / RDV</div></div>
         <div class="kpi"><div class="v">${d.questions.filter(q=>q.needs_founder && q.answered_by!=='fondateur').length}</div><div class="l">Infos à fournir</div></div>
@@ -613,11 +636,13 @@ const VIEWS = {
         <label for="p-raw">Texte contenant les contacts</label><textarea id="p-raw" rows="5" placeholder="Colle ici une page d'annuaire, une liste de cabinets avec leurs emails…"></textarea>
         <div class="row" style="margin-top:8px"><button class="btn" id="p-extract" ${S.sample?'':'disabled'}>🎯 Extraire les contacts</button><button class="btn ghost" data-go="discussion" data-agent-go="hugo">Où trouver des contacts ? (Hugo)</button></div></div>
       ${(()=>{ const n=S.data.prospects.filter(p=>!p.unsubscribed && !S.data.emails.some(e=>e.prospect_id===p.id)).length; return n?`<div class="panel row"><span>${n} prospect(s) n'ont pas encore d'email rédigé.</span><button class="btn" id="write-all" ${S.running||!S.sample?'disabled':''}>✉️ Clara, écris leurs emails</button></div>`:''; })()}
-      ${S.data.prospects.length?`<div class="panel tablewrap"><table><tr><th>Contact</th><th>Ville</th><th>Personnalisation</th><th>Statut</th><th></th></tr>
-        ${S.data.prospects.map(p=>`<tr><td><b>${esc(p.name)}</b><div>${esc(p.company||'')}</div><div class="ts">${esc(p.email)}</div></td><td>${esc(p.city||'')}</td><td class="ts">${esc(p.personalization||'')}</td>
+      ${(()=>{ const done=S.data.prospects.filter(p=>p.status!=='nouveau').sort((a,b)=>(b.contacted_ts||b.ts)-(a.contacted_ts||a.ts)); return `<div class="panel"><h2 style="margin-top:0">Déjà contactés (${done.length})</h2>${done.length?`<div class="tablewrap"><table><tr><th>Contact</th><th>Métier</th><th>Canal</th><th>Date</th><th>Statut</th></tr>${done.map(p=>`<tr><td><b>${esc(p.name||p.company)}</b><div class="ts">${esc(p.company||'')} · ${esc(p.city||'')}</div></td><td>${esc(p.role||'')}</td><td>${esc(p.channel||'email')}</td><td class="ts">${fmt(p.contacted_ts)}</td><td><span class="pill">${esc(p.status)}</span></td></tr>`).join('')}</table></div>`:'<p class="ts" style="margin:0">Personne pour l’instant. Envoie un email validé ou un WhatsApp, puis clique « ✓ Envoyé » : le contact apparaît ici.</p>'}</div>`; })()}
+      ${S.data.prospects.length?`<div class="panel tablewrap"><table><tr><th>Contact</th><th>Ville</th><th>Personnalisation</th><th>Téléphone</th><th>Statut</th><th></th></tr>
+        ${S.data.prospects.map(p=>`<tr><td><b>${esc(p.name||p.company)}</b><div>${esc(p.name?p.company||'':p.role||'')}</div><div class="ts">${esc(p.email)}</div></td><td>${esc(p.city||'')}</td><td class="ts">${esc(p.personalization||'')}</td>
+        <td>${p.phone?`<a href="tel:+${intl(p.phone)}">${esc(p.phone)}</a>${isMobile(p.phone)?`<div class="row" style="margin-top:6px;gap:6px"><a class="btn ok" href="${esc(waLink(p))}" target="_blank" rel="noopener">WhatsApp</a><button class="btn ghost" data-wa-done="${p.id}" title="À cliquer une fois le message envoyé">✓ Envoyé</button></div>`:'<div class="ts">fixe : appel seulement</div>'}`:'<span class="ts">—</span>'}</td>
         <td><select data-pstatus="${p.id}" aria-label="Statut">${statuses.map(s=>`<option ${s===p.status?'selected':''}>${s}</option>`).join('')}</select></td>
         <td><button class="btn ghost" data-reply="${p.id}">Il a répondu</button></td></tr>
-        <tr id="reply-${p.id}" hidden><td colspan="5"><textarea rows="3" id="reply-text-${p.id}" placeholder="Colle la réponse du prospect…"></textarea><div class="row" style="margin-top:6px"><button class="btn" data-reply-go="${p.id}" ${S.sample?'':'disabled'}>Inès, prépare la réponse</button></div></td></tr>`).join('')}</table></div>`:empty('Aucun prospect pour le moment.')}`;
+        <tr id="reply-${p.id}" hidden><td colspan="6"><textarea rows="3" id="reply-text-${p.id}" placeholder="Colle la réponse du prospect…"></textarea><div class="row" style="margin-top:6px"><button class="btn" data-reply-go="${p.id}" ${S.sample?'':'disabled'}>Inès, prépare la réponse</button></div></td></tr>`).join('')}</table></div>`:empty('Aucun prospect pour le moment.')}`;
   },
   offres(v){
     v.innerHTML = `<div><h1>Offres & sites</h1><p class="sub">Chaque offre décidée en réunion, avec la page de vente rédigée par Sam et l'avis de Juliette.</p></div>
@@ -718,6 +743,7 @@ function bind(v){
     if(n) log('clara', `${n} email(s) envoyé(s) depuis Gmail`); toast(`${n} email(s) envoyé(s)`); render(); });
   on('#p-extract', async(ev)=>{ const raw=$('#p-raw').value.trim(); if(!raw) return; const b=ev.currentTarget; busyBtn(b,'Hugo extrait…'); try{ const n=await extractProspects(raw, $('#p-offer').value); toast(`${n} prospect(s) ajouté(s)`); $('#p-raw').value=''; const o=S.data.offers.find(x=>x.id===$('#p-offer').value); if(n&&o){ toast('Clara écrit les emails…'); await writeEmails(o); toast('Emails prêts dans l’onglet Emails'); } }catch(e){ toast(agentError(e)); } document.activeElement?.blur(); render(); });
   v.querySelectorAll('[data-pstatus]').forEach(s=>s.onchange=async()=>{ await upd('prospects', s.dataset.pstatus, {status:s.value, ...(s.value==='désinscrit'?{unsubscribed:true}:{})}); s.blur(); toast('Statut mis à jour'); });
+  v.querySelectorAll('[data-wa-done]').forEach(b=>b.onclick=async()=>{ const p=S.data.prospects.find(x=>x.id===b.dataset.waDone); busyBtn(b,'…'); await markContacted(p,'WhatsApp'); toast('Noté : contacté par WhatsApp'); });
   v.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>{ const r=$('#reply-'+b.dataset.reply); r.hidden=!r.hidden; });
   v.querySelectorAll('[data-reply-go]').forEach(b=>b.onclick=async()=>{ const p=S.data.prospects.find(x=>x.id===b.dataset.replyGo), t=$('#reply-text-'+p.id).value.trim(); if(!t) return; busyBtn(b,'Inès analyse…'); try{ const r=await draftReply(p,t); toast('Réponse prête dans Emails'); $('#reply-text-'+p.id).blur(); }catch(e){ toast(agentError(e)); } render(); });
   v.querySelectorAll('[data-offer]').forEach(b=>b.onclick=async()=>{ await upd('offers', b.dataset.offer, {status:b.dataset.st}); });
