@@ -1,13 +1,18 @@
 // Paiement Stripe : création de sessions Checkout et réception des webhooks.
 import Stripe from 'stripe';
-import { get, insert, run, log } from './db.js';
+import { get, insert, run, log, secret, baseUrl } from './db.js';
 
-export const hasStripe = () => Boolean(process.env.STRIPE_SECRET_KEY);
+export const hasStripe = () => Boolean(secret('STRIPE_SECRET_KEY'));
 let stripe = null;
-const getStripe = () => (stripe ??= new Stripe(process.env.STRIPE_SECRET_KEY));
+let stripeKey = '';
+function getStripe() {
+  const key = secret('STRIPE_SECRET_KEY');
+  if (!stripe || key !== stripeKey) { stripe = new Stripe(key); stripeKey = key; }
+  return stripe;
+}
 
 export async function createCheckout(product) {
-  const base = process.env.PUBLIC_URL || 'http://localhost:3000';
+  const base = baseUrl();
   const line_items = [];
   const monthly = Number(product.price_monthly || 0);
   const setup = Number(product.price_setup || 0);
@@ -32,8 +37,9 @@ export async function createCheckout(product) {
 
 export function handleWebhook(rawBody, signature) {
   let event;
-  if (process.env.STRIPE_WEBHOOK_SECRET) {
-    event = getStripe().webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET);
+  const whsec = secret('STRIPE_WEBHOOK_SECRET');
+  if (whsec) {
+    event = getStripe().webhooks.constructEvent(rawBody, signature, whsec);
   } else {
     throw new Error('STRIPE_WEBHOOK_SECRET manquant : webhook refusé par sécurité.');
   }

@@ -36,9 +36,10 @@ async function render() {
 function banners() {
   const i = O.integrations;
   const b = [];
-  if (!i.claude) b.push('Mode démo : ajoutez <b>ANTHROPIC_API_KEY</b> dans le fichier .env pour que les agents travaillent réellement (recherche web, rédaction, réunions).');
-  if (!i.stripe) b.push('Paiement non connecté : ajoutez <b>STRIPE_SECRET_KEY</b> et <b>STRIPE_WEBHOOK_SECRET</b> pour encaisser les ventes.');
-  if (!i.smtp) b.push('Envoi d’emails non configuré : ajoutez vos identifiants <b>SMTP</b> et <b>MAIL_FROM</b>.');
+  const btn = '<button onclick="go(\'settings\')" style="margin-left:8px">Le faire maintenant</button>';
+  if (!i.claude) b.push(`<b>Étape 1 :</b> colle ta clé Anthropic pour que les agents travaillent pour de vrai (pour l’instant : mode démo). ${btn}`);
+  if (!i.stripe) b.push(`<b>Étape 2 :</b> connecte Stripe pour encaisser les ventes. ${btn}`);
+  if (!i.smtp) b.push(`<b>Étape 3 :</b> connecte ta messagerie pour envoyer les emails. ${btn}`);
   return b.map((x) => `<div class="banner">${x}</div>`).join('');
 }
 
@@ -235,12 +236,26 @@ const VIEWS = {
     const s = O.settings;
     const f = (k, label, type = 'text') => `<label>${label}</label><input name="${k}" type="${type}" value="${esc(s[k])}">`;
     const sel = (k, label, opts) => `<label>${label}</label><select name="${k}">${opts.map(([v, t]) => `<option value="${v}" ${s[k] === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
-    const i = O.integrations;
+    const S = O.secrets;
+    const key = (k, label, help, type = 'password') => `<label>${label} ${S[k] ? '<span class="pill ok">✓ enregistrée</span>' : '<span class="pill bad">à renseigner</span>'}</label>
+      <input name="${k}" type="${type}" autocomplete="off" placeholder="${S[k] ? 'Déjà enregistrée — laisse vide pour garder' : esc(help)}">`;
     $('#view').innerHTML = `<h1>Paramètres</h1>
-      <div class="panel"><b>Connexions</b><div class="row" style="margin-top:8px">
-        <span class="pill ${i.claude ? 'ok' : 'bad'}">Claude (agents) ${i.claude ? '✓' : '✗'}</span><span class="pill ${i.stripe ? 'ok' : 'bad'}">Stripe ${i.stripe ? '✓' : '✗'}</span>
-        <span class="pill ${i.stripeWebhook ? 'ok' : 'bad'}">Webhook Stripe ${i.stripeWebhook ? '✓' : '✗'}</span><span class="pill ${i.smtp ? 'ok' : 'bad'}">SMTP ${i.smtp ? '✓' : '✗'}</span></div>
-        <p class="ts">Les clés se configurent dans le fichier <code>.env</code> du serveur (voir <code>.env.example</code> et le README), jamais dans l'interface.</p></div>
+      <form id="kf" class="panel"><b>🔌 Connexions — colle tes clés ici, puis « Enregistrer les clés »</b>
+        <p class="ts">Elles restent sur ton serveur, ne sont jamais réaffichées, et ne quittent ton application que vers le service concerné.</p>
+        <h2>1. Les agents (Claude)</h2>
+        ${key('ANTHROPIC_API_KEY', 'Clé API Anthropic', 'sk-ant-…')}
+        <p class="ts">Où la trouver : <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com → API Keys</a> → « Create Key » → copie-la et colle-la ici.</p>
+        <h2>2. Le paiement (Stripe)</h2>
+        ${key('STRIPE_SECRET_KEY', 'Clé secrète Stripe', 'sk_test_… ou sk_live_…')}
+        <p class="ts">Où la trouver : <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener">dashboard.stripe.com → Développeurs → Clés API</a> → « Clé secrète ». Commence avec la clé de test.</p>
+        ${key('STRIPE_WEBHOOK_SECRET', 'Secret du webhook Stripe', 'whsec_…')}
+        <p class="ts">Dans Stripe → Développeurs → Webhooks → « Ajouter un endpoint » : URL <code>${esc(O.webhookUrl)}</code>, événement <code>checkout.session.completed</code>, puis copie le « secret de signature ».</p>
+        <h2>3. L'envoi d'emails (SMTP)</h2>
+        <p class="ts">Ces informations sont données par ton fournisseur d'emails (Brevo, Mailjet, OVH, Google Workspace…), rubrique « SMTP ».</p>
+        <div class="grid2"><div>${key('SMTP_HOST', 'Serveur SMTP', 'ex : smtp-relay.brevo.com', 'text')}</div><div><label>Port</label><input name="SMTP_PORT" value="${esc(O.smtpPort)}"></div>
+        <div>${key('SMTP_USER', 'Identifiant SMTP', 'souvent ton adresse email', 'text')}</div><div>${key('SMTP_PASS', 'Mot de passe SMTP', 'mot de passe ou clé SMTP')}</div></div>
+        ${key('MAIL_FROM', 'Expéditeur', 'ex : Prénom – VotreIAPro <contact@ton-domaine.fr>', 'text')}
+        <div style="margin-top:12px"><button>Enregistrer les clés</button></div></form>
       <form id="sf" class="grid2">
         <div class="panel"><b>Entreprise (obligatoire avant tout envoi)</b>${f('brand_name', 'Nom de marque')}${f('company_name', 'Raison sociale')}${f('company_legal', 'Forme juridique et SIRET')}${f('company_address', 'Adresse')}${f('contact_email', 'Email de contact (reçoit les réponses)', 'email')}${f('founder_name', 'Ton prénom et nom (signature des emails)')}</div>
         <div class="panel"><b>Pilotage</b>
@@ -250,6 +265,11 @@ const VIEWS = {
           ${f('daily_email_limit', 'Limite d’emails par jour', 'number')}${f('prospects_per_cycle', 'Prospects recherchés par cycle', 'number')}${f('ads_budget_month', 'Budget pub mensuel autorisé (€)', 'number')}
           <label>Ta vision (guide toutes les décisions des agents)</label><textarea name="founder_vision" rows="4">${esc(s.founder_vision)}</textarea></div>
         <div><button>Enregistrer</button></div></form>`;
+    $('#kf').onsubmit = async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries([...new FormData(e.target)].filter(([, v]) => String(v).trim()));
+      await api('/settings', data); toast('Clés enregistrées ✓'); render();
+    };
     $('#sf').onsubmit = async (e) => { e.preventDefault(); await api('/settings', Object.fromEntries(new FormData(e.target))); toast('Paramètres enregistrés'); render(); };
   },
 };

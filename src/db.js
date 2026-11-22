@@ -112,3 +112,13 @@ export function setSetting(key, value) {
 export function log(agent, type, title, detail = '') {
   insert('activity', { agent, type, title, detail: typeof detail === 'string' ? detail : JSON.stringify(detail) });
 }
+
+// ---- Clés de connexion : saisies dans le back-office (Paramètres) ou, à défaut, variables d'environnement ----
+export const SECRET_KEYS = ['ANTHROPIC_API_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM'];
+export function secret(name) {
+  const v = get('SELECT value FROM settings WHERE key = ?', `secret_${name}`)?.value;
+  return (v && v.trim()) || process.env[name] || '';
+}
+export function baseUrl() {
+  return (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
+}

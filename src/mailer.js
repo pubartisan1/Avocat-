@@ -1,18 +1,20 @@
 // Envoi des emails de prospection : SMTP, limites quotidiennes, désinscription, mentions obligatoires.
 import nodemailer from 'nodemailer';
 import crypto from 'node:crypto';
-import { all, get, run, update, getSettings, log } from './db.js';
+import { all, get, run, update, getSettings, log, secret, baseUrl } from './db.js';
 
-export const hasSMTP = () => Boolean(process.env.SMTP_HOST && process.env.MAIL_FROM);
+export const hasSMTP = () => Boolean(secret('SMTP_HOST') && secret('MAIL_FROM'));
 let transport = null;
+let transportKey = '';
 function getTransport() {
-  if (!transport) {
+  const cfg = { host: secret('SMTP_HOST'), port: Number(secret('SMTP_PORT') || 587), user: secret('SMTP_USER'), pass: secret('SMTP_PASS') };
+  const key = JSON.stringify(cfg);
+  if (!transport || key !== transportKey) {
     transport = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: Number(process.env.SMTP_PORT) === 465,
-      auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+      host: cfg.host, port: cfg.port, secure: cfg.port === 465,
+      auth: cfg.user ? { user: cfg.user, pass: cfg.pass } : undefined,
     });
+    transportKey = key;
   }
   return transport;
 }
@@ -25,7 +27,7 @@ export function prospectToken(prospect) {
 }
 
 function footer(s, token) {
-  const base = process.env.PUBLIC_URL || 'http://localhost:3000';
+  const base = baseUrl();
   const identity = [s.company_name || s.brand_name, s.company_legal, s.company_address].filter(Boolean).join(' — ');
   return `\n\n--\n${identity}\nVous recevez ce message car votre adresse professionnelle est publiée publiquement et que notre offre concerne votre activité.\nNe plus recevoir de messages : ${base}/desabonnement?t=${token}`;
 }
@@ -59,12 +61,12 @@ export async function processQueue() {
     }
     try {
       await getTransport().sendMail({
-        from: process.env.MAIL_FROM,
+        from: secret('MAIL_FROM'),
         to: e.to_email,
         replyTo: s.contact_email || undefined,
         subject: e.subject,
         text: e.body + footer(s, prospectToken(prospect)),
-        headers: { 'List-Unsubscribe': `<${process.env.PUBLIC_URL}/desabonnement?t=${prospectToken(prospect)}>` },
+        headers: { 'List-Unsubscribe': `<${baseUrl()}/desabonnement?t=${prospectToken(prospect)}>` },
       });
       update('emails', e.id, { status: 'envoyé', sent_ts: new Date().toISOString().replace('T', ' ').slice(0, 19), error: null });
       if (prospect.status === 'nouveau') update('prospects', prospect.id, { status: 'contacté' });

@@ -2,7 +2,7 @@
 import { AGENTS, systemFor } from './agents.js';
 import { ask, askJSON, hasLLM } from './llm.js';
 import { MOCKS } from './mocks.js';
-import { all, get, insert, update, run, getSettings, log, parseJSON } from './db.js';
+import { all, get, insert, update, run, getSettings, log, parseJSON, baseUrl } from './db.js';
 import crypto from 'node:crypto';
 
 // ------------------------------------------------------------------ contexte partagé
@@ -164,7 +164,7 @@ export async function planCampaigns(productId) {
     system: systemFor('leo'), effort: 'high', webSearch: true, maxSearches: 4,
     mock: MOCKS.campaign,
     prompt: `${companyContext()}\n\nOFFRE : ${JSON.stringify(pick(p, ['name', 'niche', 'target', 'tagline', 'price_setup', 'price_monthly']))}
-Page de vente : ${process.env.PUBLIC_URL || ''}/offre/${p.slug}
+Page de vente : ${baseUrl()}/offre/${p.slug}
 Conçois 2 à 3 campagnes (Google Ads, Meta, LinkedIn, SEO local, partenariats...) dans un budget total de ${s.ads_budget_month} €/mois. Pour chacune : ciblage, mots-clés ou audiences, 3 accroches publicitaires, budget, KPI cibles, plan de test.
 JSON attendu : {"campaigns":[{"channel":"","name":"","budget":"","plan":{}}],"questions_fondateur":[""]}`,
   });
@@ -214,7 +214,7 @@ export async function writeEmails(productId) {
         system: systemFor('clara'), effort: 'medium', maxTokens: 8000,
         mock: MOCKS.emails,
         prompt: `${companyContext()}\n\nOFFRE : ${JSON.stringify(pick(p, ['name', 'tagline', 'description', 'price_setup', 'price_monthly', 'deliverables']))}
-Page de l'offre : ${process.env.PUBLIC_URL || ''}/offre/${p.slug}
+Page de l'offre : ${baseUrl()}/offre/${p.slug}
 PROSPECT : ${JSON.stringify(pick(pr, ['name', 'company', 'role', 'city', 'website', 'personalization']))}
 Expéditeur : ${s.founder_name || '[prénom du fondateur]'} — ${s.company_name || s.brand_name}.
 Écris une séquence de 3 emails (premier contact personnalisé, relance J+3, dernier message J+7). Chaque email : objet court, 60 à 120 mots, une seule demande claire, vouvoiement, formule adaptée à la profession (« Maître » pour un avocat, « Docteur » pour un médecin). Ne mets PAS de lien de désinscription (ajouté automatiquement).
@@ -344,7 +344,7 @@ export async function draftReply(prospectId, incoming) {
   const { data } = await askJSON({
     system: systemFor('ines'), effort: 'high', maxTokens: 6000,
     mock: { analysis: '[DÉMO] Intérêt modéré, objection prix.', subject: 'Re: votre message', body: '[DÉMO] Bonjour Maître, merci pour votre retour...', next_status: 'a répondu' },
-    prompt: `${companyContext()}\n\nOFFRE : ${p ? JSON.stringify(pick(p, ['name', 'description', 'price_setup', 'price_monthly'])) : 'n/a'}\nLien de paiement : ${process.env.PUBLIC_URL || ''}/offre/${p?.slug || ''}
+    prompt: `${companyContext()}\n\nOFFRE : ${p ? JSON.stringify(pick(p, ['name', 'description', 'price_setup', 'price_monthly'])) : 'n/a'}\nLien de paiement : ${baseUrl()}/offre/${p?.slug || ''}
 PROSPECT : ${JSON.stringify(pick(pr, ['name', 'company', 'role', 'city', 'personalization']))}
 Emails déjà envoyés : ${JSON.stringify(thread)}
 RÉPONSE DU PROSPECT : « ${incoming} »

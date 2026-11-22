@@ -3,7 +3,7 @@ import './env.js';
 import express from 'express';
 import crypto from 'node:crypto';
 import path from 'node:path';
-import { all, get, insert, update, run, getSettings, setSetting, log, parseJSON } from './db.js';
+import { all, get, insert, update, run, getSettings, setSetting, log, parseJSON, secret, SECRET_KEYS, baseUrl } from './db.js';
 import { AGENT_LIST, AGENTS } from './agents.js';
 import { hasLLM } from './llm.js';
 import { hasStripe, createCheckout, handleWebhook } from './payments.js';
@@ -88,7 +88,7 @@ A.get('/overview', (req, res) => {
   const s = getSettings();
   res.json({
     agents: AGENT_LIST,
-    integrations: { claude: hasLLM(), stripe: hasStripe(), stripeWebhook: Boolean(process.env.STRIPE_WEBHOOK_SECRET), smtp: hasSMTP() },
+    integrations: { claude: hasLLM(), stripe: hasStripe(), stripeWebhook: Boolean(secret('STRIPE_WEBHOOK_SECRET')), smtp: hasSMTP() },
     running: orch.isRunning(),
     job: get('SELECT * FROM jobs ORDER BY id DESC LIMIT 1'),
     kpi: {
@@ -104,7 +104,11 @@ A.get('/overview', (req, res) => {
       leads: get("SELECT COUNT(*) n FROM leads WHERE status = 'nouveau'").n,
       products: get("SELECT COUNT(*) n FROM products WHERE status = 'en ligne'").n,
     },
-    settings: s,
+    settings: Object.fromEntries(Object.entries(s).filter(([k]) => !k.startsWith('secret_'))),
+    // Les clés ne sont jamais renvoyées au navigateur : on indique seulement si elles sont renseignées
+    secrets: Object.fromEntries(SECRET_KEYS.map((k) => [k, Boolean(secret(k))])),
+    smtpPort: secret('SMTP_PORT') || '587',
+    webhookUrl: `${baseUrl()}/api/stripe/webhook`,
   });
 });
 
@@ -177,9 +181,13 @@ A.post('/research', wrap(async (req, res) => {
 }));
 A.post('/settings', (req, res) => {
   const allowed = ['brand_name', 'autopilot', 'email_mode', 'sending_enabled', 'daily_email_limit', 'prospects_per_cycle', 'company_name', 'company_legal', 'company_address', 'contact_email', 'founder_name', 'founder_vision', 'ads_budget_month'];
-  for (const [k, v] of Object.entries(req.body)) if (allowed.includes(k)) setSetting(k, v);
+  for (const [k, v] of Object.entries(req.body)) {
+    if (allowed.includes(k)) setSetting(k, v);
+    // une clé laissée vide n'efface pas la clé déjà enregistrée
+    if (SECRET_KEYS.includes(k) && String(v).trim()) setSetting(`secret_${k}`, String(v).trim());
+  }
   log('victor', 'paramètres', 'Le fondateur a mis à jour les paramètres');
-  res.json(getSettings());
+  res.json({ ok: true });
 });
 
 function pickBody(b, keys) {

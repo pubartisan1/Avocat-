@@ -3,13 +3,16 @@
 // (rien n'est envoyé à de vrais prospects en mode démo).
 import Anthropic from '@anthropic-ai/sdk';
 import { MOCKS } from './mocks.js';
+import { secret } from './db.js';
 
 const MODEL = process.env.CLAUDE_MODEL || 'claude-opus-5-5';
 let client = null;
+let clientKey = '';
 
-export const hasLLM = () => Boolean(process.env.ANTHROPIC_API_KEY);
+export const hasLLM = () => Boolean(secret('ANTHROPIC_API_KEY'));
 function getClient() {
-  if (!client) client = new Anthropic();
+  const key = secret('ANTHROPIC_API_KEY');
+  if (!client || key !== clientKey) { client = new Anthropic({ apiKey: key }); clientKey = key; }
   return client;
 }
 

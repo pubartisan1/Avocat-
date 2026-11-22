@@ -36,33 +36,17 @@ Une application complète où une équipe de **8 agents IA** cherche les niches 
 
 Avec l'**autopilote**, un cycle se lance tout seul toutes les `CYCLE_HOURS` heures.
 
-## Installation (5 minutes)
+## Démarrer en 3 étapes (sans rien de technique)
 
-Il faut **Node.js 22.13 ou plus récent**.
-
-```bash
-npm install
-cp .env.example .env     # puis remplis les clés (voir ci-dessous)
-npm start
-```
-
-- Site public : http://localhost:3000
-- Back-office : http://localhost:3000/admin (identifiant : n'importe lequel ; mot de passe : `ADMIN_PASSWORD`)
+1. **Mettre le site en ligne** : sur [render.com](https://render.com), crée un compte, clique **New → Blueprint** et choisis ce dépôt. Render ne te demande qu'une chose : `ADMIN_PASSWORD`, le mot de passe de ton back-office (choisis-le).
+2. **Ouvrir ton QG** : va sur `https://<ton-site>.onrender.com/admin`. Identifiant : ce que tu veux. Mot de passe : celui que tu viens de choisir.
+3. **Coller tes clés** : **Paramètres → Connexions**. Chaque champ explique où trouver la clé : Anthropic pour les agents, Stripe pour le paiement, SMTP pour les emails. Clique **« Enregistrer les clés »**, puis **« Lancer un cycle complet »** depuis le tableau de bord.
 
 Sans clé Anthropic, l'application tourne en **mode démo** : les réponses sont des exemples marqués `[DÉMO]`, et rien n'est envoyé.
 
-### Les clés à mettre dans `.env`
+### Pour les techniciens : lancer sur son ordinateur
 
-| Variable | Où la trouver | À quoi ça sert |
-|---|---|---|
-| `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys | Fait travailler les agents (avec recherche web) |
-| `ADMIN_PASSWORD` | à choisir | Protège ton back-office |
-| `PUBLIC_URL` | l'adresse de ton site en ligne | Liens dans les emails et vers Stripe |
-| `STRIPE_SECRET_KEY` | dashboard.stripe.com → Développeurs → Clés API | Encaisser les paiements |
-| `STRIPE_WEBHOOK_SECRET` | Stripe → Webhooks → ajouter `PUBLIC_URL/api/stripe/webhook`, événement `checkout.session.completed` | Enregistrer automatiquement les ventes |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | ton fournisseur d'emails (Brevo, Mailjet, OVH, Google Workspace…) | Envoyer les emails de prospection |
-
-Commence avec les clés Stripe **de test** (`sk_test_…`), fais un achat d'essai, puis passe aux clés live.
+Il faut Node.js 22.13 ou plus récent. Lance `npm install`, puis `ADMIN_PASSWORD=... npm start`, puis ouvre http://localhost:3000/admin. Les clés peuvent aussi être fournies en variables d'environnement (voir `.env.example`). Une clé saisie dans le back-office est prioritaire.
 
 ### Avant le premier envoi d'emails
 
