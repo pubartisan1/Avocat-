@@ -114,6 +114,7 @@ details summary{cursor:pointer;font-weight:600}
 </div>
 <div class="toast" id="toast" role="status"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 // ============================================================ équipe
 const AGENTS = {
@@ -124,17 +125,19 @@ const AGENTS = {
   hugo:{name:'Hugo',emoji:'🎯',role:'Prospection',persona:"Tu es Hugo, prospecteur. Tu sais exactement où trouver les professionnels ciblés (annuaires publics, sites de cabinets, pages contact) et tu extrais uniquement des coordonnées professionnelles réellement présentes dans les données qu'on te donne. Tu n'inventes jamais un contact."},
   ines:{name:'Inès',emoji:'🤝',role:'Commerciale',persona:"Tu es Inès, commerciale. Tu réponds aux prospects, traites les objections (prix, temps, confiance), qualifies le besoin et amènes vers l'achat ou un rendez-vous. Chaleureuse, précise, tenace sans être insistante."},
   sam:{name:'Sam',emoji:'🛠️',role:'Sites & produit',persona:"Tu es Sam, créateur de sites et responsable produit. Tu écris des pages de vente qui convertissent : promesse, problème, solution, bénéfices, déroulé, livrables, prix, garantie, FAQ, appel à l'action. Tu prépares aussi la livraison."},
+  margaux:{name:'Margaux',emoji:'📒',role:'Comptabilité & facturation',persona:"Tu es Margaux, responsable comptable et facturation. Tu établis devis et factures conformes (numérotation continue, mentions obligatoires, TVA ou franchise en base), suis les encaissements, relances les impayés avec tact et fermeté, tiens le livre des recettes et alertes le fondateur sur la trésorerie et les échéances (URSSAF, TVA). Tu ne donnes pas de conseil fiscal engageant : tu signales ce qui doit être validé par un expert-comptable."},
+  chloe:{name:'Chloé',emoji:'🎁',role:'Relation client & livraison',persona:"Tu es Chloé, responsable de la relation client et de la livraison. Dès qu'un client signe, tu organises le lancement (questionnaire, éléments à fournir, planning), tu tiens le client informé, tu t'assures qu'il est satisfait et tu demandes un avis et des recommandations au bon moment."},
   juliette:{name:'Juliette',emoji:'⚖️',role:'Conformité',persona:"Tu es Juliette, responsable conformité. Tu vérifies le respect du droit français et européen (RGPD, prospection B2B, mentions légales, CGV, déontologie des professions ciblées comme la communication des avocats). Tu proposes des corrections concrètes."},
 };
 const ETHIQUE = `ÉTAT D'ESPRIT : équipe d'entrepreneurs d'élite, affamés de résultats, qui raisonnent en chiffres et ne lâchent jamais. Français impeccable, direct, concret.
 RÈGLES NON NÉGOCIABLES : jamais de faux témoignages, faux avis, faux chiffres ni fausse urgence ; prospection uniquement B2B vers des adresses professionnelles publiques, avec identité de l'expéditeur et possibilité de refus ; pas de promesse de résultat juridique ou médical ; si une info manque ou si une décision engage l'argent ou l'image du fondateur, poser la question au fondateur au lieu d'inventer.`;
 
 const TABS = [
-  ['tableau','Tableau de bord'],['discussion','Parler aux agents'],['questions','Questions des agents'],
+  ['tableau','Tableau de bord'],['aujourdhui','Plan du jour'],['discussion','Parler aux agents'],['questions','Questions des agents'],
   ['reunions','Réunions'],['emails','Emails'],['prospects','Prospects'],['offres','Offres & sites'],
-  ['campagnes','Campagnes'],['niches','Niches'],['journal','Journal'],['reglages','Réglages'],
+  ['campagnes','Campagnes'],['niches','Niches'],['factures','Factures & compta'],['journal','Journal'],['reglages','Réglages'],
 ];
-const COLS = ['activity','meetings','messages','questions','niches','offers','prospects','emails','campaigns','sprints'];
+const COLS = ['activity','meetings','messages','questions','niches','offers','prospects','emails','campaigns','sprints','invoices'];
 const ROOT = 'qg/main';
 
 // ============================================================ état
@@ -348,6 +351,7 @@ async function runCycle(focus=''){
   log('victor','🚀 Nouveau cycle de travail lancé', focus);
   try{
     if(S.settings.autonomy!=='off') await decidePending();
+    if(S.mcp && S.data.prospects.some(p=>p.status==='contacté')) { try{ await checkReplies(); }catch(e){ log('ines','Lecture Gmail impossible pendant le cycle', gmailError(e)); } }
     let offer = S.data.offers.find(o=>o.status!=='archivée');
     if(!offer || focus){
       await researchNiches(focus);
@@ -498,6 +502,147 @@ function gmailError(err){
   if(c==='not_granted'||c==='consent_required'||c==='approval_required') return "Autorise le QG à utiliser Gmail quand claude.ai te le demande, puis réessaie.";
   if(c==='server_unavailable'||c==='upstream_error') return "Gmail n'a pas répondu. Vérifie dans tes « Envoyés » avant de renvoyer cet email.";
   return err?.message || 'Envoi impossible.';
+}
+
+// ---------- réponses Gmail (détection automatique)
+function walk(o, fn){ if(o && typeof o==='object'){ fn(o); for(const k in o) walk(o[k], fn); } }
+async function checkReplies(){
+  if(!S.mcp) throw new Error("Gmail n'est pas disponible sur cet affichage.");
+  const contacted = S.data.prospects.filter(p=>p.email && ['contacté','a répondu','rdv'].includes(p.status));
+  if(!contacted.length) return {found:0};
+  let found=0;
+  for(let i=0;i<contacted.length;i+=15){
+    const chunk=contacted.slice(i,i+15);
+    setStep(`Lecture de Gmail (${Math.min(i+15,contacted.length)}/${contacted.length})`);
+    const res = await S.mcp.callTool('Gmail','search_threads',{query:`from:(${chunk.map(p=>p.email).join(' OR ')}) newer_than:30d -in:sent`, pageSize:50});
+    const blob = res.payload ?? res.structuredContent ?? res.content;
+    for(const p of chunk){
+      let snippet='', seen=false;
+      walk(blob, o=>{ const txt=JSON.stringify(o); if(!seen && /"(sender|from)"/i.test(txt) && txt.toLowerCase().includes(p.email)){ if(typeof o.snippet==='string' || typeof o.subject==='string'){ snippet=[o.subject, o.snippet].filter(Boolean).join(' — '); seen=true; } } });
+      if(!seen && !JSON.stringify(blob||'').toLowerCase().includes(p.email)) continue;
+      if(p.last_reply_snippet===snippet && p.status!=='contacté') continue;
+      found++;
+      await upd('prospects', p.id, {last_reply_snippet:snippet, replied_ts:Date.now()});
+      if(/\bstop\b|d[ée]sinscri|ne plus (me )?contacter|pas int[ée]ress/i.test(snippet)){
+        await upd('prospects', p.id, {status: /stop|d[ée]sinscri|ne plus/i.test(snippet)?'désinscrit':'pas intéressé', unsubscribed:/stop|d[ée]sinscri|ne plus/i.test(snippet)});
+        for(const e of S.data.emails.filter(e=>e.prospect_id===p.id && ['à valider','approuvé'].includes(e.status))) await upd('emails', e.id, {status:'annulé'});
+        log('ines', `${p.name||p.company} ne souhaite plus être contacté : retiré des envois`);
+      } else if(p.status==='contacté'){
+        log('ines', `📩 ${p.name||p.company} a répondu !`, snippet);
+        if(S.sample) await draftReply({...p}, snippet || '(réponse reçue dans Gmail, à lire)');
+      }
+    }
+  }
+  return {found};
+}
+
+// ---------- prochaine action recommandée pour chaque prospect
+const DAY=864e5;
+function nextAction(p){
+  const age = p.contacted_ts ? (Date.now()-p.contacted_ts)/DAY : 0;
+  const drafted = S.data.emails.some(e=>e.prospect_id===p.id);
+  const sent = S.data.emails.filter(e=>e.prospect_id===p.id && e.status==='envoyé').length;
+  if(p.unsubscribed || ['pas intéressé','désinscrit'].includes(p.status)) return null;
+  if(p.status==='client'){
+    const inv = S.data.invoices.find(i=>i.prospect_id===p.id && i.type==='facture');
+    if(!inv) return {prio:1, who:'margaux', label:'Établir la facture', go:'factures'};
+    if(inv.status!=='payée') return {prio:2, who:'margaux', label:`Suivre le paiement de ${inv.number}`, go:'factures'};
+    return {prio:5, who:'chloe', label:'Lancer la livraison et demander un avis', go:'discussion'};
+  }
+  if(p.status==='rdv') return {prio:1, who:'ines', label:'Tenir le rendez-vous, puis envoyer le lien de paiement ou un devis', go:'factures'};
+  if(p.status==='a répondu') return {prio:1, who:'ines', label:'Répondre (brouillon d’Inès dans Emails)', go:'emails'};
+  if(p.status==='nouveau') return drafted ? {prio:3, who:'clara', label:'Valider et envoyer le 1er email', go:'emails'} : {prio:4, who:'clara', label:'Faire rédiger le 1er email', go:'prospects'};
+  if(p.status==='contacté'){
+    if(age>=2 && p.phone && !p.called) return {prio:2, who:'ines', label:`Appeler (${p.phone}) — email envoyé il y a ${Math.floor(age)} j`, call:true};
+    if(age>=4 && isMobile(p.phone) && p.channel!=='WhatsApp') return {prio:3, who:'ines', label:'Message WhatsApp court (après l’appel)', wa:true};
+    if(sent<3) return {prio:4, who:'clara', label:'Relance prévue automatiquement (Emails)', go:'emails'};
+    return {prio:6, who:'ines', label:'Séquence terminée : laisser reposer 30 jours'};
+  }
+  return null;
+}
+
+// ---------- facturation (Margaux)
+function nextNumber(type){
+  const y=new Date().getFullYear(), pre = type==='devis' ? (S.settings.quote_prefix||'D') : (S.settings.invoice_prefix||'F');
+  const nums = S.data.invoices.filter(i=>i.type===type && String(i.number||'').startsWith(`${pre}-${y}-`)).map(i=>Number(String(i.number).split('-').pop())||0);
+  return `${pre}-${y}-${String((nums.length?Math.max(...nums):0)+1).padStart(4,'0')}`;
+}
+const vatRate = () => S.settings.vat_mode==='20' ? 0.2 : 0;
+function totals(lines){ const ht=lines.reduce((t,l)=>t+(Number(l.qty)||0)*(Number(l.unit)||0),0); const tva=Math.round(ht*vatRate()*100)/100; return {ht, tva, ttc:Math.round((ht+tva)*100)/100}; }
+function money(n){ return Number(n||0).toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})+' €'; }
+function legalBlock(){
+  const s=S.settings;
+  return [s.company_name||'[Raison sociale]', s.company_legal||'[Forme juridique — SIRET]', s.company_address||'[Adresse]', s.contact_email||''].filter(Boolean);
+}
+async function invoicePdf(inv){
+  if(!window.jspdf) throw new Error('Le module PDF n’a pas pu se charger : vérifie ta connexion puis recharge la page.');
+  const {jsPDF}=window.jspdf, doc=new jsPDF({unit:'mm', format:'a4'}), s=S.settings, t=totals(inv.lines);
+  let y=20; const L=(txt,x,yy,opt)=>doc.text(String(txt),x,yy,opt);
+  doc.setFont('helvetica','bold'); doc.setFontSize(18); L(inv.type==='devis'?'DEVIS':'FACTURE',20,y); doc.setFontSize(10); doc.setFont('helvetica','normal');
+  L(`N° ${inv.number}`,190,y,{align:'right'}); y+=6; L(`Date : ${new Date(inv.date).toLocaleDateString('fr-FR')}`,190,y,{align:'right'});
+  if(inv.type==='facture'){ y+=5; L(`Échéance : ${new Date(inv.due).toLocaleDateString('fr-FR')}`,190,y,{align:'right'}); }
+  else { y+=5; L(`Valable jusqu'au : ${new Date(inv.due).toLocaleDateString('fr-FR')}`,190,y,{align:'right'}); }
+  y=34; doc.setFont('helvetica','bold'); L('Émetteur',20,y); L('Client',115,y); doc.setFont('helvetica','normal'); y+=5;
+  const em=legalBlock(), cl=[inv.client.company||inv.client.name, inv.client.name&&inv.client.company?inv.client.name:'', inv.client.address||'', inv.client.siret?`SIRET ${inv.client.siret}`:'', inv.client.email||''].filter(Boolean);
+  em.forEach((l,i)=>L(l,20,y+i*5)); cl.forEach((l,i)=>L(l,115,y+i*5)); y+=Math.max(em.length,cl.length)*5+8;
+  doc.setFillColor(235,240,238); doc.rect(20,y-5,170,8,'F'); doc.setFont('helvetica','bold'); L('Désignation',22,y); L('Qté',130,y,{align:'right'}); L('PU HT',158,y,{align:'right'}); L('Total HT',188,y,{align:'right'}); doc.setFont('helvetica','normal'); y+=8;
+  for(const l of inv.lines){ const wrapped=doc.splitTextToSize(l.label,100); L(wrapped,22,y); L(l.qty,130,y,{align:'right'}); L(money(l.unit),158,y,{align:'right'}); L(money(l.qty*l.unit),188,y,{align:'right'}); y+=wrapped.length*5+3; }
+  y+=4; doc.line(120,y,190,y); y+=6; L('Total HT',150,y,{align:'right'}); L(money(t.ht),188,y,{align:'right'}); y+=5;
+  if(vatRate()){ L('TVA 20 %',150,y,{align:'right'}); L(money(t.tva),188,y,{align:'right'}); y+=5; }
+  doc.setFont('helvetica','bold'); L(vatRate()?'Total TTC':'Total à payer',150,y,{align:'right'}); L(money(t.ttc),188,y,{align:'right'}); doc.setFont('helvetica','normal'); y+=10;
+  const notes=[];
+  if(!vatRate()) notes.push('TVA non applicable, art. 293 B du CGI.');
+  if(inv.type==='facture'){
+    notes.push(`Paiement à réception, au plus tard le ${new Date(inv.due).toLocaleDateString('fr-FR')}.${s.iban?` Virement : IBAN ${s.iban}${s.bic?` — BIC ${s.bic}`:''}.`:''}${s.payment_link?` Paiement en ligne : ${s.payment_link}`:''}`);
+    notes.push('En cas de retard de paiement : pénalités au taux de trois fois le taux d’intérêt légal, et indemnité forfaitaire pour frais de recouvrement de 40 € (art. L441-10 du Code de commerce). Pas d’escompte pour paiement anticipé.');
+  } else notes.push('Bon pour accord : date et signature du client.');
+  doc.setFontSize(9); for(const n of notes){ const w=doc.splitTextToSize(n,170); L(w,20,y); y+=w.length*4.5+2; }
+  return doc.output('blob');
+}
+const b64 = blob => new Promise((ok,ko)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result).split(',')[1]); r.onerror=ko; r.readAsDataURL(blob); });
+async function saveFile(filename, blob){
+  if(!S.downloads) throw new Error('Le téléchargement n’est pas disponible sur cet affichage.');
+  await S.downloads.save({filename, data: blob});
+}
+async function sendInvoice(inv){
+  if(!S.mcp) throw new Error("Gmail n'est pas disponible sur cet affichage.");
+  if(!inv.client.email) throw new Error('Ajoute l’email du client.');
+  const s=S.settings, blob=await invoicePdf(inv), t=totals(inv.lines);
+  const body = inv.type==='devis'
+    ? `Bonjour,
+
+Comme convenu, vous trouverez ci-joint le devis ${inv.number} d'un montant de ${money(t.ttc)}.
+Pour l'accepter, il suffit de me le renvoyer signé ou de répondre « Bon pour accord » à ce message.
+
+Bien cordialement,
+${s.founder_name||''}
+${s.company_name||s.brand_name||''}`
+    : `Bonjour,
+
+Vous trouverez ci-joint la facture ${inv.number} d'un montant de ${money(t.ttc)}, à régler avant le ${new Date(inv.due).toLocaleDateString('fr-FR')}.${s.payment_link?`
+Paiement en ligne : ${s.payment_link}`:''}${s.iban?`
+Virement : IBAN ${s.iban}`:''}
+
+Merci pour votre confiance.
+
+Bien cordialement,
+${s.founder_name||''}
+${s.company_name||s.brand_name||''}`;
+  await S.mcp.callTool('Gmail','send_message',{to:[inv.client.email], subject:`${inv.type==='devis'?'Devis':'Facture'} ${inv.number} — ${s.company_name||s.brand_name||''}`, body, includeSignature:true, attachments:[{content: await b64(blob), filename:`${inv.number}.pdf`, mimeType:'application/pdf'}]});
+  await upd('invoices', inv.id, {status: inv.type==='devis'?'envoyé':'envoyée', sent_ts:Date.now()});
+  log('margaux', `${inv.type==='devis'?'Devis':'Facture'} ${inv.number} envoyé(e) à ${inv.client.company||inv.client.name}`);
+}
+async function remindInvoice(inv){
+  const t=totals(inv.lines), late=Math.floor((Date.now()-inv.due)/DAY);
+  const r = await think('margaux', `Rédige une relance de paiement pour la facture ${inv.number} (${money(t.ttc)}), échue depuis ${late} jour(s), client : ${inv.client.company||inv.client.name}. Ton : courtois et ferme, rappelle le montant, l'échéance et les moyens de paiement${S.settings.payment_link?` (lien : ${S.settings.payment_link})`:''}${S.settings.iban?` (IBAN : ${S.settings.iban})`:''}. 80 mots maximum.
+JSON : {"subject":"","body":""}`, {json:true, tier:'quick'});
+  await add('emails',{prospect_id:inv.prospect_id||null, to:inv.client.email, name:inv.client.name||'', company:inv.client.company||'', step:20, subject:r.subject, body:r.body, status:'à valider', due:Date.now(), kind:'relance-facture'});
+  log('margaux', `Relance de ${inv.number} rédigée — à valider dans Emails`);
+}
+function csvLedger(){
+  const rows=[['Date encaissement','N° facture','Client','Montant HT','TVA','Montant TTC','Mode']];
+  for(const i of S.data.invoices.filter(i=>i.type==='facture' && i.status==='payée').sort((a,b)=>a.paid_ts-b.paid_ts)){ const t=totals(i.lines); rows.push([new Date(i.paid_ts).toLocaleDateString('fr-FR'), i.number, i.client.company||i.client.name, t.ht.toFixed(2), t.tva.toFixed(2), t.ttc.toFixed(2), i.paid_with||'']); }
+  return new Blob(['\ufeff'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n')], {type:'text/csv'});
 }
 
 // ============================================================ données de départ
@@ -673,6 +818,45 @@ const VIEWS = {
         <p class="ts"><b>Cible :</b> ${esc(n.audience)} · <b>Capacité à payer :</b> ${esc(n.willingness_to_pay)} · <b>Concurrence :</b> ${esc(n.competition)}</p><p class="ts">${esc(n.reasoning)}</p>
         ${(n.sources||[]).map(s=>`<a class="ts" href="${esc(s)}" target="_blank" rel="noopener">${esc(String(s).replace(/^https?:\/\//,'').slice(0,60))}</a>`).join(' · ')}</div>`).join('') || empty('Aucune niche étudiée.')}`;
   },
+  aujourdhui(v){
+    const items = S.data.prospects.map(p=>({p, a:nextAction(p)})).filter(x=>x.a).sort((x,y)=>x.a.prio-y.a.prio);
+    const overdue = S.data.invoices.filter(i=>i.type==='facture' && i.status!=='payée' && i.due<Date.now());
+    const stages=[['nouveau','Nouveaux'],['contacté','Contactés'],['a répondu','Ont répondu'],['rdv','Rendez-vous'],['client','Clients']];
+    v.innerHTML = `<div><h1>Plan du jour</h1><p class="sub">Les actions qui rapprochent le plus d'une vente, dans l'ordre. La séquence qui marche le mieux en B2B : email personnalisé (J0) → appel (J+2) → relance email (J+3) → WhatsApp court seulement après l'appel (J+4) → dernier email (J+7).</p></div>
+      <div class="kpis">${stages.map(([k,l])=>`<div class="kpi"><div class="v">${S.data.prospects.filter(p=>p.status===k).length}</div><div class="l">${l}</div></div>`).join('')}</div>
+      <div class="panel row"><button class="btn" id="check-replies" ${S.mcp&&!S.running?'':'disabled'}>📥 Vérifier les réponses dans Gmail</button><span class="ts">Repère les prospects qui t'ont répondu, retire ceux qui disent STOP, et fait préparer la réponse par Inès.</span></div>
+      ${overdue.length?`<div class="banner">${overdue.length} facture(s) en retard de paiement. <button class="btn ghost" data-go="factures">Voir</button></div>`:''}
+      ${items.length?`<div class="panel tablewrap"><table><tr><th></th><th>Prospect</th><th>Action</th><th></th></tr>${items.slice(0,80).map(({p,a})=>`<tr><td>${av(a.who)}</td><td><b>${esc(p.name||p.company)}</b><div class="ts">${esc(p.role||'')} · ${esc(p.city||'')} · ${esc(p.status)}</div></td><td>${esc(a.label)}</td>
+        <td><div class="row" style="gap:6px">${a.call?`<a class="btn ghost" href="tel:+${intl(p.phone)}">📞 ${esc(p.phone)}</a><button class="btn ghost" data-called="${p.id}">✓ Appelé</button>`:''}${a.wa?`<a class="btn ok" href="${esc(waLink(p))}" target="_blank" rel="noopener">WhatsApp</a><button class="btn ghost" data-wa-done="${p.id}">✓ Envoyé</button>`:''}${a.go?`<button class="btn ghost" data-go="${a.go}">Ouvrir</button>`:''}</div></td></tr>`).join('')}</table></div>`:empty('Rien à faire pour l’instant : ajoute des prospects ou lance un cycle.')}`;
+  },
+  factures(v){
+    const inv=S.data.invoices.slice().sort((a,b)=>b.ts-a.ts), y=new Date().getFullYear(), m=new Date().getMonth();
+    const paid=inv.filter(i=>i.type==='facture'&&i.status==='payée'), open=inv.filter(i=>i.type==='facture'&&i.status!=='payée');
+    const sum=list=>list.reduce((t,i)=>t+totals(i.lines).ttc,0);
+    const caYear=sum(paid.filter(i=>new Date(i.paid_ts).getFullYear()===y)), caMonth=sum(paid.filter(i=>new Date(i.paid_ts).getFullYear()===y&&new Date(i.paid_ts).getMonth()===m));
+    const rate=Number(S.settings.social_rate||0);
+    const clients=S.data.prospects.filter(p=>['client','rdv','a répondu'].includes(p.status));
+    const offers=S.data.offers.filter(o=>o.status!=='archivée');
+    const missing=['company_name','company_legal','company_address'].filter(k=>!S.settings[k]);
+    v.innerHTML = `<div><h1>Factures & compta</h1><p class="sub">Margaux établit tes devis et factures conformes (numérotation continue, mentions obligatoires), les envoie en PDF depuis ton Gmail, suit les paiements et relance les retards. À faire valider par un expert-comptable pour tes déclarations.</p></div>
+      ${missing.length?`<div class="banner">Pour des factures valables, renseigne dans Réglages : raison sociale, forme juridique et SIRET, adresse. <button class="btn ghost" data-go="reglages">Réglages</button></div>`:''}
+      <div class="kpis"><div class="kpi"><div class="v">${money(caMonth)}</div><div class="l">Encaissé ce mois</div></div><div class="kpi"><div class="v">${money(caYear)}</div><div class="l">Encaissé en ${y}</div></div>
+        <div class="kpi"><div class="v">${money(sum(open))}</div><div class="l">À encaisser (${open.length})</div></div><div class="kpi"><div class="v">${open.filter(i=>i.due<Date.now()).length}</div><div class="l">En retard</div></div>
+        ${rate?`<div class="kpi"><div class="v">${money(caYear*rate/100)}</div><div class="l">Cotisations estimées (${rate} %)</div></div>`:''}</div>
+      <div class="panel"><h2 style="margin-top:0">Nouveau devis ou facture</h2>
+        <div class="grid2"><div><label for="i-type">Type</label><select id="i-type"><option value="facture">Facture</option><option value="devis">Devis</option></select>
+          <label for="i-client">Client</label><select id="i-client"><option value="">— saisie libre —</option>${clients.map(p=>`<option value="${p.id}">${esc(p.company||p.name)} (${esc(p.status)})</option>`).join('')}</select>
+          <label for="i-offer">Offre</label><select id="i-offer">${offers.map(o=>`<option value="${o.id}">${esc(o.name)} — ${o.price_setup} € + ${o.price_monthly} €/mois</option>`).join('')}</select></div>
+        <div><label for="i-name">Nom du client</label><input id="i-name"><label for="i-company">Société / cabinet</label><input id="i-company"><label for="i-email">Email</label><input id="i-email" type="email"><label for="i-address">Adresse</label><input id="i-address"><label for="i-siret">SIRET du client (facultatif)</label><input id="i-siret"></div></div>
+        <div class="row" style="margin-top:10px"><button class="btn" id="i-create">Créer</button><span class="ts">Lignes pré-remplies : mise en place + premier mois. Tu peux les modifier ensuite.</span></div></div>
+      ${inv.map(i=>{const t=totals(i.lines), late=i.type==='facture'&&i.status!=='payée'&&i.due<Date.now(); return `<div class="panel"><div class="row"><b>${esc(i.number)}</b><span class="pill">${i.type}</span><span class="pill ${i.status==='payée'?'ok':late?'bad':'warn'}">${late?'en retard':esc(i.status)}</span><span>${esc(i.client.company||i.client.name)}</span><b>${money(t.ttc)}</b><span class="ts">${new Date(i.date).toLocaleDateString('fr-FR')} · échéance ${new Date(i.due).toLocaleDateString('fr-FR')}</span></div>
+        <details style="margin-top:6px"><summary>Lignes</summary><textarea id="lines-${i.id}" rows="3" style="margin-top:6px" ${i.status==='brouillon'?'':'disabled'}>${esc(i.lines.map(l=>`${l.label} | ${l.qty} | ${l.unit}`).join('\n'))}</textarea>${i.status==='brouillon'?`<div class="row" style="margin-top:6px"><button class="btn ghost" data-inv-lines="${i.id}">Enregistrer les lignes</button><span class="ts">Une ligne par prestation : désignation | quantité | prix unitaire HT</span></div>`:''}</details>
+        <div class="row" style="margin-top:8px"><button class="btn ghost" data-inv-pdf="${i.id}" ${S.downloads?'':'disabled'}>⬇️ PDF</button><button class="btn" data-inv-send="${i.id}" ${S.mcp?'':'disabled'}>📤 Envoyer par Gmail</button>
+          ${i.type==='facture'&&i.status!=='payée'?`<select id="paid-with-${i.id}" style="width:auto"><option>virement</option><option>Stripe</option><option>chèque</option><option>espèces</option></select><button class="btn ok" data-inv-paid="${i.id}">Marquer payée</button>`:''}
+          ${late?`<button class="btn bad" data-inv-remind="${i.id}" ${S.sample?'':'disabled'}>Relancer (Margaux)</button>`:''}
+          ${i.type==='devis'&&i.status!=='accepté'?`<button class="btn ok" data-quote-ok="${i.id}">Devis accepté → facture</button>`:''}</div></div>`;}).join('') || empty('Aucune facture pour le moment.')}
+      <div class="panel row"><button class="btn ghost" id="ledger" ${S.downloads?'':'disabled'}>⬇️ Livre des recettes (CSV)</button><button class="btn ghost" id="finance" ${S.sample?'':'disabled'}>📒 Point trésorerie de Margaux</button></div>`;
+  },
   journal(v){ v.innerHTML = `<div><h1>Journal</h1><p class="sub">Tout ce que fait l'équipe.</p></div><div class="panel feed">${feed(S.data.activity)}</div>`; },
   reglages(v){
     const s=S.settings, f=(k,l,ph='')=>`<label for="set-${k}">${l}</label><input id="set-${k}" name="${k}" value="${esc(s[k]||'')}" placeholder="${esc(ph)}">`;
@@ -688,6 +872,13 @@ const VIEWS = {
           ${f('daily_limit','Nombre maximum de tâches d’agents par jour','200')}
           <p class="ts">Une tâche = une réponse d'un agent (un message, une prise de parole en réunion, un email rédigé). Un cycle complet en compte environ 15 à 30.</p>
           <label for="set-vision">Ta vision (guide toutes les décisions)</label><textarea id="set-vision" name="vision" rows="4">${esc(s.vision||'')}</textarea></div>
+        <div class="panel"><h2 style="margin-top:0">Facturation (Margaux)</h2>
+          <label for="set-vat_mode">TVA</label><select id="set-vat_mode" name="vat_mode"><option value="franchise" ${s.vat_mode!=='20'?'selected':''}>Franchise en base (micro-entreprise) : pas de TVA</option><option value="20" ${s.vat_mode==='20'?'selected':''}>TVA 20 %</option></select>
+          ${f('iban','IBAN (affiché sur les factures)','FR76 …')}${f('bic','BIC')}
+          ${f('payment_days','Délai de paiement des factures (jours)','15')}
+          ${f('social_rate','Taux de cotisations sociales pour l’estimation (%)','à vérifier selon ton statut')}
+          ${f('contact_email','Email affiché sur les factures')}
+</div>
         <div><button class="btn">Enregistrer</button></div></form>
       <div class="panel"><h2 style="margin-top:0">Combien ça coûte ?</h2>
         <div class="tablewrap"><table><tr><th>Poste</th><th>Coût</th></tr>
@@ -718,6 +909,23 @@ function bind(v){
   on('#go-cycle', ()=>runCycle($('#focus').value.trim()));
   on('#go-sprint', ()=>runSprint());
   on('#banner-resume', resumeTeam);
+  on('#check-replies', async()=>{ S.running=true; render(); try{ const r=await checkReplies(); toast(r.found?`${r.found} réponse(s) trouvée(s)`:'Aucune nouvelle réponse'); }catch(e){ toast(gmailError(e)); } finally{ S.running=false; S.step=''; render(); } });
+  v.querySelectorAll('[data-called]').forEach(b=>b.onclick=async()=>{ const p=S.data.prospects.find(x=>x.id===b.dataset.called); await upd('prospects', p.id, {called:true, notes:`${p.notes||''}\n[${fmt(Date.now())}] Appelé`.trim()}); log('ines', `Appel passé : ${p.name||p.company}`); toast('Appel noté'); });
+  const ic=$('#i-client'); if(ic) ic.onchange=()=>{ const p=S.data.prospects.find(x=>x.id===ic.value); if(!p) return; $('#i-name').value=p.name||''; $('#i-company').value=p.company||''; $('#i-email').value=p.email||''; if(p.offer_id && $('#i-offer').querySelector(`option[value="${p.offer_id}"]`)) $('#i-offer').value=p.offer_id; };
+  on('#i-create', async()=>{ const type=$('#i-type').value, o=S.data.offers.find(x=>x.id===$('#i-offer').value), now=Date.now();
+    const client={name:$('#i-name').value.trim(), company:$('#i-company').value.trim(), email:$('#i-email').value.trim(), address:$('#i-address').value.trim(), siret:$('#i-siret').value.trim()};
+    if(!client.name && !client.company){ toast('Indique le nom du client'); return; }
+    const lines = o ? [{label:`${o.name} — mise en place`, qty:1, unit:Number(o.price_setup)||0}, ...(Number(o.price_monthly)?[{label:`${o.name} — abonnement, 1er mois`, qty:1, unit:Number(o.price_monthly)}]:[])] : [{label:'Prestation', qty:1, unit:0}];
+    await add('invoices',{type, number:nextNumber(type), client, lines, prospect_id:$('#i-client').value||null, offer_id:o?.id||null, date:now, due: now + (type==='devis'?30:Number(S.settings.payment_days||15))*DAY, status:'brouillon'});
+    log('margaux', `${type==='devis'?'Devis':'Facture'} créé(e) pour ${client.company||client.name}`); document.activeElement?.blur(); toast('Créé(e) : vérifie puis envoie'); });
+  v.querySelectorAll('[data-inv-lines]').forEach(b=>b.onclick=async()=>{ const id=b.dataset.invLines; const lines=$('#lines-'+id).value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(x=>x[0]).map(([label,qty,unit])=>({label, qty:Number(qty)||1, unit:Number(String(unit||'0').replace(',','.'))||0})); await upd('invoices', id, {lines}); document.activeElement?.blur(); toast('Lignes enregistrées'); });
+  v.querySelectorAll('[data-inv-pdf]').forEach(b=>b.onclick=async()=>{ const i=S.data.invoices.find(x=>x.id===b.dataset.invPdf); try{ await saveFile(`${i.number}.pdf`, await invoicePdf(i)); }catch(e){ toast(e?.message||'Téléchargement refusé'); } });
+  v.querySelectorAll('[data-inv-send]').forEach(b=>b.onclick=async()=>{ const i=S.data.invoices.find(x=>x.id===b.dataset.invSend); busyBtn(b,'Envoi…'); try{ await sendInvoice(i); toast('Envoyé(e) depuis ton Gmail'); }catch(e){ toast(gmailError(e)); } render(); });
+  v.querySelectorAll('[data-inv-paid]').forEach(b=>b.onclick=async()=>{ const i=S.data.invoices.find(x=>x.id===b.dataset.invPaid); await upd('invoices', i.id, {status:'payée', paid_ts:Date.now(), paid_with:$('#paid-with-'+i.id).value}); if(i.prospect_id) await upd('prospects', i.prospect_id, {status:'client'}); log('margaux', `💶 ${i.number} payée : ${money(totals(i.lines).ttc)}`); toast('Paiement enregistré'); });
+  v.querySelectorAll('[data-inv-remind]').forEach(b=>b.onclick=async()=>{ busyBtn(b,'Margaux rédige…'); try{ await remindInvoice(S.data.invoices.find(x=>x.id===b.dataset.invRemind)); toast('Relance prête dans Emails'); }catch(e){ toast(agentError(e)); } render(); });
+  v.querySelectorAll('[data-quote-ok]').forEach(b=>b.onclick=async()=>{ const q=S.data.invoices.find(x=>x.id===b.dataset.quoteOk), now=Date.now(); await upd('invoices', q.id, {status:'accepté'}); const {id:_qid, ...qrest}=q; await add('invoices',{...qrest, type:'facture', number:nextNumber('facture'), date:now, due:now+Number(S.settings.payment_days||15)*DAY, status:'brouillon', from_quote:q.number}); if(q.prospect_id) await upd('prospects', q.prospect_id, {status:'client', client_ts:now}); log('margaux', `Devis ${q.number} accepté : facture créée`); toast('Facture créée'); });
+  on('#ledger', async()=>{ try{ await saveFile(`livre-des-recettes-${new Date().getFullYear()}.csv`, csvLedger()); }catch(e){ toast(e?.message||'Téléchargement refusé'); } });
+  on('#finance', async(ev)=>{ busyBtn(ev.currentTarget,'Margaux analyse…'); try{ const list=S.data.invoices.map(i=>({n:i.number,type:i.type,statut:i.status,client:i.client.company||i.client.name,ttc:totals(i.lines).ttc,echeance:new Date(i.due).toLocaleDateString('fr-FR')})); const r=await think('margaux', `Fais au fondateur un point trésorerie clair et court (tutoiement, 120 mots) à partir de ces devis et factures : ${JSON.stringify(list)}. Donne : encaissé, à encaisser, retards et quoi faire, prochaines échéances à anticiper (cotisations, TVA si applicable), et une recommandation.`); await add('messages',{thread:'margaux', sender:'margaux', text:r}); S.chatAgent='margaux'; go('discussion'); }catch(e){ toast(agentError(e)); render(); } });
   on('#write-all', async()=>{ S.running=true; render(); try{ let n=0; for(const o of S.data.offers.filter(o=>o.status!=='archivée')) n+=await writeEmails(o); toast(`${n} email(s) rédigé(s) : à valider dans Emails`); }catch(e){ toast(agentError(e)); } finally{ S.running=false; S.step=''; render(); } });
   v.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{ const t=$('#sp-msg-'+b.dataset.copy).textContent; navigator.clipboard.writeText(t).then(()=>toast('Message copié'),()=>{ const r=document.createRange(); r.selectNodeContents($('#sp-msg-'+b.dataset.copy)); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast('Texte sélectionné : fais Copier'); }); });
   v.querySelectorAll('[data-stop]').forEach(b=>b.onclick=pauseTeam);
@@ -742,7 +950,9 @@ function bind(v){
     for(const e of list){ if(!(await sendOne(e))) break; n++; await new Promise(r=>setTimeout(r,3000)); }
     if(n) log('clara', `${n} email(s) envoyé(s) depuis Gmail`); toast(`${n} email(s) envoyé(s)`); render(); });
   on('#p-extract', async(ev)=>{ const raw=$('#p-raw').value.trim(); if(!raw) return; const b=ev.currentTarget; busyBtn(b,'Hugo extrait…'); try{ const n=await extractProspects(raw, $('#p-offer').value); toast(`${n} prospect(s) ajouté(s)`); $('#p-raw').value=''; const o=S.data.offers.find(x=>x.id===$('#p-offer').value); if(n&&o){ toast('Clara écrit les emails…'); await writeEmails(o); toast('Emails prêts dans l’onglet Emails'); } }catch(e){ toast(agentError(e)); } document.activeElement?.blur(); render(); });
-  v.querySelectorAll('[data-pstatus]').forEach(s=>s.onchange=async()=>{ await upd('prospects', s.dataset.pstatus, {status:s.value, ...(s.value==='désinscrit'?{unsubscribed:true}:{})}); s.blur(); toast('Statut mis à jour'); });
+  v.querySelectorAll('[data-pstatus]').forEach(s=>s.onchange=async()=>{ await upd('prospects', s.dataset.pstatus, {status:s.value, ...(s.value==='désinscrit'?{unsubscribed:true}:{}), ...(s.value==='client'?{client_ts:Date.now()}:{})}); s.blur();
+    if(s.value==='client'){ const p=S.data.prospects.find(x=>x.id===s.dataset.pstatus); log('chloe', `🎉 Nouveau client : ${p.name||p.company}`, 'Margaux prépare la facture, Chloé lance la livraison.'); toast('Nouveau client ! Facture à établir dans Factures & compta'); }
+    else toast('Statut mis à jour'); });
   v.querySelectorAll('[data-wa-done]').forEach(b=>b.onclick=async()=>{ const p=S.data.prospects.find(x=>x.id===b.dataset.waDone); busyBtn(b,'…'); await markContacted(p,'WhatsApp'); toast('Noté : contacté par WhatsApp'); });
   v.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>{ const r=$('#reply-'+b.dataset.reply); r.hidden=!r.hidden; });
   v.querySelectorAll('[data-reply-go]').forEach(b=>b.onclick=async()=>{ const p=S.data.prospects.find(x=>x.id===b.dataset.replyGo), t=$('#reply-text-'+p.id).value.trim(); if(!t) return; busyBtn(b,'Inès analyse…'); try{ const r=await draftReply(p,t); toast('Réponse prête dans Emails'); $('#reply-text-'+p.id).blur(); }catch(e){ toast(agentError(e)); } render(); });
@@ -758,8 +968,8 @@ function bind(v){
   const v=location.hash.slice(1); if(TABS.some(t=>t[0]===v)) S.view=v;
   render();
   const use = n => (window.claude?.use ? window.claude.use(n) : Promise.resolve(null)).catch(()=>null);
-  const [db, sample, mcp] = await Promise.all([use('db'), use('sample'), use('mcp')]);
-  S.db=db; S.sample=sample; S.mcp=mcp;
+  const [db, sample, mcp, downloads] = await Promise.all([use('db'), use('sample'), use('mcp'), use('downloads')]);
+  S.db=db; S.sample=sample; S.mcp=mcp; S.downloads=downloads;
   if(db) subscribe(); else render();
 })();
 </script>
